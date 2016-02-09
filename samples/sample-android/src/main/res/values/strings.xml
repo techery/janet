@@ -1,0 +1,7 @@
+<resources>
+    <string name="app_name">Sample</string>
+    <string name="title_activity_users">Users</string>
+    <string name="title_activity_repos">Repositories</string>
+
+    <string name="action_settings">Settings</string>
+</resources>

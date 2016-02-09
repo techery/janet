@@ -1,0 +1,31 @@
+apply plugin: 'java'
+
+
+dependencies {
+    compile project(":janet-http:adapter")
+    compile project(":janet-http:adapter-compiler")
+    compile project(":janet-conventors:gson")
+    compile project(":janet-http:clients:okhttp")
+    compile'io.reactivex:rxjava:1.1.0'
+
+}
+
+
+version = '1.0'
+task jarWithDependencies(type: Jar) {
+    manifest {
+        attributes 'Implementation-Title': 'SantaRest jar example',
+                'Implementation-Version': version,
+                'Main-Class': 'com.santarest.sample.SimpleService'
+    }
+    baseName = project.name + '-all'
+    from { configurations.compile.collect { it.isDirectory() ? it : zipTree(it) } }
+    with jar
+}
+
+jar {
+    manifest {
+        attributes 'Main-Class': 'io.techery.janet.sample.SimpleService',
+                'Class-Path': configurations.runtime.files.collect {"$it.name"}.join(' ')
+    }
+}

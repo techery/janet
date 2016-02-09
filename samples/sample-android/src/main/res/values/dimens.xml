@@ -1,0 +1,16 @@
+<resources>
+    <dimen name="activity_horizontal_margin">16dp</dimen>
+    <dimen name="activity_vertical_margin">16dp</dimen>
+
+    <!-- Margins -->
+    <dimen name="Widget.Margin.Default">3dp</dimen>
+    <dimen name="Widget.Margin.Medium">10dp</dimen>
+    <dimen name="Widget.Margin.Big">15dp</dimen>
+    <dimen name="Widget.Margin.Small">5dp</dimen>
+    <dimen name="Widget.Margin.Bottom">5dp</dimen>
+    <dimen name="Widget.Margin.Top">3dp</dimen>
+    <dimen name="Widget.Margin.Left">5dp</dimen>
+    <dimen name="Widget.Margin.Right">5dp</dimen>
+    <dimen name="user_photo_size">100dp</dimen>
+
+</resources>

@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="light_gray">#b6b6b6</color>
+    <color name="dark_grey">#555</color>
+    <color name="shadow_start_color">#6555</color>
+    <color name="transp">#00000000</color>
+    <color name="half_transparent_background">#40dbdbdb</color>
+</resources>

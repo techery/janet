@@ -1,0 +1,10 @@
+apply plugin: 'java'
+apply plugin: 'provided-base'
+
+sourceCompatibility = 1.6
+targetCompatibility = 1.6
+
+dependencies {
+    compile 'com.google.code.gson:gson:+'
+    compile project(':janet')
+}
