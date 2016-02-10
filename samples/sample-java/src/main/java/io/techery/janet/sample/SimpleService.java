@@ -27,7 +27,7 @@ public class SimpleService {
                 .filter(BaseAction::isSuccess)
                 .subscribe(usersAction -> {
                     System.out.println("received " + usersAction);
-                }, System.out::println);
+                }, System.err::println);
 
 
         usersExecutor.createObservable(new UsersAction())
@@ -35,9 +35,9 @@ public class SimpleService {
                 .flatMap(state -> Observable.<User>from(state.action.response).first())
                 .flatMap(user -> userReposExecutor.createObservable(new UserReposAction(user.getLogin())))
                 .subscribe(new ActionStateSubscriber<UserReposAction>()
-                        .onFail(throwable -> System.out.println("repos request throwable " + throwable))
+                        .onFail(throwable -> System.err.println("repos request throwable " + throwable))
                         .onSuccess(action -> System.out.println("repos request finished " + action))
-                        .onServerError(action -> System.out.println("repos request http throwable " + action)));
+                        .onServerError(action -> System.err.println("repos request http throwable " + action)));
 
 
     }

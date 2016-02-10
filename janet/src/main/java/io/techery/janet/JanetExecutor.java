@@ -2,38 +2,34 @@ package io.techery.janet;
 
 import rx.Observable;
 import rx.Scheduler;
-import rx.functions.Action0;
-import rx.functions.Action1;
 import rx.functions.Func0;
 import rx.functions.Func1;
 import rx.observables.ConnectableObservable;
-import rx.subjects.PublishSubject;
 
 final public class JanetExecutor<A> {
 
-    private final PublishSubject<ActionState<A>> signal;
-    private ConnectableObservable<ActionState<A>> cachedSignal;
-
-    private final Func1<A, Observable<A>> observableFactory;
+    private final Func1<A, Observable<ActionState<A>>> syncObservableFactory;
+    private final Observable<ActionState<A>> pipeline;
+    private ConnectableObservable<ActionState<A>> cachedPipeline;
     private Scheduler subscribeOn;
 
-    JanetExecutor(Func1<A, Observable<A>> observableFactory) {
-        this.observableFactory = observableFactory;
-        this.signal = PublishSubject.create();
+    JanetExecutor(Func1<A, Observable<ActionState<A>>> syncObservableFactory, Func0<Observable<ActionState<A>>> pipelineFactory) {
+        this.syncObservableFactory = syncObservableFactory;
+        this.pipeline = pipelineFactory.call();
         createCachedPipeline();
     }
 
     private void createCachedPipeline() {
-        this.cachedSignal = signal.replay(1);
-        this.cachedSignal.connect();
+        this.cachedPipeline = pipeline.replay(1);
+        this.cachedPipeline.connect();
     }
 
     public Observable<ActionState<A>> observe() {
-        return signal.asObservable();
+        return pipeline;
     }
 
     public Observable<ActionState<A>> observeWithReplay() {
-        return cachedSignal.asObservable();
+        return cachedPipeline;
     }
 
     public Observable<A> observeActions() {
@@ -51,6 +47,7 @@ final public class JanetExecutor<A> {
         createCachedPipeline();
     }
 
+    @Deprecated //TODO: Is it need ?
     public void execute(A action) {
         createObservable(action).subscribe();
     }
@@ -64,35 +61,11 @@ final public class JanetExecutor<A> {
         return createObservable(action).compose(new StateToAction<A>());
     }
 
-    public Observable<ActionState<A>> createObservable(A action) {
-        final ActionState<A> state = new ActionState<A>(action);
-        return Observable.defer(new Func0<Observable<A>>() {
+    public Observable<ActionState<A>> createObservable(final A action) {
+        return Observable.defer(new Func0<Observable<ActionState<A>>>() {
             @Override
-            public Observable<A> call() {
-                return observableFactory.call(state.action);
-            }
-        }).flatMap(new Func1<A, Observable<ActionState<A>>>() {
-            @Override
-            public Observable<ActionState<A>> call(A a) {
-                return Observable.just(state.status(ActionState.Status.SUCCESS));
-            }
-        }).doOnSubscribe(new Action0() {
-            @Override
-            public void call() {
-                signal.onNext(state.status(ActionState.Status.START));
-            }
-        }).onErrorReturn(new Func1<Throwable, ActionState<A>>() {
-            @Override
-            public ActionState<A> call(Throwable throwable) {
-                if (throwable instanceof JanetServerException) {
-                    return state.status(ActionState.Status.SERVER_ERROR);
-                }
-                return state.status(ActionState.Status.FAIL).throwable(throwable);
-            }
-        }).doOnNext(new Action1<ActionState<A>>() {
-            @Override
-            public void call(ActionState<A> state) {
-                signal.onNext(state);
+            public Observable<ActionState<A>> call() {
+                return syncObservableFactory.call(action);
             }
         }).compose(new Observable.Transformer<ActionState<A>, ActionState<A>>() {
             @Override
@@ -103,4 +76,5 @@ final public class JanetExecutor<A> {
             }
         });
     }
+
 }
