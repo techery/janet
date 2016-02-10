@@ -1,11 +1,10 @@
 package io.techery.janet;
 
-import com.google.common.reflect.TypeToken;
-
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
+import io.techery.janet.utils.TypeToken;
 import rx.Observable;
 import rx.Scheduler;
 import rx.Subscriber;
@@ -29,7 +28,7 @@ public class Janet {
     }
 
     private <A> void sendAction(A action, Action1<A> callback) throws IOException {
-        ActionAdapter adapter = getActionAdapter(action.getClass());
+        ActionAdapter adapter = findActionAdapter(action.getClass());
         adapter.send(action, callback);
     }
 
@@ -45,7 +44,7 @@ public class Janet {
         });
     }
 
-    private ActionAdapter getActionAdapter(Class actionClass) {
+    private ActionAdapter findActionAdapter(Class actionClass) {
         for (ActionAdapter adapter : adapters) {
             if (actionClass.getAnnotation(adapter.getActionAnnotationClass()) != null) {
                 return adapter;

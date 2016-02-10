@@ -6,7 +6,7 @@ import io.techery.janet.http.annotations.HttpAction;
 import io.techery.janet.http.annotations.Path;
 import io.techery.janet.http.annotations.Response;
 
-@HttpAction("/users/{login}/repos1")
+@HttpAction("/users/{login}/repos")
 public class UserReposAction extends BaseAction {
 
     @Path("login")
