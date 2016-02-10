@@ -1,12 +1,17 @@
 package io.techery.janet;
 
-import java.io.IOException;
-
-import rx.functions.Action1;
-
 public abstract class ActionAdapter {
 
-    abstract <T> void send(T action, Action1<T> callback) throws IOException;
+    abstract <T> void send(T action);
+
+    abstract void setOnResponseCallback(Callback callback);
 
     abstract Class getActionAnnotationClass();
+
+    interface Callback {
+        void onStart(Object action);
+        void onSuccess(Object action);
+        void onServerError(Object action);
+        void onFail(Object action, Throwable throwable);
+    }
 }

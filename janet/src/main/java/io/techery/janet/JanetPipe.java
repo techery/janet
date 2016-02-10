@@ -6,14 +6,14 @@ import rx.functions.Func0;
 import rx.functions.Func1;
 import rx.observables.ConnectableObservable;
 
-final public class JanetExecutor<A> {
+final public class JanetPipe<A> {
 
     private final Func1<A, Observable<ActionState<A>>> syncObservableFactory;
     private final Observable<ActionState<A>> pipeline;
     private ConnectableObservable<ActionState<A>> cachedPipeline;
     private Scheduler subscribeOn;
 
-    JanetExecutor(Func1<A, Observable<ActionState<A>>> syncObservableFactory, Func0<Observable<ActionState<A>>> pipelineFactory) {
+    JanetPipe(Func1<A, Observable<ActionState<A>>> syncObservableFactory, Func0<Observable<ActionState<A>>> pipelineFactory) {
         this.syncObservableFactory = syncObservableFactory;
         this.pipeline = pipelineFactory.call();
         createCachedPipeline();
@@ -47,12 +47,11 @@ final public class JanetExecutor<A> {
         createCachedPipeline();
     }
 
-    @Deprecated //TODO: Is it need ?
-    public void execute(A action) {
+    public void send(A action) {
         createObservable(action).subscribe();
     }
 
-    public JanetExecutor<A> scheduler(Scheduler scheduler) {
+    public JanetPipe<A> pimp(Scheduler scheduler) {
         this.subscribeOn = scheduler;
         return this;
     }
@@ -62,19 +61,15 @@ final public class JanetExecutor<A> {
     }
 
     public Observable<ActionState<A>> createObservable(final A action) {
-        return Observable.defer(new Func0<Observable<ActionState<A>>>() {
-            @Override
-            public Observable<ActionState<A>> call() {
-                return syncObservableFactory.call(action);
-            }
-        }).compose(new Observable.Transformer<ActionState<A>, ActionState<A>>() {
-            @Override
-            public Observable<ActionState<A>> call(Observable<ActionState<A>> observable) {
-                if (subscribeOn != null)
-                    observable = observable.subscribeOn(subscribeOn);
-                return observable;
-            }
-        });
+        return syncObservableFactory.call(action)
+                .compose(new Observable.Transformer<ActionState<A>, ActionState<A>>() {
+                    @Override
+                    public Observable<ActionState<A>> call(Observable<ActionState<A>> observable) {
+                        if (subscribeOn != null)
+                            observable = observable.subscribeOn(subscribeOn);
+                        return observable;
+                    }
+                });
     }
 
 }

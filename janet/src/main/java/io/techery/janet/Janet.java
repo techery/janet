@@ -1,16 +1,13 @@
 package io.techery.janet;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
 import io.techery.janet.utils.TypeToken;
 import rx.Observable;
 import rx.Scheduler;
-import rx.Subscriber;
-import rx.exceptions.Exceptions;
 import rx.functions.Action;
-import rx.functions.Action1;
+import rx.functions.Action0;
 import rx.functions.Func0;
 import rx.functions.Func1;
 import rx.subjects.PublishSubject;
@@ -25,23 +22,12 @@ public class Janet {
         this.interceptors = builder.interceptors;
         this.adapters = builder.adapters;
         this.pipeline = PublishSubject.create();
+        connectPipeline();
     }
 
-    private <A> void sendAction(A action, Action1<A> callback) throws IOException {
+    private <A> void sendAction(A action) {
         ActionAdapter adapter = findActionAdapter(action.getClass());
-        adapter.send(action, callback);
-    }
-
-    private <A> Observable<ActionState<A>> bind(Observable<ActionState<A>> observable) {
-        return observable.doOnNext(new Action1<ActionState<A>>() {
-            @Override public void call(ActionState<A> actionState) {
-                pipeline.onNext(actionState);
-            }
-        }).doOnError(new Action1<Throwable>() {
-            @Override public void call(Throwable throwable) {
-                pipeline.onError(throwable);
-            }
-        });
+        adapter.send(action);
     }
 
     private ActionAdapter findActionAdapter(Class actionClass) {
@@ -53,78 +39,84 @@ public class Janet {
         throw new JanetException("Action class should be annotated by any supported annotation or check dependence of any adapter");
     }
 
-    private <A> Observable<ActionState<A>> createObservable(final A action) {
-        return Observable
-                .create(new CallOnSubscribe<A>(action, new Callback<A, Action1<A>>() {
-                    @Override
-                    public void call(A action, Action1<A> callback) throws IOException {
-                        sendAction(action, callback);
-                    }
-                }));
+    private void connectPipeline() {
+        for (ActionAdapter adapter : adapters) {
+            adapter.setOnResponseCallback(new ActionAdapter.Callback() {
+                @Override public void onStart(Object action) {
+                    //noinspection unchecked
+                    pipeline.onNext(new ActionState(action).status(ActionState.Status.START));
+                }
+
+                @Override public void onSuccess(Object action) {
+                    //noinspection unchecked
+                    pipeline.onNext(new ActionState(action).status(ActionState.Status.SUCCESS));
+                }
+
+                @Override public void onServerError(Object action) {
+                    //noinspection unchecked
+                    pipeline.onNext(new ActionState(action).status(ActionState.Status.SERVER_ERROR));
+                }
+
+                @Override public void onFail(Object action, Throwable throwable) {
+                    //noinspection unchecked
+                    pipeline.onNext(new ActionState(action).throwable(throwable).status(ActionState.Status.FAIL));
+                }
+            });
+        }
     }
 
-    public <A> JanetExecutor<A> createExecutor(final Class<A> actionClass, Scheduler scheduler) {
-        final TypeToken<ActionState<A>> type = new TypeToken<ActionState<A>>() {};
-        return new JanetExecutor<A>(new Func1<A, Observable<ActionState<A>>>() {
+    private <A> Observable<ActionState<A>> createObservable(final A action) {
+        return pipeline.asObservable()
+                .filter(new Func1<ActionState, Boolean>() {
+                    @Override public Boolean call(ActionState actionState) {
+                        return actionState.action == action;
+                    }
+                })
+                .compose(new CastToState<A>())
+                .mergeWith(Observable.<ActionState<A>>empty()
+                        .doOnSubscribe(new Action0() {
+                            @Override public void call() {
+                                sendAction(action);
+                            }
+                        }));
+    }
+
+    public <A> JanetPipe<A> createExecutor(final Class<A> actionClass, Scheduler scheduler) {
+        return new JanetPipe<A>(new Func1<A, Observable<ActionState<A>>>() {
             @Override
             public Observable<ActionState<A>> call(A action) {
-                return bind(createObservable(action));
+                return createObservable(action);
             }
         }, new Func0<Observable<ActionState<A>>>() {
             @Override public Observable<ActionState<A>> call() {
-                return pipeline.asObservable().filter(new Func1<ActionState, Boolean>() {
-                    @Override public Boolean call(ActionState actionState) {
-                        return actionClass.isInstance(actionState.action);
-                    }
-                }).cast((Class<ActionState<A>>) type.getRawType());
+                return pipeline.asObservable()
+                        .filter(new Func1<ActionState, Boolean>() {
+                            @Override public Boolean call(ActionState actionState) {
+                                return actionClass.isInstance(actionState.action);
+                            }
+                        }).compose(new CastToState<A>());
             }
-        }).scheduler(scheduler);
+        }).pimp(scheduler);
     }
 
-    public <A> JanetExecutor<A> createExecutor(Class<A> actionClass) {
+    public <A> JanetPipe<A> createExecutor(Class<A> actionClass) {
         return createExecutor(actionClass, null);
     }
 
-    final private static class CallOnSubscribe<A> implements Observable.OnSubscribe<ActionState<A>> {
 
-        private final A action;
-        private final Callback<A, Action1<A>> func;
+    private static class CastToState<A> implements Observable.Transformer<ActionState, ActionState<A>> {
 
-        CallOnSubscribe(A action, Callback<A, Action1<A>> func) {
-            this.action = action;
-            this.func = func;
+        private final Class<ActionState<A>> type;
+
+
+        @SuppressWarnings("unchecked")
+        private CastToState() {
+            type = (Class<ActionState<A>>) new TypeToken<ActionState<A>>() {}.getRawType();
         }
 
-        @Override public void call(final Subscriber<? super ActionState<A>> subscriber) {
-            final ActionState<A> state = new ActionState<A>(action);
-            subscriber.onNext(state.status(ActionState.Status.START));
-            try {
-                func.call(action, new Action1<A>() {
-                    @Override
-                    public void call(A action) {
-                        if (!subscriber.isUnsubscribed()) {
-                            subscriber.onNext(state.status(ActionState.Status.SUCCESS));
-                        }
-                        if (!subscriber.isUnsubscribed()) {
-                            subscriber.onCompleted();
-                        }
-                    }
-                });
-            } catch (final Exception e) {
-                Exceptions.throwIfFatal(e);
-                if (e instanceof JanetException) {
-                    throw (JanetException) e;
-                }
-                if (e instanceof JanetServerException) {
-                    if (!subscriber.isUnsubscribed()) {
-                        subscriber.onNext(state.status(ActionState.Status.SERVER_ERROR));
-                    }
-                } else {
-                    if (!subscriber.isUnsubscribed()) {
-                        subscriber.onNext(state.status(ActionState.Status.FAIL).throwable(e));
-                    }
-                }
-            }
+
+        @Override public Observable<ActionState<A>> call(Observable<ActionState> source) {
+            return source.cast(type);
         }
     }
 
@@ -132,8 +124,8 @@ public class Janet {
         void intercept(Action action);
     }
 
-    private interface Callback<A, T> {
-        void call(A value, T value2) throws IOException;
+    private interface Callback<A> {
+        void call(A value) throws Exception;
     }
 
     public static class Builder {
