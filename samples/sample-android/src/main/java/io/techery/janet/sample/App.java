@@ -6,9 +6,10 @@ import android.content.Context;
 import com.google.gson.Gson;
 import com.squareup.okhttp.OkHttpClient;
 
+import io.techery.janet.ActionPipe;
+import io.techery.janet.ActionState;
 import io.techery.janet.HttpActionAdapter;
 import io.techery.janet.Janet;
-import io.techery.janet.ActionPipe;
 import io.techery.janet.gson.GsonConverter;
 import io.techery.janet.okhttp.OkClient;
 import io.techery.janet.sample.network.UserReposAction;
@@ -39,8 +40,8 @@ public class App extends Application {
                     .build()));
             gitHubAPI = new Janet.Builder()
                     .addAdapter(new HttpActionAdapter(API_URL, new OkClient(okHttpClient), new GsonConverter(new Gson())))
-                    .addInterceptor(action -> {
-                        // do something
+                    .addInterceptor(ActionState.Status.SUCCESS, state -> {
+                        // DO SMTH
                     })
                     .build();
         }

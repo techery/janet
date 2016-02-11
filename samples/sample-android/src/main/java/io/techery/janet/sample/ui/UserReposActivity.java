@@ -22,6 +22,7 @@ import io.techery.janet.sample.network.UserReposAction;
 import io.techery.janet.sample.ui.adapter.UserReposAdapter;
 import rx.android.schedulers.AndroidSchedulers;
 
+
 public class UserReposActivity extends RxAppCompatActivity {
 
     private final static String EXTRA_USER = "user";

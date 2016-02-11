@@ -6,6 +6,7 @@ import java.util.List;
 import io.techery.janet.internal.CastToState;
 import rx.Observable;
 import rx.Scheduler;
+import rx.Subscriber;
 import rx.functions.Action0;
 import rx.functions.Func0;
 import rx.functions.Func1;
@@ -13,15 +14,16 @@ import rx.subjects.PublishSubject;
 
 public class Janet {
 
-    private final List<Interceptor> interceptors;
     private final List<ActionAdapter> adapters;
     private final PublishSubject<ActionState> pipeline;
+    private final InterceptorsDecorator interceptors;
 
     private Janet(Builder builder) {
-        this.interceptors = builder.interceptors;
         this.adapters = builder.adapters;
         this.pipeline = PublishSubject.create();
+        this.interceptors = builder.interceptors;
         connectPipeline();
+        connectInterceptors();
     }
 
     private void connectPipeline() {
@@ -48,6 +50,19 @@ public class Janet {
                 }
             });
         }
+    }
+
+    private void connectInterceptors() {
+        pipeline.asObservable()
+                .subscribe(new Subscriber<ActionState>() {
+                    @Override public void onCompleted() {}
+
+                    @Override public void onError(Throwable e) {}
+
+                    @Override public void onNext(ActionState actionState) {
+                        interceptors.intercept(actionState);
+                    }
+                });
     }
 
     ///////////////////////////////////////////////////////////////////////////
@@ -113,15 +128,7 @@ public class Janet {
     public static class Builder {
 
         private List<ActionAdapter> adapters = new ArrayList<ActionAdapter>();
-        private List<Interceptor> interceptors = new ArrayList<Interceptor>();
-
-        public Builder addInterceptor(Interceptor requestInterceptor) {
-            if (requestInterceptor == null) {
-                throw new IllegalArgumentException("Request interceptor may not be null.");
-            }
-            this.interceptors.add(requestInterceptor);
-            return this;
-        }
+        private InterceptorsDecorator interceptors = new InterceptorsDecorator();
 
         public Builder addAdapter(ActionAdapter adapter) {
             if (adapter == null) {
@@ -131,6 +138,17 @@ public class Janet {
                 throw new IllegalArgumentException("the ActionAdapter doesn't support any actions");
             }
             adapters.add(adapter);
+            return this;
+        }
+
+        public Builder addInterceptor(ActionState.Status status, Interceptor interceptor) {
+            if (status == null) {
+                throw new IllegalArgumentException("ActionState.Status may not be null.");
+            }
+            if (interceptor == null) {
+                throw new IllegalArgumentException("Interceptor may not be null.");
+            }
+            this.interceptors.add(status, interceptor);
             return this;
         }
 

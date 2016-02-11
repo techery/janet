@@ -10,8 +10,7 @@ import io.techery.janet.http.annotations.Response;
 @HttpAction("/users")
 public class UsersAction extends BaseAction{
 
-    @Query("since")
-    final int since = 0;
+    @Query("since") int since = 0;
 
     @Response
     ArrayList<User> response;

@@ -29,7 +29,7 @@ public class UsersActivity extends RxAppCompatActivity {
     SwipeRefreshLayout swipeRefreshLayout;
 
     private UsersAdapter adapter;
-
+    
     private ActionPipe<UsersAction> usersPipe;
 
     @Override
