@@ -30,7 +30,7 @@ final public class HttpActionAdapter extends ActionAdapter {
         loadActionHelperFactory();
     }
 
-    <A> void send(A action) {
+    @Override <A> void send(A action) {
         try {
             sendInternal(action);
         } catch (Exception e) {
