@@ -1,6 +1,5 @@
 package io.techery.janet;
 
-import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -9,12 +8,12 @@ import io.techery.janet.http.HttpClient;
 import io.techery.janet.http.annotations.HttpAction;
 import io.techery.janet.http.model.Request;
 import io.techery.janet.http.model.Response;
-import rx.functions.Action1;
 
 final public class HttpActionAdapter extends ActionAdapter {
 
     final static String HELPERS_FACTORY_CLASS_SIMPLE_NAME = "ActionHelperFactoryImpl";
-    private final static String HELPERS_FACTORY_CLASS_NAME = Janet.class.getPackage().getName() + "." + HELPERS_FACTORY_CLASS_SIMPLE_NAME;
+    private final static String HELPERS_FACTORY_CLASS_NAME = Janet.class.getPackage()
+            .getName() + "." + HELPERS_FACTORY_CLASS_SIMPLE_NAME;
 
     private ActionHelperFactory actionHelperFactory;
     private final Map<Class, ActionHelper> actionHelperCache = new HashMap<Class, ActionHelper>();
@@ -22,6 +21,7 @@ final public class HttpActionAdapter extends ActionAdapter {
     private final HttpClient client;
     private final Converter converter;
     private final String baseUrl;
+    private Callback callback;
 
     public HttpActionAdapter(String baseUrl, HttpClient client, Converter converter) {
         this.baseUrl = baseUrl;
@@ -30,7 +30,18 @@ final public class HttpActionAdapter extends ActionAdapter {
         loadActionHelperFactory();
     }
 
-    <A> void send(A action, Action1<A> callback) throws IOException {
+    <A> void send(A action) {
+        try {
+            sendInternal(action);
+        } catch (Exception e) {
+            if (!(e instanceof JanetServerException)) {
+                this.callback.onFail(action, e);
+            }
+        }
+    }
+
+    <A> void sendInternal(A action) throws Exception {
+        callback.onStart(action);
         final ActionHelper<A> helper = getActionHelper(action.getClass());
         if (helper == null) {
             throw new JanetException("Something was happened with code generator. Check dependence of janet-http-compiler");
@@ -41,10 +52,15 @@ final public class HttpActionAdapter extends ActionAdapter {
         Response response = client.execute(request);
         action = helper.onResponse(action, response, converter);
         if (!response.isSuccessful()) { //throw exception to change action state
-            throw new JanetServerException();
+            callback.onServerError(action);
         }
-        callback.call(action);
+        this.callback.onSuccess(action);
     }
+
+    @Override void setOnResponseCallback(Callback callback) {
+        this.callback = callback;
+    }
+
 
     @Override Class getActionAnnotationClass() {
         return HttpAction.class;

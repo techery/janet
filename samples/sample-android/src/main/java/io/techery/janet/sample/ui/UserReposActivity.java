@@ -15,7 +15,7 @@ import com.trello.rxlifecycle.components.support.RxAppCompatActivity;
 import butterknife.Bind;
 import butterknife.ButterKnife;
 import io.techery.janet.ActionStateSubscriber;
-import io.techery.janet.JanetExecutor;
+import io.techery.janet.JanetPipe;
 import io.techery.janet.sample.App;
 import io.techery.janet.sample.model.User;
 import io.techery.janet.sample.network.UserReposAction;
@@ -35,7 +35,7 @@ public class UserReposActivity extends RxAppCompatActivity {
 
     private User user;
     private UserReposAdapter adapter;
-    private JanetExecutor<UserReposAction> userReposExecutor;
+    private JanetPipe<UserReposAction> userReposExecutor;
 
     public static void start(Context context, User user) {
         Intent intent = new Intent(context, UserReposActivity.class);
@@ -84,7 +84,7 @@ public class UserReposActivity extends RxAppCompatActivity {
     }
 
     private void loadRepos() {
-        userReposExecutor.execute(new UserReposAction(user.getLogin()));
+        userReposExecutor.send(new UserReposAction(user.getLogin()));
     }
 
     private void showProgressLoading(boolean show) {

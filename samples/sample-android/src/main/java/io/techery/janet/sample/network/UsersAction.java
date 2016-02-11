@@ -1,14 +1,14 @@
 package io.techery.janet.sample.network;
 
-import com.santarest.annotations.Query;
-import com.santarest.annotations.Response;
-import com.santarest.annotations.RestAction;
 
 import java.util.ArrayList;
 
+import io.techery.janet.http.annotations.HttpAction;
+import io.techery.janet.http.annotations.Query;
+import io.techery.janet.http.annotations.Response;
 import io.techery.janet.sample.model.User;
 
-@RestAction("/users")
+@HttpAction("/users")
 public class UsersAction extends BaseAction {
 
     @Query("since")

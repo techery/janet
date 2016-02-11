@@ -1,14 +1,14 @@
 package io.techery.janet.sample.network;
 
-import com.santarest.annotations.Path;
-import com.santarest.annotations.Response;
-import com.santarest.annotations.RestAction;
 
 import java.util.ArrayList;
 
+import io.techery.janet.http.annotations.HttpAction;
+import io.techery.janet.http.annotations.Path;
+import io.techery.janet.http.annotations.Response;
 import io.techery.janet.sample.model.Repository;
 
-@RestAction("/users/{login}/repos")
+@HttpAction("/users/{login}/repos")
 public class UserReposAction extends BaseAction {
 
     @Path("login")

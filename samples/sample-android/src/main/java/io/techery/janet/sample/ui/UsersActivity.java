@@ -13,7 +13,7 @@ import com.trello.rxlifecycle.components.support.RxAppCompatActivity;
 import butterknife.Bind;
 import butterknife.ButterKnife;
 import io.techery.janet.ActionStateSubscriber;
-import io.techery.janet.JanetExecutor;
+import io.techery.janet.JanetPipe;
 import io.techery.janet.sample.App;
 import io.techery.janet.sample.network.UsersAction;
 import io.techery.janet.sample.ui.adapter.UsersAdapter;
@@ -30,7 +30,7 @@ public class UsersActivity extends RxAppCompatActivity {
 
     private UsersAdapter adapter;
 
-    private JanetExecutor<UsersAction> usersExecutor;
+    private JanetPipe<UsersAction> usersExecutor;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -72,7 +72,7 @@ public class UsersActivity extends RxAppCompatActivity {
     }
 
     private void loadUsers() {
-        usersExecutor.execute(new UsersAction());
+        usersExecutor.send(new UsersAction());
     }
 
     private void showProgressLoading(boolean show) {

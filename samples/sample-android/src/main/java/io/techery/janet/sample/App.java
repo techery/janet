@@ -8,7 +8,7 @@ import com.squareup.okhttp.OkHttpClient;
 
 import io.techery.janet.HttpActionAdapter;
 import io.techery.janet.Janet;
-import io.techery.janet.JanetExecutor;
+import io.techery.janet.JanetPipe;
 import io.techery.janet.gson.GsonConverter;
 import io.techery.janet.okhttp.OkClient;
 import io.techery.janet.sample.network.UserReposAction;
@@ -23,9 +23,9 @@ public class App extends Application {
 
     private Janet gitHubAPI;
 
-    private JanetExecutor<UsersAction> usersExecutor;
+    private JanetPipe<UsersAction> usersExecutor;
 
-    private JanetExecutor<UserReposAction> userReposExecutor;
+    private JanetPipe<UserReposAction> userReposExecutor;
 
     @Override
     public void onCreate() {
@@ -49,18 +49,18 @@ public class App extends Application {
         return gitHubAPI;
     }
 
-    public JanetExecutor<UsersAction> getUsersExecutor() {
+    public JanetPipe<UsersAction> getUsersExecutor() {
         if (usersExecutor == null) {
             usersExecutor = getGitHubAPI().createExecutor(UsersAction.class)
-                    .scheduler(Schedulers.io());
+                    .pimp(Schedulers.io());
         }
         return usersExecutor;
     }
 
-    public JanetExecutor<UserReposAction> getUserReposExecutor() {
+    public JanetPipe<UserReposAction> getUserReposExecutor() {
         if (userReposExecutor == null) {
             userReposExecutor = getGitHubAPI().createExecutor(UserReposAction.class)
-                    .scheduler(Schedulers.io());
+                    .pimp(Schedulers.io());
         }
         return userReposExecutor;
     }

@@ -10,5 +10,5 @@ dependencies {
     compile 'com.google.code.findbugs:jsr305:2.0.3'
     compile 'org.apache.velocity:velocity:1.7'
     compile 'org.ow2.asm:asm:4.1'
-    compile 'com.google.guava:guava:+'
+    compile 'com.google.guava:guava:18.0'
 }

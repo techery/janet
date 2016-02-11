@@ -1,6 +1,7 @@
 package io.techery.janet.sample.network;
 
-import com.santarest.annotations.Status;
+
+import io.techery.janet.http.annotations.Status;
 
 /**
  * This action class was created to show,
