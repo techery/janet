@@ -30,7 +30,7 @@ final public class HttpActionAdapter extends ActionAdapter {
         loadActionHelperFactory();
     }
 
-    <A> void send(A action) {
+    @Override <A> void send(A action) {
         try {
             sendInternal(action);
         } catch (Exception e) {
@@ -44,7 +44,7 @@ final public class HttpActionAdapter extends ActionAdapter {
         callback.onStart(action);
         final ActionHelper<A> helper = getActionHelper(action.getClass());
         if (helper == null) {
-            throw new JanetException("Something was happened with code generator. Check dependence of janet-http-compiler");
+            throw new JanetInternalException("Something was happened with code generator. Check dependence of janet-http-compiler");
         }
         RequestBuilder builder = new RequestBuilder(baseUrl, converter);
         builder = helper.fillRequest(builder, action);

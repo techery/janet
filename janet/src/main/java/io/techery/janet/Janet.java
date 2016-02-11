@@ -3,10 +3,9 @@ package io.techery.janet;
 import java.util.ArrayList;
 import java.util.List;
 
-import io.techery.janet.utils.TypeToken;
+import io.techery.janet.internal.CastToState;
 import rx.Observable;
 import rx.Scheduler;
-import rx.functions.Action;
 import rx.functions.Action0;
 import rx.functions.Func0;
 import rx.functions.Func1;
@@ -23,20 +22,6 @@ public class Janet {
         this.adapters = builder.adapters;
         this.pipeline = PublishSubject.create();
         connectPipeline();
-    }
-
-    private <A> void sendAction(A action) {
-        ActionAdapter adapter = findActionAdapter(action.getClass());
-        adapter.send(action);
-    }
-
-    private ActionAdapter findActionAdapter(Class actionClass) {
-        for (ActionAdapter adapter : adapters) {
-            if (actionClass.getAnnotation(adapter.getActionAnnotationClass()) != null) {
-                return adapter;
-            }
-        }
-        throw new JanetException("Action class should be annotated by any supported annotation or check dependence of any adapter");
     }
 
     private void connectPipeline() {
@@ -65,27 +50,19 @@ public class Janet {
         }
     }
 
-    private <A> Observable<ActionState<A>> createObservable(final A action) {
-        return pipeline.asObservable()
-                .filter(new Func1<ActionState, Boolean>() {
-                    @Override public Boolean call(ActionState actionState) {
-                        return actionState.action == action;
-                    }
-                })
-                .compose(new CastToState<A>())
-                .mergeWith(Observable.<ActionState<A>>empty()
-                        .doOnSubscribe(new Action0() {
-                            @Override public void call() {
-                                sendAction(action);
-                            }
-                        }));
+    ///////////////////////////////////////////////////////////////////////////
+    // Public API
+    ///////////////////////////////////////////////////////////////////////////
+
+    public <A> ActionPipe<A> createPipe(Class<A> actionClass) {
+        return createPipe(actionClass, null);
     }
 
-    public <A> JanetPipe<A> createExecutor(final Class<A> actionClass, Scheduler scheduler) {
-        return new JanetPipe<A>(new Func1<A, Observable<ActionState<A>>>() {
+    public <A> ActionPipe<A> createPipe(final Class<A> actionClass, Scheduler scheduler) {
+        return new ActionPipe<A>(new Func1<A, Observable<ActionState<A>>>() {
             @Override
             public Observable<ActionState<A>> call(A action) {
-                return createObservable(action);
+                return send(action);
             }
         }, new Func0<Observable<ActionState<A>>>() {
             @Override public Observable<ActionState<A>> call() {
@@ -99,39 +76,44 @@ public class Janet {
         }).pimp(scheduler);
     }
 
-    public <A> JanetPipe<A> createExecutor(Class<A> actionClass) {
-        return createExecutor(actionClass, null);
+    ///////////////////////////////////////////////////////////////////////////
+    // Send Action Flow
+    ///////////////////////////////////////////////////////////////////////////
+
+    private <A> Observable<ActionState<A>> send(final A action) {
+        return pipeline.asObservable()
+                .filter(new Func1<ActionState, Boolean>() {
+                    @Override public Boolean call(ActionState actionState) {
+                        return actionState.action == action;
+                    }
+                })
+                .compose(new CastToState<A>())
+                .mergeWith(Observable.<ActionState<A>>empty()
+                        .doOnSubscribe(new Action0() {
+                            @Override public void call() {
+                                doSend(action);
+                            }
+                        }));
     }
 
+    private <A> void doSend(A action) {
+        ActionAdapter adapter = findActionAdapter(action.getClass());
+        adapter.send(action);
+    }
 
-    private static class CastToState<A> implements Observable.Transformer<ActionState, ActionState<A>> {
-
-        private final Class<ActionState<A>> type;
-
-
-        @SuppressWarnings("unchecked")
-        private CastToState() {
-            type = (Class<ActionState<A>>) new TypeToken<ActionState<A>>() {}.getRawType();
+    private ActionAdapter findActionAdapter(Class actionClass) {
+        for (ActionAdapter adapter : adapters) {
+            if (actionClass.getAnnotation(adapter.getActionAnnotationClass()) != null) {
+                return adapter;
+            }
         }
-
-
-        @Override public Observable<ActionState<A>> call(Observable<ActionState> source) {
-            return source.cast(type);
-        }
-    }
-
-    public interface Interceptor {
-        void intercept(Action action);
-    }
-
-    private interface Callback<A> {
-        void call(A value) throws Exception;
+        throw new JanetInternalException("Action class should be annotated by any supported annotation or check dependence of any adapter");
     }
 
     public static class Builder {
+
         private List<ActionAdapter> adapters = new ArrayList<ActionAdapter>();
         private List<Interceptor> interceptors = new ArrayList<Interceptor>();
-
 
         public Builder addInterceptor(Interceptor requestInterceptor) {
             if (requestInterceptor == null) {

@@ -12,8 +12,8 @@ import java.util.Map;
 import io.techery.janet.http.model.Header;
 import io.techery.janet.http.model.Request;
 import io.techery.janet.http.model.Response;
-import io.techery.janet.model.ActionBody;
-import io.techery.janet.model.BytesArrayBody;
+import io.techery.janet.body.ActionBody;
+import io.techery.janet.body.BytesArrayBody;
 
 
 public class UrlConnectionClient implements HttpClient {

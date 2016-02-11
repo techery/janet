@@ -4,7 +4,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.net.URLEncoder;
 
-import io.techery.janet.model.ActionBody;
+import io.techery.janet.body.ActionBody;
 
 public final class FormUrlEncodedRequestBody extends ActionBody {
     final ByteArrayOutputStream content = new ByteArrayOutputStream();

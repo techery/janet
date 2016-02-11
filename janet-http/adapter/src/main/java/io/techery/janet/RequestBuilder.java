@@ -16,7 +16,7 @@ import io.techery.janet.http.model.FormUrlEncodedRequestBody;
 import io.techery.janet.http.model.Header;
 import io.techery.janet.http.model.MultipartRequestBody;
 import io.techery.janet.http.model.Request;
-import io.techery.janet.model.ActionBody;
+import io.techery.janet.body.ActionBody;
 
 public final class RequestBuilder {
 

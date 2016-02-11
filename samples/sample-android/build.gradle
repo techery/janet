@@ -10,8 +10,6 @@ buildscript {
     }
 }
 
-
-
 apply plugin: 'com.android.application'
 apply plugin: 'com.neenbedankt.android-apt'
 apply plugin: 'me.tatarka.retrolambda'
@@ -37,12 +35,18 @@ android {
         sourceCompatibility JavaVersion.VERSION_1_8
         targetCompatibility JavaVersion.VERSION_1_8
     }
+    packagingOptions {
+        exclude 'META-INF/NOTICE.txt'
+        exclude 'META-INF/LICENSE.txt'
+        exclude 'META-INF/services/javax.annotation.processing.Processor'
+        exclude 'LICENSE.txt'
+    }
 }
 
 dependencies {
     compile project(":janet-http:adapter")
     compile project(":janet-http:adapter-compiler")
-    compile project(":janet-conventors:gson")
+    compile project(":janet-converters:gson")
     compile project(":janet-http:clients:okhttp")
 
     compile 'com.android.support:appcompat-v7:23.1.1'

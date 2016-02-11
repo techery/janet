@@ -8,7 +8,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.UUID;
 
-import io.techery.janet.model.ActionBody;
+import io.techery.janet.body.ActionBody;
 
 public final class MultipartRequestBody extends ActionBody {
     public static final String DEFAULT_TRANSFER_ENCODING = "binary";

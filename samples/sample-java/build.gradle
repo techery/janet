@@ -4,7 +4,7 @@ apply plugin: 'java'
 dependencies {
     compile project(":janet-http:adapter")
     compile project(":janet-http:adapter-compiler")
-    compile project(":janet-conventors:gson")
+    compile project(":janet-converters:gson")
     compile project(":janet-http:clients:okhttp")
     compile'io.reactivex:rxjava:1.1.0'
 
