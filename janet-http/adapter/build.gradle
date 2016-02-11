@@ -6,5 +6,7 @@ targetCompatibility = 1.6
 
 dependencies {
     compile project(':janet')
+    compile project(':janet-base-body')
+    compile project(':janet-converters:base')
     provided 'io.reactivex:rxjava:+'
 }

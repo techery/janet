@@ -10,8 +10,8 @@ import io.techery.janet.http.annotations.Status;
 import io.techery.janet.http.model.FileBody;
 import io.techery.janet.http.model.FormUrlEncodedRequestBody;
 import io.techery.janet.http.model.MultipartRequestBody;
-import io.techery.janet.model.ActionBody;
-import io.techery.janet.model.BytesArrayBody;
+import io.techery.janet.body.ActionBody;
+import io.techery.janet.body.BytesArrayBody;
 
 import java.io.File;
 import java.util.ArrayList;

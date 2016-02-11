@@ -3,7 +3,7 @@ package io.techery.janet.http.model;
 import java.io.IOException;
 import java.io.OutputStream;
 
-import io.techery.janet.model.ActionBody;
+import io.techery.janet.body.ActionBody;
 
 public class MimeOverridingTypedOutput extends ActionBody {
         private final ActionBody delegate;

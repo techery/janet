@@ -4,7 +4,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-import io.techery.janet.model.ActionBody;
+import io.techery.janet.body.ActionBody;
 
 
 public final class Request {

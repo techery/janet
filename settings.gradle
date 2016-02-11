@@ -1,10 +1,12 @@
 include ':janet',
-        ':janet-async:adapter', //TODO
+        ':janet-base-body',
+        ':janet-async:adapter',
         ':janet-http:adapter',
         ':janet-http:adapter-compiler',
         ':janet-http:clients:android',
         ':janet-http:clients:okhttp',
         ':janet-http:clients:url-connection',
-        ':janet-conventors:gson',
+        ':janet-converters:base',
+        ':janet-converters:gson',
         ':samples:sample-android',
         ':samples:sample-java'

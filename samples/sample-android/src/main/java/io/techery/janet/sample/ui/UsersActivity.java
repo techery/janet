@@ -7,14 +7,14 @@ import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.view.View;
 
-import io.techery.janet.sample.R;
 import com.trello.rxlifecycle.components.support.RxAppCompatActivity;
 
 import butterknife.Bind;
 import butterknife.ButterKnife;
-import io.techery.janet.ActionStateSubscriber;
-import io.techery.janet.JanetPipe;
+import io.techery.janet.ActionPipe;
+import io.techery.janet.helper.ActionStateSubscriber;
 import io.techery.janet.sample.App;
+import io.techery.janet.sample.R;
 import io.techery.janet.sample.network.UsersAction;
 import io.techery.janet.sample.ui.adapter.UsersAdapter;
 import rx.android.schedulers.AndroidSchedulers;
@@ -30,14 +30,14 @@ public class UsersActivity extends RxAppCompatActivity {
 
     private UsersAdapter adapter;
 
-    private JanetPipe<UsersAction> usersExecutor;
+    private ActionPipe<UsersAction> usersPipe;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.list);
         ButterKnife.bind(this);
-        usersExecutor = App.get(this).getUsersExecutor();
+        usersPipe = App.get(this).getUsersPipe();
         setupRecyclerView();
         swipeRefreshLayout.setEnabled(true);
     }
@@ -45,7 +45,7 @@ public class UsersActivity extends RxAppCompatActivity {
     @Override
     protected void onResume() {
         super.onResume();
-        usersExecutor.observeWithReplay()
+        usersPipe.observeWithReplay()
                 .compose(bindToLifecycle())
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribe(new ActionStateSubscriber<UsersAction>()
@@ -72,7 +72,7 @@ public class UsersActivity extends RxAppCompatActivity {
     }
 
     private void loadUsers() {
-        usersExecutor.send(new UsersAction());
+        usersPipe.send(new UsersAction());
     }
 
     private void showProgressLoading(boolean show) {

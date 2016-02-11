@@ -1,22 +1,6 @@
 package io.techery.janet;
 
 
-import io.techery.janet.http.annotations.Body;
-import io.techery.janet.http.annotations.Field;
-import io.techery.janet.http.annotations.Part;
-import io.techery.janet.http.annotations.Path;
-import io.techery.janet.http.annotations.Query;
-import io.techery.janet.http.annotations.RequestHeader;
-import io.techery.janet.http.annotations.ResponseHeader;
-import io.techery.janet.http.annotations.HttpAction;
-import io.techery.janet.http.annotations.Status;
-import io.techery.janet.converter.Converter;
-import io.techery.janet.http.model.FileBody;
-import io.techery.janet.http.model.Header;
-import io.techery.janet.http.model.Response;
-import io.techery.janet.model.ActionBody;
-import io.techery.janet.model.BytesArrayBody;
-
 import com.google.common.reflect.TypeToken;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.MethodSpec;
@@ -34,6 +18,22 @@ import java.util.List;
 import javax.annotation.processing.Filer;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.Modifier;
+
+import io.techery.janet.body.ActionBody;
+import io.techery.janet.body.BytesArrayBody;
+import io.techery.janet.converter.Converter;
+import io.techery.janet.http.annotations.Body;
+import io.techery.janet.http.annotations.Field;
+import io.techery.janet.http.annotations.HttpAction;
+import io.techery.janet.http.annotations.Part;
+import io.techery.janet.http.annotations.Path;
+import io.techery.janet.http.annotations.Query;
+import io.techery.janet.http.annotations.RequestHeader;
+import io.techery.janet.http.annotations.ResponseHeader;
+import io.techery.janet.http.annotations.Status;
+import io.techery.janet.http.model.FileBody;
+import io.techery.janet.http.model.Header;
+import io.techery.janet.http.model.Response;
 
 import static io.techery.janet.TypeUtils.equalTypes;
 

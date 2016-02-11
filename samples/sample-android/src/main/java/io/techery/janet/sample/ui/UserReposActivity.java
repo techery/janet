@@ -9,14 +9,14 @@ import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.view.View;
 
-import io.techery.janet.sample.R;
 import com.trello.rxlifecycle.components.support.RxAppCompatActivity;
 
 import butterknife.Bind;
 import butterknife.ButterKnife;
-import io.techery.janet.ActionStateSubscriber;
-import io.techery.janet.JanetPipe;
+import io.techery.janet.ActionPipe;
+import io.techery.janet.helper.ActionStateSubscriber;
 import io.techery.janet.sample.App;
+import io.techery.janet.sample.R;
 import io.techery.janet.sample.model.User;
 import io.techery.janet.sample.network.UserReposAction;
 import io.techery.janet.sample.ui.adapter.UserReposAdapter;
@@ -35,7 +35,7 @@ public class UserReposActivity extends RxAppCompatActivity {
 
     private User user;
     private UserReposAdapter adapter;
-    private JanetPipe<UserReposAction> userReposExecutor;
+    private ActionPipe<UserReposAction> userReposPipe;
 
     public static void start(Context context, User user) {
         Intent intent = new Intent(context, UserReposActivity.class);
@@ -48,7 +48,7 @@ public class UserReposActivity extends RxAppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.list);
         ButterKnife.bind(this);
-        userReposExecutor = App.get(this).getUserReposExecutor();
+        userReposPipe = App.get(this).getUserReposPipe();
         restoreState(savedInstanceState);
         setupRecyclerView();
         swipeRefreshLayout.setEnabled(true);
@@ -57,7 +57,7 @@ public class UserReposActivity extends RxAppCompatActivity {
     @Override
     protected void onResume() {
         super.onResume();
-        userReposExecutor.observeWithReplay()
+        userReposPipe.observeWithReplay()
                 .filter(state -> user.getLogin().equals(state.action.getLogin()))
                 .compose(bindToLifecycle())
                 .observeOn(AndroidSchedulers.mainThread())
@@ -84,7 +84,7 @@ public class UserReposActivity extends RxAppCompatActivity {
     }
 
     private void loadRepos() {
-        userReposExecutor.send(new UserReposAction(user.getLogin()));
+        userReposPipe.send(new UserReposAction(user.getLogin()));
     }
 
     private void showProgressLoading(boolean show) {

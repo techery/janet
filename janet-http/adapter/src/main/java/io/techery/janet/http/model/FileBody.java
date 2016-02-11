@@ -5,7 +5,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 
-import io.techery.janet.model.ActionBody;
+import io.techery.janet.body.ActionBody;
 
 public class FileBody extends ActionBody {
     private static final int BUFFER_SIZE = 4096;
