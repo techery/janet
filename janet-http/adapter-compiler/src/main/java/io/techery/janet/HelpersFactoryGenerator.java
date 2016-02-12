@@ -9,9 +9,11 @@ import java.util.ArrayList;
 import javax.annotation.processing.Filer;
 import javax.lang.model.element.Modifier;
 
-public class FactoryGenerator extends Generator {
+import io.techery.janet.compiler.utils.Generator;
 
-    public FactoryGenerator(Filer filer) {
+public class HelpersFactoryGenerator extends Generator<HttpActionClass> {
+
+    public HelpersFactoryGenerator(Filer filer) {
         super(filer);
     }
 
@@ -29,7 +31,8 @@ public class FactoryGenerator extends Generator {
                 .addParameter(Class.class, "actionClass");
 
         for (HttpActionClass actionClass : actionClasses) {
-            makeMethodBuilder.beginControlFlow("if(actionClass == $L.class)", actionClass.getTypeElement().getQualifiedName());
+            makeMethodBuilder.beginControlFlow("if(actionClass == $L.class)", actionClass.getTypeElement()
+                    .getQualifiedName());
             makeMethodBuilder.addStatement(" return new $L()", actionClass.getFullHelperName());
             makeMethodBuilder.endControlFlow();
         }

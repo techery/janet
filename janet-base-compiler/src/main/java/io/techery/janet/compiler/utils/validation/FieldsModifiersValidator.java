@@ -1,6 +1,4 @@
-package io.techery.janet.validation;
-
-import io.techery.janet.HttpActionClass;
+package io.techery.janet.compiler.utils.validation;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -9,9 +7,11 @@ import javax.lang.model.element.Element;
 import javax.lang.model.element.ElementKind;
 import javax.lang.model.element.Modifier;
 
-public class FieldsModifiersValidator implements Validator<HttpActionClass> {
+import io.techery.janet.compiler.utils.ActionClass;
+
+public class FieldsModifiersValidator<T extends ActionClass> implements Validator<T> {
     @Override
-    public Set<ValidationError> validate(HttpActionClass value) {
+    public Set<ValidationError> validate(T value) {
         Set<ValidationError> messages = new HashSet<ValidationError>();
         for (Element element : value.getAllAnnotatedMembers()) {
             if (element.getKind() != ElementKind.FIELD) continue;

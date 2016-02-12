@@ -1,4 +1,4 @@
-package io.techery.janet;
+package io.techery.janet.compiler.utils;
 
 import com.squareup.javapoet.JavaFile;
 import com.squareup.javapoet.TypeSpec;
@@ -8,7 +8,7 @@ import java.util.ArrayList;
 
 import javax.annotation.processing.Filer;
 
-public abstract class Generator {
+public abstract class Generator<T> {
 
     private final Filer filer;
 
@@ -16,7 +16,7 @@ public abstract class Generator {
         this.filer = filer;
     }
 
-    abstract void generate(ArrayList<HttpActionClass> actionClasses);
+    public abstract void generate(ArrayList<T> actionClasses);
 
     protected void saveClass(String packageName, TypeSpec typeSpec) {
         try {

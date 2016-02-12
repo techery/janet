@@ -12,6 +12,8 @@ import javax.lang.model.element.Element;
 import javax.lang.model.element.TypeElement;
 
 import io.techery.janet.HttpActionClass;
+import io.techery.janet.compiler.utils.validation.ValidationError;
+import io.techery.janet.compiler.utils.validation.Validator;
 import io.techery.janet.http.annotations.HttpAction;
 import io.techery.janet.http.annotations.Path;
 

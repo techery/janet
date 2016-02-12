@@ -1,7 +1,5 @@
-package io.techery.janet.validation;
+package io.techery.janet.compiler.utils.validation;
 
-import io.techery.janet.HttpActionClass;
-import io.techery.janet.TypeUtils;
 import com.squareup.javapoet.TypeName;
 
 import java.lang.annotation.Annotation;
@@ -13,7 +11,10 @@ import java.util.Set;
 
 import javax.lang.model.element.Element;
 
-public class AnnotationTypesValidator implements Validator<HttpActionClass> {
+import io.techery.janet.compiler.utils.ActionClass;
+import io.techery.janet.compiler.utils.TypeUtils;
+
+public class AnnotationTypesValidator<T extends ActionClass> implements Validator<T> {
 
     private final Class annotationClass;
     private final Type[] types;
@@ -29,7 +30,7 @@ public class AnnotationTypesValidator implements Validator<HttpActionClass> {
     }
 
     @Override
-    public Set<ValidationError> validate(HttpActionClass value) {
+    public Set<ValidationError> validate(T value) {
         Set<ValidationError> errors = new HashSet<ValidationError>();
         List<Element> elements = value.getAnnotatedElements(annotationClass);
         for (Element element : elements) {
@@ -37,7 +38,8 @@ public class AnnotationTypesValidator implements Validator<HttpActionClass> {
             if (TypeUtils.containsType(element, types)) {
                 continue;
             }
-            errors.add(new ValidationError("Fields annotated with %s should one from these types %s", element, annotation.toString(), typeNames.toString()));
+            errors.add(new ValidationError("Fields annotated with %s should one from these types %s", element, annotation
+                    .toString(), typeNames.toString()));
         }
         return errors;
     }
