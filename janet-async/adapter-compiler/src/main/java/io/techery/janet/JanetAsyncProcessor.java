@@ -15,10 +15,12 @@ import javax.annotation.processing.RoundEnvironment;
 import javax.lang.model.SourceVersion;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.TypeElement;
+import javax.lang.model.type.TypeMirror;
 import javax.lang.model.util.Elements;
 import javax.tools.Diagnostic;
 
 import io.techery.janet.async.annotations.AsyncAction;
+import io.techery.janet.async.annotations.SyncedResponse;
 import io.techery.janet.compiler.utils.validation.ClassValidator;
 import io.techery.janet.compiler.utils.validation.ValidationError;
 import io.techery.janet.validation.AsyncActionValidators;
@@ -29,7 +31,7 @@ public class JanetAsyncProcessor extends AbstractProcessor {
     private Messager messager;
     private ClassValidator classValidator;
     private AsyncActionValidators asyncActionValidators;
-    private AsyncWrappersGenerator generator;
+    private AsyncWrappersGenerator wrappersGenerator;
 
     @Override
     public synchronized void init(ProcessingEnvironment processingEnv) {
@@ -38,7 +40,7 @@ public class JanetAsyncProcessor extends AbstractProcessor {
         messager = processingEnv.getMessager();
         classValidator = new ClassValidator(AsyncAction.class);
         asyncActionValidators = new AsyncActionValidators();
-        generator = new AsyncWrappersGenerator(processingEnv.getFiler());
+        wrappersGenerator = new AsyncWrappersGenerator(processingEnv.getFiler());
     }
 
     @Override
@@ -57,14 +59,22 @@ public class JanetAsyncProcessor extends AbstractProcessor {
     public boolean process(Set<? extends TypeElement> annotations, RoundEnvironment roundEnv) {
         if (annotations.isEmpty()) return true;
         ArrayList<AsyncActionClass> actionClasses = new ArrayList<AsyncActionClass>();
-        for (Element saltarElement : roundEnv.getElementsAnnotatedWith(AsyncAction.class)) {
+        for (Element element : roundEnv.getElementsAnnotatedWith(AsyncAction.class)) {
             Set<ValidationError> errors = new HashSet<ValidationError>();
-            errors.addAll(classValidator.validate(saltarElement));
+            errors.addAll(classValidator.validate(element));
             if (!errors.isEmpty()) {
                 printErrors(errors);
                 continue;
             }
-            TypeElement typeElement = (TypeElement) saltarElement;
+            TypeElement typeElement = (TypeElement) element;
+            boolean isSystem = false;
+            for (TypeMirror iface : typeElement.getInterfaces()) {
+                if (iface.toString().equals("io.techery.janet.async.actions.SystemAction")) {
+                    isSystem = true;
+                    break;
+                }
+            }
+            if (isSystem) continue;
             AsyncActionClass actionClass = new AsyncActionClass(elementUtils, typeElement);
             errors.addAll(asyncActionValidators.validate(actionClass));
             if (!errors.isEmpty()) {
@@ -74,7 +84,8 @@ public class JanetAsyncProcessor extends AbstractProcessor {
             actionClasses.add(actionClass);
         }
         if (!actionClasses.isEmpty()) {
-            generator.generate(actionClasses);
+            wrappersGenerator.generate(actionClasses);
+
         }
         return true;
     }

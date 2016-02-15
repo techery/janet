@@ -4,48 +4,48 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.DelayQueue;
 
 final class AsyncActionSynchronizer {
 
     final static long PENDING_TIMEOUT = 60 * 5 * 1000; //5 mins
 
-    private final ConcurrentHashMap<String, ConcurrentLinkedQueue<AsyncActionWrapper>> pendingForResponse;
+    private final ConcurrentHashMap<String, CopyOnWriteArrayList<AsyncActionWrapper>> pendingForResponse;
 
     private final DelayQueue<AsyncActionWrapper> delayQueue;
 
 
     AsyncActionSynchronizer() {
-        pendingForResponse = new ConcurrentHashMap<String, ConcurrentLinkedQueue<AsyncActionWrapper>>();
+        pendingForResponse = new ConcurrentHashMap<String, CopyOnWriteArrayList<AsyncActionWrapper>>();
         delayQueue = new DelayQueue<AsyncActionWrapper>();
     }
 
-
     void put(String event, AsyncActionWrapper wrapper) {
         cleanup();
-        ConcurrentLinkedQueue<AsyncActionWrapper> queue = pendingForResponse.get(event);
-        if (queue == null) {
-            queue = new ConcurrentLinkedQueue<AsyncActionWrapper>();
-            ConcurrentLinkedQueue<AsyncActionWrapper> _queue = pendingForResponse.putIfAbsent(event, queue);
-            if (_queue != null) {
-                queue = _queue;
+        CopyOnWriteArrayList<AsyncActionWrapper> cache = pendingForResponse.get(event);
+        if (cache == null) {
+            cache = new CopyOnWriteArrayList<AsyncActionWrapper>();
+            CopyOnWriteArrayList<AsyncActionWrapper> _cache = pendingForResponse.putIfAbsent(event, cache);
+            if (_cache != null) {
+                cache = _cache;
             }
         }
-        queue.add(wrapper);
+        cache.add(wrapper);
         delayQueue.add(wrapper);
     }
 
-    List<AsyncActionWrapper> poll(String event) {
+    List<AsyncActionWrapper> sync(String event, Object responseAction) {
         cleanup();
         if (contains(event)) {
-            ConcurrentLinkedQueue<AsyncActionWrapper> queue = pendingForResponse.get(event);
+            CopyOnWriteArrayList<AsyncActionWrapper> cache = pendingForResponse.get(event);
             List<AsyncActionWrapper> result = new ArrayList<AsyncActionWrapper>();
-            AsyncActionWrapper wrapper = queue.poll();
-            while (wrapper != null) {
-                result.add(wrapper);
-                wrapper = queue.poll();
+            for (AsyncActionWrapper wrapper : cache) {
+                if (wrapper.fillResponse(responseAction)) {
+                    result.add(wrapper);
+                }
             }
+            cache.removeAll(result);
             return result;
         }
         return Collections.emptyList();
@@ -56,10 +56,10 @@ final class AsyncActionSynchronizer {
         return pendingForResponse.containsKey(event);
     }
 
-    private void cleanup(){
+    private void cleanup() {
         AsyncActionWrapper wrapper = delayQueue.poll();
         while (wrapper != null) {
-            ConcurrentLinkedQueue<AsyncActionWrapper> queue = pendingForResponse.get(wrapper.getResponseEvent());
+            CopyOnWriteArrayList<AsyncActionWrapper> queue = pendingForResponse.get(wrapper.getResponseEvent());
             queue.remove(wrapper);
             wrapper = delayQueue.poll();
         }

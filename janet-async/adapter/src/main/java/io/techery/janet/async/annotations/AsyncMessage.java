@@ -12,5 +12,5 @@ import static java.lang.annotation.RetentionPolicy.RUNTIME;
 @Documented
 @Retention(RUNTIME)
 @Target(FIELD)
-public @interface Message {
+public @interface AsyncMessage {
 }

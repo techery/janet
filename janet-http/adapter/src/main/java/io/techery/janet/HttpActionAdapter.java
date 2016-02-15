@@ -25,6 +25,15 @@ final public class HttpActionAdapter extends ActionAdapter {
     private final String baseUrl;
 
     public HttpActionAdapter(String baseUrl, HttpClient client, Converter converter) {
+        if(baseUrl == null){
+            throw new IllegalArgumentException("baseUrl == null");
+        }
+        if(client == null){
+            throw new IllegalArgumentException("client == null");
+        }
+        if(converter == null){
+            throw new IllegalArgumentException("converter == null");
+        }
         this.baseUrl = baseUrl;
         this.client = client;
         this.converter = converter;

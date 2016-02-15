@@ -103,10 +103,8 @@ public class Janet {
 
     private ActionAdapter findActionAdapter(Class actionClass) {
         for (ActionAdapter adapter : adapters) {
-            for (Class type : adapter.getSupportedAnnotationTypes()) {
-                if (actionClass.getAnnotation(type) != null) {
-                    return adapter;
-                }
+            if (actionClass.getAnnotation(adapter.getSupportedAnnotationType()) != null) {
+                return adapter;
             }
         }
         throw new JanetInternalException("Action class should be annotated by any supported annotation or check dependence of any adapter");
@@ -129,8 +127,7 @@ public class Janet {
             if (adapter == null) {
                 throw new IllegalArgumentException("ActionAdapter may not be null.");
             }
-            if (adapter.getSupportedAnnotationTypes() == null
-                    || adapter.getSupportedAnnotationTypes().isEmpty()) {
+            if (adapter.getSupportedAnnotationType() == null) {
                 throw new IllegalArgumentException("the ActionAdapter doesn't support any actions");
             }
             adapters.add(adapter);

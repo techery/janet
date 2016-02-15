@@ -14,7 +14,7 @@ public abstract class AsyncActionWrapper<A> implements Delayed {
 
     protected AsyncActionWrapper(A action) {this.action = action;}
 
-    protected abstract boolean isMessageBytes();
+    protected abstract boolean isBytesMessage();
     protected abstract String getEvent();
     protected abstract byte[] getBytesMessage();
     protected abstract ActionBody getMessage(Converter converter);

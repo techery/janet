@@ -2,7 +2,7 @@ package io.techery.janet.async;
 
 import io.techery.janet.async.annotations.AsyncAction;
 
-public class SameEventPredicate implements SyncPredicate {
+public class SameEventPredicate extends SyncPredicate {
 
     @Override public boolean isResponse(Object request, Object response) {
         AsyncAction a1 = request.getClass().getAnnotation(AsyncAction.class);

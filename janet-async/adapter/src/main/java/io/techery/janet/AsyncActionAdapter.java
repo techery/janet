@@ -28,6 +28,15 @@ final public class AsyncActionAdapter extends ActionAdapter {
 
 
     public AsyncActionAdapter(String url, AsyncClient client, Converter converter) {
+        if (url == null) {
+            throw new IllegalArgumentException("url == null");
+        }
+        if (client == null) {
+            throw new IllegalArgumentException("client == null");
+        }
+        if (converter == null) {
+            throw new IllegalArgumentException("converter == null");
+        }
         this.url = url;
         this.client = client;
         this.converter = converter;
@@ -65,7 +74,7 @@ final public class AsyncActionAdapter extends ActionAdapter {
         if (responseEvent != null) {
             synchronizer.put(responseEvent, wrapper);
         }
-        if (wrapper.isMessageBytes()) {
+        if (wrapper.isBytesMessage()) {
             client.send(wrapper.getEvent(), wrapper.getBytesMessage());
         } else {
             ActionBody actionBody = wrapper.getMessage(converter);
@@ -84,10 +93,8 @@ final public class AsyncActionAdapter extends ActionAdapter {
             AsyncActionWrapper messageWrapper = actionWrapperFactory.make(actionClass, action);
             messageWrapper.fillMessage(body, converter);
             if (synchronizer.contains(event)) {
-                for (AsyncActionWrapper wrapper : synchronizer.poll(event)) {
-                    if (wrapper.fillResponse(messageWrapper.action)) {
-                        callback.onSuccess(wrapper.action);
-                    }
+                for (AsyncActionWrapper wrapper : synchronizer.sync(event, messageWrapper.action)) {
+                    callback.onSuccess(wrapper.action);
                 }
             } else {
                 callback.onSuccess(action);

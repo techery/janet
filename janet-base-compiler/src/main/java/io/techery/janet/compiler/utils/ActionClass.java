@@ -9,7 +9,6 @@ import java.util.List;
 
 import javax.lang.model.element.Element;
 import javax.lang.model.element.ElementKind;
-import javax.lang.model.element.Name;
 import javax.lang.model.element.PackageElement;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.util.Elements;
@@ -20,12 +19,14 @@ public class ActionClass {
     private final HashMap<Class, List<Element>> allAnnotatedMembersMap;
     protected final Class annotationClass;
     private final TypeElement typeElement;
-    private final Elements elementUtils;
+    private final PackageElement packageElement;
+    private final String packageName;
 
     public ActionClass(Class annotationClass, Elements elementUtils, TypeElement typeElement) {
         this.annotationClass = annotationClass;
-        this.elementUtils = elementUtils;
         this.typeElement = typeElement;
+        this.packageElement = elementUtils.getPackageElement(annotationClass.getPackage().getName());
+        this.packageName = elementUtils.getPackageOf(getTypeElement()).getQualifiedName().toString();
         allAnnotatedMembersMap = new HashMap<Class, List<Element>>();
         allAnnotatedMembers = new ArrayList<Element>();
         List<Class> libraryAnnotations = getLibraryAnnotations();
@@ -46,8 +47,6 @@ public class ActionClass {
     }
 
     private List<Class> getLibraryAnnotations() {
-        String annotationPackage = annotationClass.getPackage().getName();
-        PackageElement packageElement = elementUtils.getPackageElement(annotationPackage);
         List<Class> libraryAnnotation = new ArrayList<Class>();
         for (Element element : packageElement.getEnclosedElements()) {
             if (element.getKind() != ElementKind.ANNOTATION_TYPE) continue;
@@ -79,8 +78,7 @@ public class ActionClass {
     }
 
     public String getPackageName() {
-        Name qualifiedName = elementUtils.getPackageOf(getTypeElement()).getQualifiedName();
-        return qualifiedName.toString();
+        return packageName;
     }
 
     public String getWrapperName() {
