@@ -20,7 +20,6 @@ import javax.lang.model.util.Elements;
 import javax.tools.Diagnostic;
 
 import io.techery.janet.async.annotations.AsyncAction;
-import io.techery.janet.async.annotations.SyncedResponse;
 import io.techery.janet.compiler.utils.validation.ClassValidator;
 import io.techery.janet.compiler.utils.validation.ValidationError;
 import io.techery.janet.validation.AsyncActionValidators;
@@ -32,6 +31,8 @@ public class JanetAsyncProcessor extends AbstractProcessor {
     private ClassValidator classValidator;
     private AsyncActionValidators asyncActionValidators;
     private AsyncWrappersGenerator wrappersGenerator;
+    private AsyncFactoryGenerator factoryGenerator;
+    private AsyncRosterGenerator rosterGenerator;
 
     @Override
     public synchronized void init(ProcessingEnvironment processingEnv) {
@@ -41,6 +42,8 @@ public class JanetAsyncProcessor extends AbstractProcessor {
         classValidator = new ClassValidator(AsyncAction.class);
         asyncActionValidators = new AsyncActionValidators();
         wrappersGenerator = new AsyncWrappersGenerator(processingEnv.getFiler());
+        factoryGenerator = new AsyncFactoryGenerator(processingEnv.getFiler());
+        rosterGenerator = new AsyncRosterGenerator(processingEnv.getFiler());
     }
 
     @Override
@@ -85,8 +88,9 @@ public class JanetAsyncProcessor extends AbstractProcessor {
         }
         if (!actionClasses.isEmpty()) {
             wrappersGenerator.generate(actionClasses);
-
         }
+        factoryGenerator.generate(actionClasses);
+        rosterGenerator.generate(actionClasses);
         return true;
     }
 

@@ -1,5 +1,6 @@
 package io.techery.janet;
 
+import java.util.List;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
 import io.techery.janet.async.actions.ConnectAsyncAction;
@@ -13,8 +14,13 @@ import io.techery.janet.converter.Converter;
 
 final public class AsyncActionAdapter extends ActionAdapter {
 
-    static final String FACTORY_CLASS_NAME = "AsyncActionWrapperFactoryImpl";
-    static final String ROOSTER_CLASS_NAME = "AsyncActionsRoster";
+    static final String ROOSTER_CLASS_SIMPLE_NAME = "AsyncActionsRoster";
+    private final static String ROOSTER_CLASS_NAME = Janet.class.getPackage()
+            .getName() + "." + ROOSTER_CLASS_SIMPLE_NAME;
+
+    static final String FACTORY_CLASS_SIMPLE_NAME = "AsyncActionWrapperFactoryImpl";
+    private final static String FACTORY_CLASS_NAME = Janet.class.getPackage()
+            .getName() + "." + FACTORY_CLASS_SIMPLE_NAME;
 
     private final String url;
     private final AsyncClient client;
@@ -46,6 +52,9 @@ final public class AsyncActionAdapter extends ActionAdapter {
         loadActionWrapperFactory();
         loadAsyncActionRooster();
         client.setCallback(clientCallback);
+        for (String event : actionsRoster.getRegisteredEvents()) {
+            client.subscribe(event);
+        }
     }
 
     @Override Class getSupportedAnnotationType() {
@@ -87,22 +96,31 @@ final public class AsyncActionAdapter extends ActionAdapter {
             System.err.println(String.format("Received sync message %s is not defined by any action :(. The message contains body %s", event, body));
             return;
         }
-        Class actionClass = actionsRoster.getActionClass(event);
-        try {
-            Object action = actionClass.newInstance();
+        List<Class> actionClassList = actionsRoster.getActionClasses(event);
+        for (Class actionClass : actionClassList) {
+            Object action = createActionInstance(actionClass);
             AsyncActionWrapper messageWrapper = actionWrapperFactory.make(actionClass, action);
-            messageWrapper.fillMessage(body, converter);
+            try {
+                messageWrapper.fillMessage(body, converter);
+            } catch (Exception e) {
+                callback.onFail(action, e);
+            }
             if (synchronizer.contains(event)) {
-                for (AsyncActionWrapper wrapper : synchronizer.sync(event, messageWrapper.action)) {
+                for (AsyncActionWrapper wrapper : synchronizer.sync(event, messageWrapper.action, new AsyncActionSynchronizer.Predicate() {
+                    @Override public boolean call(AsyncActionWrapper wrapper, Object responseAction) {
+                        try {
+                            return wrapper.fillResponse(responseAction);
+                        } catch (Exception e) {
+                            callback.onFail(wrapper.action, e);
+                        }
+                        return false;
+                    }
+                })) {
                     callback.onSuccess(wrapper.action);
                 }
             } else {
                 callback.onSuccess(action);
             }
-        } catch (InstantiationException e) {
-            e.printStackTrace();
-        } catch (IllegalAccessException e) {
-            e.printStackTrace();
         }
     }
 
@@ -162,6 +180,17 @@ final public class AsyncActionAdapter extends ActionAdapter {
         } catch (Exception e) {
             throw new JanetInternalException("Something was happened with code generator. Check dependence of janet-async-compiler");
         }
+    }
+
+    private Object createActionInstance(Class aClass) {
+        try {
+            return aClass.newInstance();
+        } catch (InstantiationException e) {
+            e.printStackTrace();
+        } catch (IllegalAccessException e) {
+            e.printStackTrace();
+        }
+        return null;
     }
 
     interface AsyncActionWrapperFactory {

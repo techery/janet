@@ -14,6 +14,8 @@ public abstract class AsyncClient {
 
     public abstract void send(String event, byte[] bytes) throws Throwable;
 
+    public abstract void subscribe(String event);
+
     void setCallback(Callback callback) {
         this.callback = callback;
     }

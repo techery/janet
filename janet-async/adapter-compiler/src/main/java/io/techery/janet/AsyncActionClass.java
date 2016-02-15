@@ -54,6 +54,10 @@ public class AsyncActionClass extends ActionClass {
         return getTypeElement().getSimpleName() + WRAPPER_SUFFIX;
     }
 
+    public String getFullWrapperName() {
+        return getPackageName() + "." + getTypeElement().getSimpleName() + WRAPPER_SUFFIX;
+    }
+
     public boolean isBytesMessage() {
         return ClassName.get(getTypeElement().getSuperclass())
                 .toString()

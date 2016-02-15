@@ -10,6 +10,7 @@ import java.util.concurrent.DelayQueue;
 final class AsyncActionSynchronizer {
 
     final static long PENDING_TIMEOUT = 60 * 5 * 1000; //5 mins
+    final static long PENDING_ACTIONS_EVENT_LIMIT = 20;
 
     private final ConcurrentHashMap<String, CopyOnWriteArrayList<AsyncActionWrapper>> pendingForResponse;
 
@@ -33,15 +34,18 @@ final class AsyncActionSynchronizer {
         }
         cache.add(wrapper);
         delayQueue.add(wrapper);
+        if (cache.size() > PENDING_ACTIONS_EVENT_LIMIT) {
+            cache.remove(0);
+        }
     }
 
-    List<AsyncActionWrapper> sync(String event, Object responseAction) {
+    List<AsyncActionWrapper> sync(String event, Object responseAction, Predicate predicate) {
         cleanup();
         if (contains(event)) {
             CopyOnWriteArrayList<AsyncActionWrapper> cache = pendingForResponse.get(event);
             List<AsyncActionWrapper> result = new ArrayList<AsyncActionWrapper>();
             for (AsyncActionWrapper wrapper : cache) {
-                if (wrapper.fillResponse(responseAction)) {
+                if (predicate.call(wrapper, responseAction)) {
                     result.add(wrapper);
                 }
             }
@@ -59,10 +63,13 @@ final class AsyncActionSynchronizer {
     private void cleanup() {
         AsyncActionWrapper wrapper = delayQueue.poll();
         while (wrapper != null) {
-            CopyOnWriteArrayList<AsyncActionWrapper> queue = pendingForResponse.get(wrapper.getResponseEvent());
-            queue.remove(wrapper);
+            CopyOnWriteArrayList<AsyncActionWrapper> cache = pendingForResponse.get(wrapper.getResponseEvent());
+            cache.remove(wrapper);
             wrapper = delayQueue.poll();
         }
     }
 
+    interface Predicate {
+        boolean call(AsyncActionWrapper wrapper, Object responseAction);
+    }
 }

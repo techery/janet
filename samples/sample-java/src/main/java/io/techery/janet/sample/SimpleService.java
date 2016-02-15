@@ -19,7 +19,6 @@ public class SimpleService {
     public static void main(String... args) {
         Janet janet = new Janet.Builder()
                 .addAdapter(new HttpActionAdapter(API_URL, new OkClient(), new GsonConverter(new Gson())))
-                .addAdapter(new AsyncActionAdapter("http://localhost:3000", null, new GsonConverter(new Gson())))
                 .addInterceptor(System.out::println)
                 .build();
 
