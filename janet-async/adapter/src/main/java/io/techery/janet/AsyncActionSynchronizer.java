@@ -9,7 +9,7 @@ import java.util.concurrent.DelayQueue;
 
 final class AsyncActionSynchronizer {
 
-    final static long PENDING_TIMEOUT = 60 * 5 * 1000; //5 mins
+    final static long PENDING_TIMEOUT = 60 * 1000;
     final static long PENDING_ACTIONS_EVENT_LIMIT = 20;
 
     private final ConcurrentHashMap<String, CopyOnWriteArrayList<AsyncActionWrapper>> pendingForResponse;

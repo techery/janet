@@ -46,7 +46,8 @@ public class AsyncWrappersGenerator extends Generator<AsyncActionClass> {
                 .addMethod(createGetMessageMethod(actionClass))
                 .addMethod(createGetResponseEventMethod(actionClass))
                 .addMethod(createFillResponseMethod(actionClass))
-                .addMethod(createFillMessageMethod(actionClass));
+                .addMethod(createFillMessageMethod(actionClass))
+                .addMethod(createGetResponseTimeoutMethod(actionClass));
 
 
         saveClass(actionClass.getPackageName(), classBuilder.build());
@@ -152,6 +153,19 @@ public class AsyncWrappersGenerator extends Generator<AsyncActionClass> {
         } else {
             builder.addStatement("action.$L =  ($T) converter.fromBody(body, new $T<$T>(){}.getType())", messageField, messageField
                     .asType(), TypeToken.class, messageField.asType());
+        }
+        return builder.build();
+    }
+
+    private static MethodSpec createGetResponseTimeoutMethod(AsyncActionClass actionClass) {
+        MethodSpec.Builder builder = MethodSpec.methodBuilder("getResponseTimeout")
+                .addAnnotation(Override.class)
+                .addModifiers(Modifier.PUBLIC)
+                .returns(long.class);
+        if (actionClass.getResponseInfo()!=null && actionClass.getResponseInfo().responseTimeout > 0) {
+            builder.addStatement("return $Ll", actionClass.getResponseInfo().responseTimeout);
+        } else {
+            builder.addStatement("return super.getResponseTimeout()");
         }
         return builder.build();
     }

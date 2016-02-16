@@ -98,6 +98,7 @@ public class AsyncActionClass extends ActionClass {
         public TypeElement syncPredicateElement;
         public final Element responseField;
         public final TypeElement responseFieldType;
+        public long responseTimeout;
 
         public SyncedResponseInfo(Elements elementUtils, Element responseField) {
             this.responseField = responseField;
@@ -109,6 +110,9 @@ public class AsyncActionClass extends ActionClass {
                             TypeMirror valueMirror = (TypeMirror) valuesMap.get(key).getValue();
                             this.syncPredicateElement = elementUtils.getTypeElement(ClassName.get(valueMirror)
                                     .toString());
+                        }
+                        if (key.getSimpleName().contentEquals("timeout")) {
+                            responseTimeout = Long.valueOf(valuesMap.get(key).getValue().toString());
                         }
                     }
                     break;

@@ -22,8 +22,12 @@ public abstract class AsyncActionWrapper<A> implements Delayed {
     protected abstract boolean fillResponse(Object responseAction);
     protected abstract void fillMessage(BytesArrayBody body, Converter converter);
 
+    protected long getResponseTimeout(){
+        return AsyncActionSynchronizer.PENDING_TIMEOUT;
+    }
+
     final long getDelayMillis() {
-        return (startTime + AsyncActionSynchronizer.PENDING_TIMEOUT) - System.currentTimeMillis();
+        return (startTime + getResponseTimeout()) - System.currentTimeMillis();
     }
 
     @Override

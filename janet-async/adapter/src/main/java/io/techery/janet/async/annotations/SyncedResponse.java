@@ -15,4 +15,6 @@ import static java.lang.annotation.RetentionPolicy.RUNTIME;
 public @interface SyncedResponse {
 
     Class<? extends SyncPredicate> value();
+
+    long timeout() default 0;
 }
