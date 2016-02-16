@@ -14,13 +14,15 @@ import io.techery.janet.converter.Converter;
 
 final public class AsyncActionAdapter extends ActionAdapter {
 
-    static final String ROOSTER_CLASS_SIMPLE_NAME = "AsyncActionsRoster";
-    private final static String ROOSTER_CLASS_NAME = Janet.class.getPackage()
-            .getName() + "." + ROOSTER_CLASS_SIMPLE_NAME;
+    static final String ROSTER_CLASS_SIMPLE_NAME = "AsyncActionsRoster";
+    private final static String ROSTER_CLASS_NAME = Janet.class.getPackage()
+            .getName() + "." + ROSTER_CLASS_SIMPLE_NAME;
 
     static final String FACTORY_CLASS_SIMPLE_NAME = "AsyncActionWrapperFactoryImpl";
     private final static String FACTORY_CLASS_NAME = Janet.class.getPackage()
             .getName() + "." + FACTORY_CLASS_SIMPLE_NAME;
+
+    private static final String ERROR_GENERATOR = "Something was happened with code generator. Check dependence of janet-async-compiler";
 
     private final String url;
     private final AsyncClient client;
@@ -84,7 +86,7 @@ final public class AsyncActionAdapter extends ActionAdapter {
 
         AsyncActionWrapper wrapper = actionWrapperFactory.make(action.getClass(), action);
         if (wrapper == null) {
-            throw new JanetInternalException("Something was happened with code generator. Check dependence of janet-async-compiler");
+            throw new JanetInternalException(ERROR_GENERATOR);
         }
         String responseEvent = wrapper.getResponseEvent();
         if (responseEvent != null) {
@@ -182,7 +184,7 @@ final public class AsyncActionAdapter extends ActionAdapter {
                     = (Class<? extends AsyncActionWrapperFactory>) Class.forName(FACTORY_CLASS_NAME);
             actionWrapperFactory = clazz.newInstance();
         } catch (Exception e) {
-            throw new JanetInternalException("Something was happened with code generator. Check dependence of janet-async-compiler");
+            throw new JanetInternalException(ERROR_GENERATOR);
         }
     }
 
@@ -190,10 +192,10 @@ final public class AsyncActionAdapter extends ActionAdapter {
     private void loadAsyncActionRooster() {
         try {
             Class<? extends AsyncActionsRosterBase> clazz
-                    = (Class<? extends AsyncActionsRosterBase>) Class.forName(ROOSTER_CLASS_NAME);
+                    = (Class<? extends AsyncActionsRosterBase>) Class.forName(ROSTER_CLASS_NAME);
             actionsRoster = clazz.newInstance();
         } catch (Exception e) {
-            throw new JanetInternalException("Something was happened with code generator. Check dependence of janet-async-compiler");
+            throw new JanetInternalException(ERROR_GENERATOR);
         }
     }
 

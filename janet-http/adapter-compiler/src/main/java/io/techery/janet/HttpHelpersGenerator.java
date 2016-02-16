@@ -86,7 +86,6 @@ public class HttpHelpersGenerator extends Generator<HttpActionClass> {
         return builder.build();
     }
 
-    //TODO: replace logic like in retrofit
     private void addRequestFields(HttpActionClass actionClass, MethodSpec.Builder builder) {
         for (Element element : actionClass.getAnnotatedElements(Field.class)) {
             Field annotation = element.getAnnotation(Field.class);

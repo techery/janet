@@ -92,6 +92,9 @@ public class SocketIO extends AsyncClient {
     @Override protected void disconnect() throws Throwable {
         if (isConnected()) {
             socket.disconnect();
+            for (String event : events) {
+                socket.off(event);
+            }
         } else {
             callback.onDisconnect("not connected");
         }
