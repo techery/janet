@@ -62,15 +62,6 @@ public class FileBody extends BytesArrayBody {
         }
     }
 
-    public void moveTo(FileBody destination) throws IOException {
-        if (!mimeType().equals(destination.mimeType())) {
-            throw new IOException("Type mismatch.");
-        }
-        if (!file.renameTo(destination.file())) {
-            throw new IOException("Rename failed!");
-        }
-    }
-
     @Override
     public String toString() {
         return file.getAbsolutePath() + " (" + mimeType() + ")";

@@ -59,7 +59,7 @@ public class AsyncWrappersGenerator extends Generator<AsyncActionClass> {
                 .addStatement("super(action)");
         if (actionClass.getResponseInfo() != null) {
             builder.addField(SyncPredicate.class, "syncPredicate", Modifier.PRIVATE, Modifier.FINAL);
-            constructorBuilder.addStatement("this.syncPredicate = new $T()", actionClass.getResponseInfo().syncPredicateClass);
+            constructorBuilder.addStatement("this.syncPredicate = new $T()", actionClass.getResponseInfo().syncPredicateElement);
         }
         builder.addMethod(constructorBuilder.build());
         return builder;

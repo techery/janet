@@ -1,10 +1,8 @@
 package io.techery.janet.async;
 
-public class SyncPredicate<T, R> {
+public abstract class SyncPredicate {
 
-    public SyncPredicate() {}
-
-    public boolean isResponse(T request, R response) {
+    public boolean isResponse(Object requestAction, Object response) {
         return true;
     }
 }

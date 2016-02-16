@@ -86,7 +86,7 @@ public class AsyncActionClass extends ActionClass {
 
     final public static class SyncedResponseInfo {
         public final String responseEvent;
-        public TypeName syncPredicateClass;
+        public TypeElement syncPredicateElement;
         public final Element responseField;
 
         public SyncedResponseInfo(Elements elementUtils, Element responseField) {
@@ -97,7 +97,7 @@ public class AsyncActionClass extends ActionClass {
                     for (ExecutableElement key : valuesMap.keySet()) {
                         if (key.getSimpleName().contentEquals("value")) {
                             TypeMirror valueMirror = (TypeMirror) valuesMap.get(key).getValue();
-                            this.syncPredicateClass = ClassName.get(valueMirror);
+                            this.syncPredicateElement = elementUtils.getTypeElement(ClassName.get(valueMirror).toString());
                         }
                     }
                     break;

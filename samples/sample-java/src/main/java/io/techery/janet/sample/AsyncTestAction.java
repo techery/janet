@@ -7,7 +7,6 @@ import io.techery.janet.async.annotations.AsyncAction;
 import io.techery.janet.async.annotations.AsyncMessage;
 import io.techery.janet.async.annotations.SyncedResponse;
 import io.techery.janet.body.ActionBody;
-import io.techery.janet.body.BytesArrayBody;
 
 @AsyncAction(value = "test", incoming = true)
 public class AsyncTestAction {
@@ -18,7 +17,6 @@ public class AsyncTestAction {
     @SyncedResponse(TestSyncPredicate.class)
     AsyncIncomingAction response;
 
-
     public static class TestSyncPredicate extends SyncPredicate {
 
         @Override public boolean isResponse(Object request, Object response) {
@@ -26,7 +24,7 @@ public class AsyncTestAction {
         }
     }
 
-    public static class TestBytesBody extends ActionBody{
+    public static class TestBytesBody extends ActionBody {
 
         @Override public byte[] getContent() throws IOException {
             return new byte[0];
