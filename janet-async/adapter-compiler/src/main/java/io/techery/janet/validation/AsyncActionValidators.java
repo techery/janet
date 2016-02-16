@@ -20,6 +20,7 @@ public class AsyncActionValidators implements Validator<AsyncActionClass> {
     public AsyncActionValidators() {
         validators = new ArrayList<Validator<AsyncActionClass>>();
         validators.add(new FieldsModifiersValidator<AsyncActionClass>());
+        validators.add(new MessageValidator());
         validators.add(new TypeIncomingValidator());
         validators.add(new SyncedResponseValidator());
         validators.add(new AnnotationQuantityValidator<AsyncActionClass>(AsyncMessage.class, 1));

@@ -6,4 +6,11 @@ import io.techery.janet.async.annotations.AsyncAction;
 final public class ConnectAsyncAction implements SystemAction {
 
     public boolean reconnectIfConnected;
+
+    public ConnectAsyncAction() {
+    }
+
+    public ConnectAsyncAction(boolean reconnectIfConnected) {
+        this.reconnectIfConnected = reconnectIfConnected;
+    }
 }

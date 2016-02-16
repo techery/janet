@@ -4,17 +4,17 @@ public abstract class AsyncClient {
 
     protected Callback callback;
 
-    public abstract boolean isConnected();
+    protected abstract boolean isConnected();
 
-    public abstract void connect(String url, boolean reconnectIfConnected) throws Throwable;
+    protected abstract void connect(String url, boolean reconnectIfConnected) throws Throwable;
 
-    public abstract void disconnect() throws Throwable;
+    protected abstract void disconnect() throws Throwable;
 
-    public abstract void send(String event, String string) throws Throwable;
+    protected abstract void send(String event, String string) throws Throwable;
 
-    public abstract void send(String event, byte[] bytes) throws Throwable;
+    protected abstract void send(String event, byte[] bytes) throws Throwable;
 
-    public abstract void subscribe(String event);
+    protected abstract void subscribe(String event);
 
     void setCallback(Callback callback) {
         this.callback = callback;

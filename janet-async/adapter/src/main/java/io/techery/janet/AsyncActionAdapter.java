@@ -64,8 +64,12 @@ final public class AsyncActionAdapter extends ActionAdapter {
     @Override protected <T> void sendInternal(T action) throws Throwable {
         callback.onStart(action);
         if (action instanceof ConnectAsyncAction) {
-            client.connect(url, ((ConnectAsyncAction) action).reconnectIfConnected);
-            connectActionQueue.add((ConnectAsyncAction) action);
+            ConnectAsyncAction connectAsyncAction = (ConnectAsyncAction) action;
+            if (client.isConnected() && !connectAsyncAction.reconnectIfConnected) {
+                callback.onSuccess(action);
+            }
+            client.connect(url, connectAsyncAction.reconnectIfConnected);
+            connectActionQueue.add(connectAsyncAction);
             return;
         }
         if (action instanceof DisconnectAsyncAction) {
@@ -155,11 +159,19 @@ final public class AsyncActionAdapter extends ActionAdapter {
         }
 
         @Override public void onMessage(String event, String string) {
-            onMessageReceived(event, new StringBody(string));
+            BytesArrayBody body = null;
+            if(string!=null){
+                body = new StringBody(string);
+            }
+            onMessageReceived(event, body);
         }
 
         @Override public void onMessage(String event, byte[] bytes) {
-            onMessageReceived(event, new BytesArrayBody(null, bytes));
+            BytesArrayBody body = null;
+            if(bytes!=null){
+                body = new BytesArrayBody(null, bytes);
+            }
+            onMessageReceived(event, body);
         }
     };
 

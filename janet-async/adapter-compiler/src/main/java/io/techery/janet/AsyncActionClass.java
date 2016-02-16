@@ -28,7 +28,7 @@ public class AsyncActionClass extends ActionClass {
     private String event;
     private final boolean incoming;
     private SyncedResponseInfo responseInfo;
-    private final Element messageField;
+    private Element messageField;
     private boolean isBytesMessage;
 
 
@@ -37,7 +37,16 @@ public class AsyncActionClass extends ActionClass {
         AsyncAction annotation = typeElement.getAnnotation(AsyncAction.class);
         this.incoming = annotation.incoming();
         this.event = annotation.value();
-        this.messageField = getAnnotatedElements(AsyncMessage.class).get(0);
+        List<Element> messageFields = getAnnotatedElements(AsyncMessage.class);
+        for (Element field : messageFields) {
+            this.messageField = field;
+            break;
+        }
+
+        if (messageField == null) { //validator throw a error
+            return;
+        }
+
         //defining message is bytes
         ClassName bytesArrayBody = ClassName.get(BytesArrayBody.class);
         TypeMirror messageSuperClass = elementUtils.getTypeElement(messageField.asType().toString()).getSuperclass();
@@ -88,6 +97,7 @@ public class AsyncActionClass extends ActionClass {
         public final String responseEvent;
         public TypeElement syncPredicateElement;
         public final Element responseField;
+        public final TypeElement responseFieldType;
 
         public SyncedResponseInfo(Elements elementUtils, Element responseField) {
             this.responseField = responseField;
@@ -97,15 +107,16 @@ public class AsyncActionClass extends ActionClass {
                     for (ExecutableElement key : valuesMap.keySet()) {
                         if (key.getSimpleName().contentEquals("value")) {
                             TypeMirror valueMirror = (TypeMirror) valuesMap.get(key).getValue();
-                            this.syncPredicateElement = elementUtils.getTypeElement(ClassName.get(valueMirror).toString());
+                            this.syncPredicateElement = elementUtils.getTypeElement(ClassName.get(valueMirror)
+                                    .toString());
                         }
                     }
                     break;
                 }
             }
             TypeName responseActionName = ClassName.get(responseField.asType());
-            Element element = elementUtils.getTypeElement(responseActionName.toString());
-            AsyncAction asyncAction = element.getAnnotation(AsyncAction.class);
+            responseFieldType = elementUtils.getTypeElement(responseActionName.toString());
+            AsyncAction asyncAction = responseFieldType.getAnnotation(AsyncAction.class);
             this.responseEvent = asyncAction.value();
         }
     }

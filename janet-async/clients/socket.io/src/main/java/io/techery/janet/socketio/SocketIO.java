@@ -1,21 +1,18 @@
-package io.techery.janet.nkzawa;
+package io.techery.janet.socketio;
 
-import com.github.nkzawa.emitter.Emitter;
-import com.github.nkzawa.socketio.client.IO;
-import com.github.nkzawa.socketio.client.Socket;
 
-import org.json.JSONObject;
-
-import java.util.HashSet;
-import java.util.Set;
-
+import io.socket.client.IO;
+import io.socket.client.Socket;
+import io.socket.emitter.Emitter;
 import io.techery.janet.AsyncClient;
 
 public class SocketIO extends AsyncClient {
 
     private Socket socket;
 
-    private Set<String> events = new HashSet<String>();
+    public SocketIO() {
+
+    }
 
     @Override protected boolean isConnected() {
         return socket != null && socket.connected();
@@ -45,7 +42,8 @@ public class SocketIO extends AsyncClient {
             @Override public void call(Object... args) {
                 callback.onConnect();
             }
-        }).on(Socket.EVENT_DISCONNECT, new Emitter.Listener() {
+        });
+        socket.on(Socket.EVENT_DISCONNECT, new Emitter.Listener() {
             @Override public void call(Object... args) {
                 String reason = null;
                 if (args.length > 0) {
@@ -53,7 +51,8 @@ public class SocketIO extends AsyncClient {
                 }
                 callback.onDisconnect(reason);
             }
-        }).on(Socket.EVENT_ERROR, new Emitter.Listener() {
+        });
+        socket.on(Socket.EVENT_ERROR, new Emitter.Listener() {
             @Override public void call(Object... args) {
                 Throwable throwable = null;
                 if (args.length > 0) {
@@ -61,7 +60,8 @@ public class SocketIO extends AsyncClient {
                 }
                 callback.onError(throwable);
             }
-        }).on(Socket.EVENT_CONNECT_ERROR, new Emitter.Listener() {
+        });
+        socket.on(Socket.EVENT_CONNECT_ERROR, new Emitter.Listener() {
             @Override public void call(Object... args) {
                 Throwable throwable = null;
                 if (args.length > 0) {
@@ -69,24 +69,12 @@ public class SocketIO extends AsyncClient {
                 }
                 callback.onError(throwable);
             }
-        }).on(Socket.EVENT_CONNECT_TIMEOUT, new Emitter.Listener() {
+        });
+        socket.on(Socket.EVENT_CONNECT_TIMEOUT, new Emitter.Listener() {
             @Override public void call(Object... args) {
                 System.out.println(args);
             }
         });
-        for (final String event : events) {
-            socket.on(event, new Emitter.Listener() {
-                @Override public void call(Object... args) {
-                    if (args.length > 0) {
-                        Object value = args[0];
-                        callback.onMessage(event, String.valueOf(value));
-                    } else {
-                        callback.onMessage(event, (String) null);
-                    }
-                }
-            });
-        }
-        socket.connect();
     }
 
     @Override protected void disconnect() throws Throwable {
@@ -99,7 +87,7 @@ public class SocketIO extends AsyncClient {
 
     @Override protected void send(String event, String string) throws Throwable {
         if (isConnected()) {
-            socket.emit(event, new JSONObject(string));
+            socket.emit(event, string);
         }
     }
 
@@ -110,6 +98,16 @@ public class SocketIO extends AsyncClient {
     }
 
     @Override protected void subscribe(final String event) {
-        events.add(event);
+        if (isConnected()) {
+            socket.on(event, new Emitter.Listener() {
+                @Override public void call(Object... args) {
+                    if (args.length > 0) {
+                        Object value = args[0];
+                        callback.onMessage(event, String.valueOf(value));
+                    }
+                    callback.onMessage(event, (String) null);
+                }
+            });
+        }
     }
 }

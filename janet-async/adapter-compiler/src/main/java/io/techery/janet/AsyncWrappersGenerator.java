@@ -124,7 +124,7 @@ public class AsyncWrappersGenerator extends Generator<AsyncActionClass> {
                 .addParameter(Object.class, "responseAction")
                 .returns(boolean.class);
         if (actionClass.getResponseInfo() != null) {
-            builder.beginControlFlow("if(syncPredicate.isResponse(this, responseAction))");
+            builder.beginControlFlow("if(syncPredicate.isResponse(this.action, responseAction))");
             builder.addStatement("action.$L = ($L)responseAction", actionClass.getResponseInfo().responseField, actionClass
                     .getResponseInfo().responseField.asType());
             builder.addStatement("return true");
@@ -143,6 +143,10 @@ public class AsyncWrappersGenerator extends Generator<AsyncActionClass> {
                 .addModifiers(Modifier.PUBLIC)
                 .addParameter(BytesArrayBody.class, "body")
                 .addParameter(Converter.class, "converter");
+        builder.beginControlFlow("if(body == null)");
+        builder.addStatement("action.$L = null", messageField);
+        builder.addStatement("return");
+        builder.endControlFlow();
         if (actionClass.isBytesMessage()) {
             builder.addStatement("action.$L = ($T) body", messageField, messageField.asType());
         } else {

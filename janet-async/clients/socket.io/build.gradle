@@ -1,0 +1,10 @@
+apply plugin: 'java'
+
+sourceCompatibility = 1.6
+targetCompatibility = 1.6
+
+dependencies {
+    compile project(path: ':janet-async:adapter')
+    compile ('io.socket:socket.io-client:+')
+    compile ('org.java-websocket:Java-WebSocket:+')
+}
