@@ -18,7 +18,6 @@ import javax.lang.model.util.Elements;
 import io.techery.janet.async.annotations.AsyncAction;
 import io.techery.janet.async.annotations.AsyncMessage;
 import io.techery.janet.async.annotations.SyncedResponse;
-import io.techery.janet.body.ActionBody;
 import io.techery.janet.body.BytesArrayBody;
 import io.techery.janet.compiler.utils.ActionClass;
 

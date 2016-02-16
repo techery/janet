@@ -45,17 +45,29 @@ public class SocketIO extends AsyncClient {
         });
         socket.on(Socket.EVENT_DISCONNECT, new Emitter.Listener() {
             @Override public void call(Object... args) {
-                callback.onDisconnect(String.valueOf(args[0]));
+                String reason = null;
+                if (args.length > 0) {
+                    reason = String.valueOf(args[0]);
+                }
+                callback.onDisconnect(reason);
             }
         });
         socket.on(Socket.EVENT_ERROR, new Emitter.Listener() {
             @Override public void call(Object... args) {
-                callback.onError((Throwable) args[0]);
+                Throwable throwable = null;
+                if (args.length > 0) {
+                    throwable = (Throwable) args[0];
+                }
+                callback.onError(throwable);
             }
         });
         socket.on(Socket.EVENT_CONNECT_ERROR, new Emitter.Listener() {
             @Override public void call(Object... args) {
-                callback.onError((Throwable) args[0]);
+                Throwable throwable = null;
+                if (args.length > 0) {
+                    throwable = (Throwable) args[0];
+                }
+                callback.onError(throwable);
             }
         });
     }
@@ -84,10 +96,9 @@ public class SocketIO extends AsyncClient {
         if (isConnected()) {
             socket.on(event, new Emitter.Listener() {
                 @Override public void call(Object... args) {
-                    //TODO:Check it!
-                    if(args.length > 0){
+                    if (args.length > 0) {
                         Object value = args[0];
-                        callback.onMessage(event, args[0]);
+                        callback.onMessage(event, String.valueOf(value));
                     }
                     callback.onMessage(event, (String) null);
                 }
