@@ -16,6 +16,7 @@ import javax.lang.model.element.Modifier;
 import io.techery.janet.async.SyncPredicate;
 import io.techery.janet.async.annotations.AsyncMessage;
 import io.techery.janet.body.ActionBody;
+import io.techery.janet.body.BytesArrayBody;
 import io.techery.janet.compiler.utils.Generator;
 import io.techery.janet.converter.Converter;
 
@@ -42,7 +43,6 @@ public class AsyncWrappersGenerator extends Generator<AsyncActionClass> {
 
         classBuilder.addMethod(createIsBytesMessageMethod(actionClass))
                 .addMethod(createGetEventMethod(actionClass))
-                .addMethod(createGetBytesMessageMethod(actionClass))
                 .addMethod(createGetMessageMethod(actionClass))
                 .addMethod(createGetResponseEventMethod(actionClass))
                 .addMethod(createFillResponseMethod(actionClass))
@@ -83,19 +83,6 @@ public class AsyncWrappersGenerator extends Generator<AsyncActionClass> {
                 .build();
     }
 
-    private static MethodSpec createGetBytesMessageMethod(AsyncActionClass actionClass) {
-        MethodSpec.Builder builder = MethodSpec.methodBuilder("getBytesMessage")
-                .addAnnotation(Override.class)
-                .addModifiers(Modifier.PUBLIC)
-                .returns(byte[].class);
-        if (actionClass.isBytesMessage()) {
-            builder.addStatement("return action.getBytes()");
-        } else {
-            builder.addStatement("return null");
-        }
-        return builder.build();
-    }
-
     private static MethodSpec createGetMessageMethod(AsyncActionClass actionClass) {
         MethodSpec.Builder builder = MethodSpec.methodBuilder("getMessage")
                 .addAnnotation(Override.class)
@@ -105,7 +92,11 @@ public class AsyncWrappersGenerator extends Generator<AsyncActionClass> {
         List<Element> fields = actionClass.getAnnotatedElements(AsyncMessage.class);
         if (!fields.isEmpty()) {
             Element field = fields.get(0);
-            builder.addStatement("return converter.toBody(action.$L)", field);
+            if (actionClass.isBytesMessage()) {
+                builder.addStatement("return action.$L", field);
+            } else {
+                builder.addStatement("return converter.toBody(action.$L)", field);
+            }
         } else {
             builder.addStatement("return null");
         }
@@ -147,14 +138,18 @@ public class AsyncWrappersGenerator extends Generator<AsyncActionClass> {
 
     private static MethodSpec createFillMessageMethod(AsyncActionClass actionClass) {
         Element messageField = actionClass.getMessageField();
-        return MethodSpec.methodBuilder("fillMessage")
+        MethodSpec.Builder builder = MethodSpec.methodBuilder("fillMessage")
                 .addAnnotation(Override.class)
                 .addModifiers(Modifier.PUBLIC)
-                .addParameter(ActionBody.class, "body")
-                .addParameter(Converter.class, "converter")
-                .addStatement("action.$L =  ($T) converter.fromBody(body, new $T<$T>(){}.getType())", messageField, messageField
-                        .asType(), TypeToken.class, messageField.asType())
-                .build();
+                .addParameter(BytesArrayBody.class, "body")
+                .addParameter(Converter.class, "converter");
+        if (actionClass.isBytesMessage()) {
+            builder.addStatement("action.$L = ($T) body", messageField, messageField.asType());
+        } else {
+            builder.addStatement("action.$L =  ($T) converter.fromBody(body, new $T<$T>(){}.getType())", messageField, messageField
+                    .asType(), TypeToken.class, messageField.asType());
+        }
+        return builder.build();
     }
 
 

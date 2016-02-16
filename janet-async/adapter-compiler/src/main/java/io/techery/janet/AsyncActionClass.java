@@ -11,23 +11,26 @@ import javax.lang.model.element.AnnotationValue;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.TypeElement;
+import javax.lang.model.type.TypeKind;
 import javax.lang.model.type.TypeMirror;
 import javax.lang.model.util.Elements;
 
-import io.techery.janet.async.actions.BytesAsyncAction;
 import io.techery.janet.async.annotations.AsyncAction;
 import io.techery.janet.async.annotations.AsyncMessage;
 import io.techery.janet.async.annotations.SyncedResponse;
+import io.techery.janet.body.ActionBody;
+import io.techery.janet.body.BytesArrayBody;
 import io.techery.janet.compiler.utils.ActionClass;
 
 public class AsyncActionClass extends ActionClass {
 
     public final static String WRAPPER_SUFFIX = "Wrapper";
 
-    private final String event;
+    private String event;
     private final boolean incoming;
     private SyncedResponseInfo responseInfo;
     private final Element messageField;
+    private boolean isBytesMessage;
 
 
     public AsyncActionClass(Elements elementUtils, TypeElement typeElement) {
@@ -36,6 +39,18 @@ public class AsyncActionClass extends ActionClass {
         this.incoming = annotation.incoming();
         this.event = annotation.value();
         this.messageField = getAnnotatedElements(AsyncMessage.class).get(0);
+        //defining message is bytes
+        ClassName bytesArrayBody = ClassName.get(BytesArrayBody.class);
+        TypeMirror messageSuperClass = elementUtils.getTypeElement(messageField.asType().toString()).getSuperclass();
+        while (messageSuperClass != null && messageSuperClass.getKind() != TypeKind.NONE) {
+            TypeName typeName = ClassName.get(messageSuperClass);
+            if (typeName.toString().equals(bytesArrayBody.toString())) {
+                isBytesMessage = true;
+                break;
+            }
+            messageSuperClass = elementUtils.getTypeElement(messageSuperClass.toString()).getSuperclass();
+        }
+        //getting response info
         List<Element> fields = getAnnotatedElements(SyncedResponse.class);
         if (!fields.isEmpty()) {
             responseInfo = new SyncedResponseInfo(elementUtils, fields.get(0));
@@ -59,9 +74,7 @@ public class AsyncActionClass extends ActionClass {
     }
 
     public boolean isBytesMessage() {
-        return ClassName.get(getTypeElement().getSuperclass())
-                .toString()
-                .equals(ClassName.get(BytesAsyncAction.class).toString());
+        return isBytesMessage;
     }
 
     public SyncedResponseInfo getResponseInfo() {

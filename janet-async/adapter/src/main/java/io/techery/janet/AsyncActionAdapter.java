@@ -63,9 +63,8 @@ final public class AsyncActionAdapter extends ActionAdapter {
 
     @Override protected <T> void sendInternal(T action) throws Throwable {
         callback.onStart(action);
-        if (!client.isConnected()
-                && action instanceof ConnectAsyncAction) {
-            client.connect(url);
+        if (action instanceof ConnectAsyncAction) {
+            client.connect(url, ((ConnectAsyncAction) action).reconnectIfConnected);
             connectActionQueue.add((ConnectAsyncAction) action);
             return;
         }
@@ -73,6 +72,10 @@ final public class AsyncActionAdapter extends ActionAdapter {
             client.disconnect();
             disconnectActionQueue.add((DisconnectAsyncAction) action);
             return;
+        }
+
+        if (!client.isConnected()) {
+            client.connect(url, false);
         }
 
         AsyncActionWrapper wrapper = actionWrapperFactory.make(action.getClass(), action);
@@ -83,15 +86,15 @@ final public class AsyncActionAdapter extends ActionAdapter {
         if (responseEvent != null) {
             synchronizer.put(responseEvent, wrapper);
         }
+        ActionBody actionBody = wrapper.getMessage(converter);
         if (wrapper.isBytesMessage()) {
-            client.send(wrapper.getEvent(), wrapper.getBytesMessage());
+            client.send(wrapper.getEvent(), actionBody.getContent());
         } else {
-            ActionBody actionBody = wrapper.getMessage(converter);
             client.send(wrapper.getEvent(), new String(actionBody.getContent()));
         }
     }
 
-    private void onMessageReceived(String event, ActionBody body) {
+    private void onMessageReceived(String event, BytesArrayBody body) {
         if (!actionsRoster.containsEvent(event)) {
             System.err.println(String.format("Received sync message %s is not defined by any action :(. The message contains body %s", event, body));
             return;

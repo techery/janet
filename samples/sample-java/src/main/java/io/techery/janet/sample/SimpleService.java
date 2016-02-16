@@ -3,7 +3,9 @@ package io.techery.janet.sample;
 import com.google.gson.Gson;
 
 import io.techery.janet.AsyncActionAdapter;
+import io.techery.janet.AsyncActionWrapper;
 import io.techery.janet.async.actions.ConnectAsyncAction;
+import io.techery.janet.body.BytesArrayBody;
 import io.techery.janet.helper.ActionStateSubscriber;
 import io.techery.janet.HttpActionAdapter;
 import io.techery.janet.Janet;
@@ -22,7 +24,10 @@ public class SimpleService {
                 .addInterceptor(System.out::println)
                 .build();
 
-        janet.createPipe(ConnectAsyncAction.class).send(new ConnectAsyncAction());
+//        janet.createPipe(ConnectAsyncAction.class).send(new ConnectAsyncAction());
+
+        AsyncTestActionWrapper wrapper = new AsyncTestActionWrapper(new AsyncTestAction());
+        wrapper.fillMessage(new BytesArrayBody("", new byte[0]), new GsonConverter(new Gson()));
 
         ActionPipe<UsersAction> usersPipe = janet.createPipe(UsersAction.class);
         ActionPipe<UserReposAction> userReposPipe = janet.createPipe(UserReposAction.class);

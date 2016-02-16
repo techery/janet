@@ -8,4 +8,8 @@ public class JanetInternalException extends RuntimeException {
     public JanetInternalException(String message) {
         super(message);
     }
+
+    public JanetInternalException(Throwable cause) {
+        super(cause);
+    }
 }

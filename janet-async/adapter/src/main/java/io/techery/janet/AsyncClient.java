@@ -6,7 +6,7 @@ public abstract class AsyncClient {
 
     public abstract boolean isConnected();
 
-    public abstract void connect(String url) throws Throwable;
+    public abstract void connect(String url, boolean reconnectIfConnected) throws Throwable;
 
     public abstract void disconnect() throws Throwable;
 
@@ -20,7 +20,7 @@ public abstract class AsyncClient {
         this.callback = callback;
     }
 
-    interface Callback {
+    public interface Callback {
         void onConnect();
         void onDisconnect(String reason);
         void onError(Throwable throwable);

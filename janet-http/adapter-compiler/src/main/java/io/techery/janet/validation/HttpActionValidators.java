@@ -20,7 +20,7 @@ import io.techery.janet.http.annotations.HttpAction;
 import io.techery.janet.http.annotations.Part;
 import io.techery.janet.http.annotations.ResponseHeader;
 import io.techery.janet.http.annotations.Status;
-import io.techery.janet.http.model.FileBody;
+import io.techery.janet.body.FileBody;
 import io.techery.janet.http.model.FormUrlEncodedRequestBody;
 import io.techery.janet.http.model.MultipartRequestBody;
 

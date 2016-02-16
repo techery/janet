@@ -1,20 +1,20 @@
-package io.techery.janet.http.model;
+package io.techery.janet.body;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 
-import io.techery.janet.body.ActionBody;
+import io.techery.janet.JanetInternalException;
 
-public class FileBody extends ActionBody {
+public class FileBody extends BytesArrayBody {
     private static final int BUFFER_SIZE = 4096;
 
     private final String mimeType;
     private final File file;
 
     public FileBody(String mimeType, File file) {
-        super(mimeType);
+        super(mimeType, getBytes(file));
         if (mimeType == null) {
             throw new NullPointerException("mimeType");
         }
@@ -43,20 +43,23 @@ public class FileBody extends ActionBody {
         return file.getName();
     }
 
-    @Override
-    public byte[] getContent() throws IOException {
-        byte[] buffer = new byte[BUFFER_SIZE];
-        FileInputStream in = new FileInputStream(file);
-        ByteArrayOutputStream out = new ByteArrayOutputStream();
+    private static byte[] getBytes(File file) {
         try {
-            int read;
-            while ((read = in.read(buffer)) != -1) {
-                out.write(buffer, 0, read);
+            byte[] buffer = new byte[BUFFER_SIZE];
+            FileInputStream in = new FileInputStream(file);
+            ByteArrayOutputStream out = new ByteArrayOutputStream();
+            try {
+                int read;
+                while ((read = in.read(buffer)) != -1) {
+                    out.write(buffer, 0, read);
+                }
+            } finally {
+                in.close();
             }
-        } finally {
-            in.close();
+            return out.toByteArray();
+        }catch (IOException e){
+            throw new JanetInternalException(e);
         }
-        return out.toByteArray();
     }
 
     public void moveTo(FileBody destination) throws IOException {
