@@ -23,11 +23,6 @@ public class TypeIncomingValidator implements Validator<AsyncActionClass> {
                             .getTypeElement()));
                 }
             }
-
-//            if (!value.getAnnotatedElements(SyncedResponse.class).isEmpty()) {
-//                errors.add(new ValidationError("This class can not contain synced response. It is for receiving only", value
-//                        .getTypeElement()));
-//            }
         }
         return errors;
     }

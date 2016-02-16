@@ -52,3 +52,6 @@ proguard/
 
 # svn
 *.svn*
+
+#node.js
+node_modules
