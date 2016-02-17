@@ -1,4 +1,4 @@
-package io.techery.janet.sample;
+package io.techery.janet.sample.http;
 
 
 import io.techery.janet.http.annotations.Status;

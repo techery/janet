@@ -1,13 +1,8 @@
 package io.techery.janet.validation;
 
-import com.squareup.javapoet.ClassName;
-import com.squareup.javapoet.TypeName;
-
 import java.util.HashSet;
 import java.util.Set;
 
-import javax.lang.model.element.AnnotationMirror;
-import javax.lang.model.element.Element;
 import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.util.ElementFilter;
 
@@ -22,7 +17,7 @@ public class SyncedResponseValidator implements Validator<AsyncActionClass> {
         Set<ValidationError> errors = new HashSet<ValidationError>();
         if (value.getResponseInfo() != null) {
             AsyncAction asyncActionAnnotation = value.getResponseInfo().responseFieldType.getAnnotation(AsyncAction.class);
-            if(asyncActionAnnotation == null || !asyncActionAnnotation.incoming()){
+            if (asyncActionAnnotation == null || !asyncActionAnnotation.incoming()) {
                 errors.add(new ValidationError("Synced response must be as incoming async action", value.getResponseInfo().responseField));
             }
             if (value.getResponseInfo().syncPredicateElement == null) {

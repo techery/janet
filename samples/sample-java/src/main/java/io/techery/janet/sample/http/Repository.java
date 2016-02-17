@@ -1,4 +1,4 @@
-package io.techery.janet.sample;
+package io.techery.janet.sample.http;
 
 public class Repository {
 

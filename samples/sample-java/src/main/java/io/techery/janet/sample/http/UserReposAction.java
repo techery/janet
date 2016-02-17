@@ -1,4 +1,4 @@
-package io.techery.janet.sample;
+package io.techery.janet.sample.http;
 
 import java.util.ArrayList;
 
@@ -13,7 +13,7 @@ public class UserReposAction extends BaseAction {
     final String login;
 
     @Response
-    ArrayList<Repository> repositories;
+    ArrayList<io.techery.janet.sample.http.Repository> repositories;
 
     public UserReposAction(String login) {
         this.login = login;
@@ -23,7 +23,7 @@ public class UserReposAction extends BaseAction {
         return login;
     }
 
-    public ArrayList<Repository> getRepositories() {
+    public ArrayList<io.techery.janet.sample.http.Repository> getRepositories() {
         return repositories;
     }
 
