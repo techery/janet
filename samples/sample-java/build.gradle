@@ -10,7 +10,7 @@ buildscript {
 }
 
 apply plugin: 'java'
-apply plugin: "kotlin"
+apply plugin: 'kotlin'
 
 
 dependencies {
@@ -21,11 +21,11 @@ dependencies {
     compile project(":janet-async:clients:nkzawa-socket.io")
     compile project(":janet-converters:gson")
     compile project(":janet-http:clients:okhttp")
-    compile'io.reactivex:rxjava:1.1.0'
+    compile 'io.reactivex:rxjava:1.1.0'
     //kotlin
     compile "org.jetbrains.kotlin:kotlin-stdlib:1.0.0"
     compile "org.jetbrains.kotlin:kotlin-reflect:1.0.0"
-    compile'io.reactivex:rxkotlin:0.40.1'
+    compile 'io.reactivex:rxkotlin:0.40.1'
 }
 
 
