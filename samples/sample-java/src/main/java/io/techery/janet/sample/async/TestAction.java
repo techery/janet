@@ -1,5 +1,6 @@
 package io.techery.janet.sample.async;
 
+import io.techery.janet.async.SyncPredicate;
 import io.techery.janet.async.annotations.AsyncAction;
 import io.techery.janet.async.annotations.AsyncMessage;
 import io.techery.janet.async.annotations.SyncedResponse;
@@ -10,7 +11,7 @@ public class TestAction {
     @AsyncMessage
     Body body;
 
-    @SyncedResponse(SyncPredicate.class)
+    @SyncedResponse(TestSyncPredicate.class)
     TestAction response;
 
     @Override public String toString() {
@@ -20,10 +21,10 @@ public class TestAction {
                 '}';
     }
 
-    public static class SyncPredicate extends io.techery.janet.async.SyncPredicate {
+    public static class TestSyncPredicate implements SyncPredicate<TestAction, TestAction> {
 
-        @Override public boolean isResponse(Object requestAction, Object response) {
-            return ((TestAction) requestAction).body.id == ((TestAction) response).body.id;
+        @Override public boolean isResponse(TestAction requestAction, TestAction response) {
+            return requestAction.body.id == response.body.id;
         }
     }
 }

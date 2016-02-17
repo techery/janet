@@ -1,6 +1,7 @@
 package io.techery.janet;
 
 import com.google.auto.service.AutoService;
+import com.squareup.javapoet.TypeName;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -19,6 +20,7 @@ import javax.lang.model.type.TypeMirror;
 import javax.lang.model.util.Elements;
 import javax.tools.Diagnostic;
 
+import io.techery.janet.async.actions.SystemAction;
 import io.techery.janet.async.annotations.AsyncAction;
 import io.techery.janet.compiler.utils.validation.ClassValidator;
 import io.techery.janet.compiler.utils.validation.ValidationError;
@@ -72,7 +74,8 @@ public class JanetAsyncProcessor extends AbstractProcessor {
             TypeElement typeElement = (TypeElement) element;
             boolean isSystem = false;
             for (TypeMirror iface : typeElement.getInterfaces()) {
-                if (iface.toString().equals("io.techery.janet.async.actions.SystemAction")) {
+                if (TypeName.get(iface).toString()
+                        .equals(TypeName.get(SystemAction.class).toString())) {
                     isSystem = true;
                     break;
                 }

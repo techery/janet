@@ -3,7 +3,7 @@ package io.techery.janet.async.actions;
 import io.techery.janet.async.annotations.AsyncAction;
 
 @AsyncAction(value = "disconnect", incoming = true)
-final public class DisconnectAsyncAction implements SystemAction {
+final public class DisconnectAsyncAction implements ServerStatusAction {
 
     private String reason;
 
