@@ -1,33 +1,10 @@
 apply plugin: 'java'
-apply plugin: 'com.google.protobuf'
 
 sourceCompatibility = 1.6
 targetCompatibility = 1.6
 
-sourceSets {
-    main {
-        proto {
-            // In addition to the default 'src/main/proto'
-            srcDir 'src/main/protobuf'
-            srcDir 'src/main/protocolbuffers'
-            // In addition to the default '**/*.proto' (use with caution).
-            // Using an extension other than 'proto' is NOT recommended,
-            // because when proto files are published along with class files, we can
-            // only tell the type of a file from its extension.
-            include '**/*.protodevel'
-        }
-    }
-}
-
-protobuf {
-    protoc {
-        // Download from repositories
-        artifact = 'com.google.protobuf:protoc:3.0.0-alpha-3'
-    }
-}
-
 dependencies {
     compile project(':janet-converters:base')
 
-    compile 'com.google.protobuf:protobuf-java:2.4.1'
+    compile 'com.google.protobuf:protobuf-java:2.4.+'
 }
