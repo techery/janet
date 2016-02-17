@@ -3,18 +3,13 @@ package io.techery.janet.body;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 
-public class StringBody extends ActionBody {
+public class StringBody extends BytesArrayBody {
 
     private final String string;
 
     public StringBody(String string) {
-        super("text/plain; charset=UTF-8");
+        super("text/plain; charset=UTF-8", convertToBytes(string));
         this.string = string;
-    }
-
-    @Override
-    public byte[] getContent() throws IOException {
-        return convertToBytes(string);
     }
 
     private static byte[] convertToBytes(String string) {
@@ -23,6 +18,10 @@ public class StringBody extends ActionBody {
         } catch (UnsupportedEncodingException e) {
             throw new RuntimeException(e);
         }
+    }
+
+    public String getString() {
+        return string;
     }
 
     @Override

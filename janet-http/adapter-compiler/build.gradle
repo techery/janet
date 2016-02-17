@@ -5,6 +5,7 @@ sourceCompatibility = '1.6'
 
 dependencies {
     compile project(':janet-base-body')
+    compile project(':janet-base-compiler')
     compile project(':janet-http:adapter')
     compile 'com.squareup:javapoet:1.1.0'
     compile 'com.google.auto.service:auto-service:1.0-rc2'

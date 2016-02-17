@@ -1,7 +1,9 @@
 package io.techery.janet;
 
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 
 import io.techery.janet.converter.Converter;
 import io.techery.janet.http.HttpClient;
@@ -11,7 +13,7 @@ import io.techery.janet.http.model.Response;
 
 final public class HttpActionAdapter extends ActionAdapter {
 
-    final static String HELPERS_FACTORY_CLASS_SIMPLE_NAME = "ActionHelperFactoryImpl";
+    final static String HELPERS_FACTORY_CLASS_SIMPLE_NAME = "HttpActionHelperFactory";
     private final static String HELPERS_FACTORY_CLASS_NAME = Janet.class.getPackage()
             .getName() + "." + HELPERS_FACTORY_CLASS_SIMPLE_NAME;
 
@@ -21,26 +23,28 @@ final public class HttpActionAdapter extends ActionAdapter {
     private final HttpClient client;
     private final Converter converter;
     private final String baseUrl;
-    private Callback callback;
 
     public HttpActionAdapter(String baseUrl, HttpClient client, Converter converter) {
+        if(baseUrl == null){
+            throw new IllegalArgumentException("baseUrl == null");
+        }
+        if(client == null){
+            throw new IllegalArgumentException("client == null");
+        }
+        if(converter == null){
+            throw new IllegalArgumentException("converter == null");
+        }
         this.baseUrl = baseUrl;
         this.client = client;
         this.converter = converter;
         loadActionHelperFactory();
     }
 
-    @Override <A> void send(A action) {
-        try {
-            sendInternal(action);
-        } catch (Exception e) {
-            if (!(e instanceof JanetServerException)) {
-                this.callback.onFail(action, e);
-            }
-        }
+    @Override Class getSupportedAnnotationType() {
+        return HttpAction.class;
     }
 
-    <A> void sendInternal(A action) throws Exception {
+    @Override protected <A> void sendInternal(A action) throws Exception {
         callback.onStart(action);
         final ActionHelper<A> helper = getActionHelper(action.getClass());
         if (helper == null) {
@@ -55,15 +59,6 @@ final public class HttpActionAdapter extends ActionAdapter {
             callback.onServerError(action);
         }
         this.callback.onSuccess(action);
-    }
-
-    @Override void setOnResponseCallback(Callback callback) {
-        this.callback = callback;
-    }
-
-
-    @Override Class getActionAnnotationClass() {
-        return HttpAction.class;
     }
 
     private ActionHelper getActionHelper(Class actionClass) {

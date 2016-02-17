@@ -1,15 +1,17 @@
 package io.techery.janet.validation;
 
-import io.techery.janet.HttpActionClass;
-import io.techery.janet.http.annotations.Body;
-import io.techery.janet.http.annotations.HttpAction;
-
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
 import javax.lang.model.element.Element;
+
+import io.techery.janet.HttpActionClass;
+import io.techery.janet.compiler.utils.validation.ValidationError;
+import io.techery.janet.compiler.utils.validation.Validator;
+import io.techery.janet.http.annotations.Body;
+import io.techery.janet.http.annotations.HttpAction;
 
 public class BodyValidator implements Validator<HttpActionClass> {
     @Override
@@ -26,7 +28,8 @@ public class BodyValidator implements Validator<HttpActionClass> {
             if (!method.hasBody()) continue;
             methodNames.add(method.name());
         }
-        errors.add(new ValidationError(String.format("It's possible to use %s only with %s methods ", element, Body.class.getName(), methodNames.toString()), value.getTypeElement()));
+        errors.add(new ValidationError(String.format("It's possible to use %s only with %s methods ", element, Body.class
+                .getName(), methodNames.toString()), value.getTypeElement()));
         return errors;
     }
 }

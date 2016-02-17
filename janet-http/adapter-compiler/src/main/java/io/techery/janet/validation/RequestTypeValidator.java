@@ -8,6 +8,8 @@ import java.util.Set;
 import javax.lang.model.element.Element;
 
 import io.techery.janet.HttpActionClass;
+import io.techery.janet.compiler.utils.validation.ValidationError;
+import io.techery.janet.compiler.utils.validation.Validator;
 import io.techery.janet.http.annotations.HttpAction;
 
 public class RequestTypeValidator implements Validator<HttpActionClass> {
