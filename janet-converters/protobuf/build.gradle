@@ -1,0 +1,10 @@
+apply plugin: 'java'
+
+sourceCompatibility = 1.6
+targetCompatibility = 1.6
+
+dependencies {
+    compile project(':janet-converters:base')
+
+    compile 'com.google.protobuf:protobuf-java:2.4.+'
+}

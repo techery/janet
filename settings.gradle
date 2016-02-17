@@ -8,5 +8,6 @@ include ':janet',
         ':janet-http:clients:url-connection',
         ':janet-converters:base',
         ':janet-converters:gson',
+        ':janet-converters:protobuf',
         ':samples:sample-android',
         ':samples:sample-java'
