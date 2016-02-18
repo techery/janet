@@ -19,14 +19,6 @@ artifacts {
     archives javadocJar
 }
 
-install {
-    repositories.mavenInstaller {
-        pom.groupId = 'io.techery.janet'
-        pom.artifactId = 'nkzawa-socket.io'
-        pom.version = '0.0.1-SNAPSHOT'
-    }
-}
-
 dependencies {
     compile project(path: ':janet-async:async-adapter')
     compile 'com.github.nkzawa:socket.io-client:0.3.0'
