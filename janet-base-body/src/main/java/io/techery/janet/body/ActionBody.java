@@ -13,6 +13,7 @@ public abstract class ActionBody {
 
     private final String mimeType;
     private byte[] bytes;
+    private long length;
 
     public ActionBody(String mimeType) {
         if (mimeType == null) {
@@ -51,7 +52,11 @@ public abstract class ActionBody {
     }
 
     public long length() {
-        return bytes().length;
+        if (length > 0) {
+            return length;
+        }
+        length = bytes().length;
+        return length;
     }
 
     public void writeTo(OutputStream out) throws IOException {

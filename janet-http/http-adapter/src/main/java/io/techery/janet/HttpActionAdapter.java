@@ -1,9 +1,7 @@
 package io.techery.janet;
 
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Map;
-import java.util.Set;
 
 import io.techery.janet.converter.Converter;
 import io.techery.janet.http.HttpClient;
@@ -16,6 +14,7 @@ final public class HttpActionAdapter extends ActionAdapter {
     final static String HELPERS_FACTORY_CLASS_SIMPLE_NAME = "HttpActionHelperFactory";
     private final static String HELPERS_FACTORY_CLASS_NAME = Janet.class.getPackage()
             .getName() + "." + HELPERS_FACTORY_CLASS_SIMPLE_NAME;
+    private final int PROGRESS_THRESHOLD = 5;
 
     private ActionHelperFactory actionHelperFactory;
     private final Map<Class, ActionHelper> actionHelperCache = new HashMap<Class, ActionHelper>();
@@ -25,13 +24,13 @@ final public class HttpActionAdapter extends ActionAdapter {
     private final String baseUrl;
 
     public HttpActionAdapter(String baseUrl, HttpClient client, Converter converter) {
-        if(baseUrl == null){
+        if (baseUrl == null) {
             throw new IllegalArgumentException("baseUrl == null");
         }
-        if(client == null){
+        if (client == null) {
             throw new IllegalArgumentException("client == null");
         }
-        if(converter == null){
+        if (converter == null) {
             throw new IllegalArgumentException("converter == null");
         }
         this.baseUrl = baseUrl;
@@ -53,7 +52,16 @@ final public class HttpActionAdapter extends ActionAdapter {
         RequestBuilder builder = new RequestBuilder(baseUrl, converter);
         builder = helper.fillRequest(builder, action);
         Request request = builder.build();
-        Response response = client.execute(request);
+        Response response = client.execute(request, new ActionRequestCallback<A>(action) {
+            private int lastProgress;
+
+            @Override public void onProgress(int progress) {
+                if (progress > lastProgress + PROGRESS_THRESHOLD) {
+                    callback.onProgress(action, progress);
+                    lastProgress = progress;
+                }
+            }
+        });
         action = helper.onResponse(action, response, converter);
         if (!response.isSuccessful()) { //throw exception to change action state
             callback.onServerError(action);
@@ -90,6 +98,14 @@ final public class HttpActionAdapter extends ActionAdapter {
         RequestBuilder fillRequest(RequestBuilder requestBuilder, T action);
 
         T onResponse(T action, Response response, Converter converter);
+    }
+
+    private static abstract class ActionRequestCallback<A> implements HttpClient.RequestCallback {
+
+        protected final A action;
+
+        private ActionRequestCallback(A action) {this.action = action;}
+
     }
 
 

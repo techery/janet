@@ -98,6 +98,7 @@ final public class AsyncActionAdapter extends ActionAdapter {
         } else {
             client.send(wrapper.getEvent(), new String(actionBody.getContent()));
         }
+        callback.onProgress(action, 100);
     }
 
     private void onMessageReceived(String event, BytesArrayBody body) {

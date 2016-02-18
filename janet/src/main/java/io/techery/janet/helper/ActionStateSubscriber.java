@@ -4,6 +4,7 @@ import io.techery.janet.ActionState;
 import rx.Subscriber;
 import rx.functions.Action0;
 import rx.functions.Action1;
+import rx.functions.Action2;
 
 public class ActionStateSubscriber<A> extends Subscriber<ActionState<A>> {
 
@@ -11,6 +12,7 @@ public class ActionStateSubscriber<A> extends Subscriber<ActionState<A>> {
     private Action1<Throwable> onFail;
     private Action1<A> onServerError;
     private Action0 onStart;
+    private Action2<A, Integer> onProgress;
     private Action1<ActionState<A>> beforeEach;
     private Action1<ActionState<A>> afterEach;
 
@@ -29,8 +31,13 @@ public class ActionStateSubscriber<A> extends Subscriber<ActionState<A>> {
         return this;
     }
 
-    public ActionStateSubscriber<A> onStart(Action0 onProgress) {
-        this.onStart = onProgress;
+    public ActionStateSubscriber<A> onStart(Action0 onStart) {
+        this.onStart = onStart;
+        return this;
+    }
+
+    public ActionStateSubscriber<A> onProgress(Action2<A, Integer> onProgress) {
+        this.onProgress = onProgress;
         return this;
     }
 
@@ -58,6 +65,9 @@ public class ActionStateSubscriber<A> extends Subscriber<ActionState<A>> {
                 break;
             case SERVER_ERROR:
                 if (onServerError != null) onServerError.call(state.action);
+                break;
+            case PROGRESS:
+                if (onProgress != null) onProgress.call(state.action, state.progress);
                 break;
         }
         if (afterEach != null) afterEach.call(state);

@@ -13,12 +13,10 @@ import rx.subjects.PublishSubject;
 
 public class Janet {
 
-    private final List<Interceptor> interceptors;
     private final List<ActionAdapter> adapters;
     private final PublishSubject<ActionState> pipeline;
 
     private Janet(Builder builder) {
-        this.interceptors = builder.interceptors;
         this.adapters = builder.adapters;
         this.pipeline = PublishSubject.create();
         connectPipeline();
@@ -26,10 +24,15 @@ public class Janet {
 
     private void connectPipeline() {
         for (ActionAdapter adapter : adapters) {
-            adapter.setOnResponseCallback(new ActionAdapter.Callback() {
+            adapter.setCallback(new ActionAdapter.Callback() {
                 @Override public void onStart(Object action) {
                     //noinspection unchecked
                     pipeline.onNext(new ActionState(action).status(ActionState.Status.START));
+                }
+
+                @Override public void onProgress(Object action, int progress) {
+                    //noinspection unchecked
+                    pipeline.onNext(new ActionState(action).status(ActionState.Status.PROGRESS).progress(progress));
                 }
 
                 @Override public void onSuccess(Object action) {
@@ -113,15 +116,6 @@ public class Janet {
     public static class Builder {
 
         private List<ActionAdapter> adapters = new ArrayList<ActionAdapter>();
-        private List<Interceptor> interceptors = new ArrayList<Interceptor>();
-
-        public Builder addInterceptor(Interceptor requestInterceptor) {
-            if (requestInterceptor == null) {
-                throw new IllegalArgumentException("Request interceptor may not be null.");
-            }
-            this.interceptors.add(requestInterceptor);
-            return this;
-        }
 
         public Builder addAdapter(ActionAdapter adapter) {
             if (adapter == null) {

@@ -8,8 +8,10 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.concurrent.TimeUnit;
 
+import io.techery.janet.http.HttpClient;
 import io.techery.janet.http.UrlConnectionClient;
 import io.techery.janet.http.model.Request;
+import io.techery.janet.http.model.Response;
 
 /**
  * Janet client that uses OkHttp.
