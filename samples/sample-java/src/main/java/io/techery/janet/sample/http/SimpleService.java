@@ -2,11 +2,13 @@ package io.techery.janet.sample.http;
 
 import com.google.gson.Gson;
 
+import io.techery.janet.ActionPipe;
 import io.techery.janet.HttpActionAdapter;
 import io.techery.janet.Janet;
 import io.techery.janet.gson.GsonConverter;
 import io.techery.janet.helper.ActionStateSubscriber;
 import io.techery.janet.okhttp.OkClient;
+import rx.Observable;
 
 public class SimpleService {
 
@@ -17,24 +19,24 @@ public class SimpleService {
                 .addAdapter(new HttpActionAdapter(API_URL, new OkClient(), new GsonConverter(new Gson())))
                 .build();
 
-        //        ActionPipe<UsersAction> usersPipe = janet.createPipe(UsersAction.class);
-        //        ActionPipe<UserReposAction> userReposPipe = janet.createPipe(UserReposAction.class);
-        //
-        //        usersPipe.observeActions()
-        //                .filter(BaseAction::isSuccess)
-        //                .subscribe(
-        //                        action -> System.out.println("received " + action),
-        //                        System.err::println
-        //                );
-        //
-        //        usersPipe.createObservable(new UsersAction())
-        //                .filter(state -> state.action.isSuccess())
-        //                .flatMap(state -> Observable.<User>from(state.action.response).first())
-        //                .flatMap(user -> userReposPipe.createObservable(new UserReposAction(user.getLogin())))
-        //                .subscribe(new ActionStateSubscriber<UserReposAction>()
-        //                        .onSuccess(action -> System.out.println("repos request finished " + action))
-        //                        .onFail(throwable -> System.err.println("repos request throwable " + throwable))
-        //                        .onServerError(action -> System.err.println("repos request http throwable " + action)));
+        ActionPipe<UsersAction> usersPipe = janet.createPipe(UsersAction.class);
+        ActionPipe<UserReposAction> userReposPipe = janet.createPipe(UserReposAction.class);
+
+        usersPipe.observeActions()
+                .filter(BaseAction::isSuccess)
+                .subscribe(
+                        action -> System.out.println("received " + action),
+                        System.err::println
+                );
+
+        usersPipe.createObservable(new UsersAction())
+                .filter(state -> state.action.isSuccess())
+                .flatMap(state -> Observable.<User>from(state.action.response).first())
+                .flatMap(user -> userReposPipe.createObservable(new UserReposAction(user.getLogin())))
+                .subscribe(new ActionStateSubscriber<UserReposAction>()
+                        .onSuccess(action -> System.out.println("repos request finished " + action))
+                        .onFail(throwable -> System.err.println("repos request throwable " + throwable))
+                        .onServerError(action -> System.err.println("repos request http throwable " + action)));
 
 
         janet = new Janet.Builder()
