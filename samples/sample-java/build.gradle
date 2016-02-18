@@ -14,13 +14,13 @@ apply plugin: 'kotlin'
 
 
 dependencies {
-    compile project(":janet-http:adapter")
-    compile project(":janet-http:adapter-compiler")
-    compile project(":janet-async:adapter")
-    compile project(":janet-async:adapter-compiler")
-    compile project(":janet-async:clients:nkzawa-socket.io")
+    compile project(":janet-http:http-adapter")
+    compile project(":janet-http:http-adapter-compiler")
+    compile project(":janet-async:async-adapter")
+    compile project(":janet-async:async-adapter-compiler")
+    compile project(":janet-async:async-clients:nkzawa-socket.io")
     compile project(":janet-converters:gson")
-    compile project(":janet-http:clients:okhttp")
+    compile project(":janet-http:http-clients:okhttp")
     compile 'io.reactivex:rxjava:1.1.0'
     //kotlin
     compile "org.jetbrains.kotlin:kotlin-stdlib:1.0.0"

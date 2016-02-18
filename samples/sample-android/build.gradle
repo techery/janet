@@ -46,6 +46,11 @@ android {
 
 dependencies {
 
+    compile project(":janet-http:http-adapter")
+    compile project(":janet-http:http-adapter-compiler")
+    compile project(":janet-converters:gson")
+    compile project(":janet-http:http-clients:okhttp")
+
     compile 'com.android.support:appcompat-v7:23.1.1'
     compile 'com.android.support:recyclerview-v7:23.1.1'
     compile 'io.reactivex:rxjava:1.1.0'

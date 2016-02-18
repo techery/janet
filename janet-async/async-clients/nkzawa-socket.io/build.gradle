@@ -1,10 +1,8 @@
 apply plugin: 'java'
-apply plugin: 'provided-base'
 apply plugin: 'maven'
 
 sourceCompatibility = 1.6
 targetCompatibility = 1.6
-
 
 task sourcesJar(type: Jar, dependsOn: classes) {
     classifier = 'sources'
@@ -24,13 +22,12 @@ artifacts {
 install {
     repositories.mavenInstaller {
         pom.groupId = 'io.techery.janet'
-        pom.artifactId = 'okhttp'
+        pom.artifactId = 'nkzawa-socket.io'
         pom.version = '0.0.1-SNAPSHOT'
     }
 }
 
 dependencies {
-    compile project(':janet-http:clients:url-connection')
-    compile 'com.squareup.okhttp:okhttp:2.7.4'
-    compile 'com.squareup.okhttp:okhttp-urlconnection:2.7.4'
+    compile project(path: ':janet-async:async-adapter')
+    compile 'com.github.nkzawa:socket.io-client:0.3.0'
 }

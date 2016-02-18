@@ -22,19 +22,13 @@ artifacts {
 install {
     repositories.mavenInstaller {
         pom.groupId = 'io.techery.janet'
-        pom.artifactId = 'http-adapter-compiler'
+        pom.artifactId = 'socket.io'
         pom.version = '0.0.1-SNAPSHOT'
     }
 }
 
 dependencies {
-    compile project(':janet-base-body')
-    compile project(':janet-base-compiler')
-    compile project(':janet-http:adapter')
-    compile 'com.squareup:javapoet:1.1.0'
-    compile 'com.google.auto.service:auto-service:1.0-rc2'
-    compile 'com.google.code.findbugs:jsr305:2.0.3'
-    compile 'org.apache.velocity:velocity:1.7'
-    compile 'org.ow2.asm:asm:4.1'
-    compile 'com.google.guava:guava:18.0'
+    compile project(path: ':janet-async:async-adapter')
+    compile ('io.socket:socket.io-client:+')
+    compile ('org.java-websocket:Java-WebSocket:+')
 }
