@@ -20,14 +20,6 @@ artifacts {
     archives javadocJar
 }
 
-install {
-    repositories.mavenInstaller {
-        pom.groupId = 'io.techery.janet'
-        pom.artifactId = 'janet'
-        pom.version = '0.0.1-SNAPSHOT'
-    }
-}
-
 dependencies {
     provided 'io.reactivex:rxjava:+'
 }

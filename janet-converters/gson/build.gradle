@@ -20,14 +20,6 @@ artifacts {
     archives javadocJar
 }
 
-install {
-    repositories.mavenInstaller {
-        pom.groupId = 'io.techery.janet'
-        pom.artifactId = 'gson'
-        pom.version = '0.0.1-SNAPSHOT'
-    }
-}
-
 dependencies {
     compile project(':janet-converters:base')
     compile 'com.google.code.gson:gson:2.6.1'

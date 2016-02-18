@@ -19,14 +19,6 @@ artifacts {
     archives javadocJar
 }
 
-install {
-    repositories.mavenInstaller {
-        pom.groupId = 'io.techery.janet'
-        pom.artifactId = 'base'
-        pom.version = '0.0.1-SNAPSHOT'
-    }
-}
-
 dependencies {
     compile fileTree(dir: 'libs', include: ['*.jar'])
     compile project(':janet-base-body')

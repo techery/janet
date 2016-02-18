@@ -21,14 +21,6 @@ artifacts {
     archives javadocJar
 }
 
-install {
-    repositories.mavenInstaller {
-        pom.groupId = 'io.techery.janet'
-        pom.artifactId = 'okhttp'
-        pom.version = '0.0.1-SNAPSHOT'
-    }
-}
-
 dependencies {
     compile project(':janet-http:http-clients:url-connection')
     compile 'com.squareup.okhttp:okhttp:2.7.4'

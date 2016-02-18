@@ -18,15 +18,6 @@ artifacts {
     archives sourcesJar
     archives javadocJar
 }
-
-install {
-    repositories.mavenInstaller {
-        pom.groupId = 'io.techery.janet'
-        pom.artifactId = 'async-adapter-compiler'
-        pom.version = '0.0.1-SNAPSHOT'
-    }
-}
-
 dependencies {
     compile project(':janet-base-body')
     compile project(':janet-async:async-adapter')
