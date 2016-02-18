@@ -1,4 +1,5 @@
 apply plugin: 'java'
+apply plugin: 'provided-base'
 apply plugin: 'maven'
 
 sourceCompatibility = 1.6
@@ -23,12 +24,13 @@ artifacts {
 install {
     repositories.mavenInstaller {
         pom.groupId = 'io.techery.janet'
-        pom.artifactId = 'gson'
+        pom.artifactId = 'okhttp'
         pom.version = '0.0.1-SNAPSHOT'
     }
 }
 
 dependencies {
-    compile project(':janet-converters:base')
-    compile 'com.google.code.gson:gson:2.6.1'
+    compile project(':janet-http:http-clients:url-connection')
+    compile 'com.squareup.okhttp:okhttp:2.7.4'
+    compile 'com.squareup.okhttp:okhttp-urlconnection:2.7.4'
 }

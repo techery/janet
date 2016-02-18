@@ -45,10 +45,11 @@ android {
 }
 
 dependencies {
-    compile project(":janet-http:adapter")
-    compile project(":janet-http:adapter-compiler")
+
+    compile project(":janet-http:http-adapter")
+    compile project(":janet-http:http-adapter-compiler")
     compile project(":janet-converters:gson")
-    compile project(":janet-http:clients:okhttp")
+    compile project(":janet-http:http-clients:okhttp")
 
     compile 'com.android.support:appcompat-v7:23.1.1'
     compile 'com.android.support:recyclerview-v7:23.1.1'

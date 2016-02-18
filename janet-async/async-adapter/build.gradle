@@ -1,9 +1,9 @@
 apply plugin: 'java'
+apply plugin: 'provided-base'
 apply plugin: 'maven'
 
 sourceCompatibility = 1.6
 targetCompatibility = 1.6
-
 
 task sourcesJar(type: Jar, dependsOn: classes) {
     classifier = 'sources'
@@ -23,12 +23,12 @@ artifacts {
 install {
     repositories.mavenInstaller {
         pom.groupId = 'io.techery.janet'
-        pom.artifactId = 'gson'
         pom.version = '0.0.1-SNAPSHOT'
     }
 }
 
 dependencies {
+    compile project(':janet')
+    compile project(':janet-base-body')
     compile project(':janet-converters:base')
-    compile 'com.google.code.gson:gson:2.6.1'
 }

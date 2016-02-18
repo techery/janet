@@ -4,7 +4,6 @@ apply plugin: 'maven'
 sourceCompatibility = 1.6
 targetCompatibility = 1.6
 
-
 task sourcesJar(type: Jar, dependsOn: classes) {
     classifier = 'sources'
     from sourceSets.main.allSource
@@ -23,12 +22,13 @@ artifacts {
 install {
     repositories.mavenInstaller {
         pom.groupId = 'io.techery.janet'
-        pom.artifactId = 'gson'
+        pom.artifactId = 'socket.io'
         pom.version = '0.0.1-SNAPSHOT'
     }
 }
 
 dependencies {
-    compile project(':janet-converters:base')
-    compile 'com.google.code.gson:gson:2.6.1'
+    compile project(path: ':janet-async:async-adapter')
+    compile ('io.socket:socket.io-client:+')
+    compile ('org.java-websocket:Java-WebSocket:+')
 }
