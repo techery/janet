@@ -1,7 +1,6 @@
 package io.techery.janet;
 
 
-import com.google.common.reflect.TypeToken;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.MethodSpec;
 import com.squareup.javapoet.ParameterizedTypeName;
@@ -37,6 +36,8 @@ import io.techery.janet.http.model.Header;
 import io.techery.janet.http.model.Response;
 
 import io.techery.janet.compiler.utils.TypeUtils;
+import io.techery.janet.internal.TypeToken;
+
 import static io.techery.janet.compiler.utils.TypeUtils.equalTypes;
 
 
