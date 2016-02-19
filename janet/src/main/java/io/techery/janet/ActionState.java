@@ -3,12 +3,13 @@ package io.techery.janet;
 public class ActionState<A> {
 
     public enum Status{
-        START, SUCCESS, FAIL, SERVER_ERROR
+        START, PROGRESS, SUCCESS, FAIL, SERVER_ERROR
     }
 
     public A action;
     public Throwable throwable;
     public Status status;
+    public int progress;
 
     public ActionState(A action) {
         this.action = action;
@@ -26,6 +27,11 @@ public class ActionState<A> {
 
     public ActionState<A> status(Status status) {
         this.status = status;
+        return this;
+    }
+
+    public ActionState<A> progress(int progress) {
+        this.progress = progress;
         return this;
     }
 

@@ -24,11 +24,12 @@ import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
 
+import io.techery.janet.body.ActionBody;
+import io.techery.janet.body.BytesArrayBody;
+import io.techery.janet.http.internal.ProgressOutputStream;
 import io.techery.janet.http.model.Header;
 import io.techery.janet.http.model.Request;
 import io.techery.janet.http.model.Response;
-import io.techery.janet.body.ActionBody;
-import io.techery.janet.body.BytesArrayBody;
 
 
 public class ApacheClient implements io.techery.janet.http.HttpClient {
@@ -49,9 +50,8 @@ public class ApacheClient implements io.techery.janet.http.HttpClient {
         this.client = client;
     }
 
-    @Override
-    public Response execute(Request request) throws IOException {
-        HttpUriRequest apacheRequest = createRequest(request);
+    @Override public Response execute(Request request, RequestCallback requestCallback) throws IOException {
+        HttpUriRequest apacheRequest = createRequest(request, requestCallback);
         HttpResponse apacheResponse = execute(client, apacheRequest);
         return parseResponse(request.getUrl(), apacheResponse);
     }
@@ -60,9 +60,9 @@ public class ApacheClient implements io.techery.janet.http.HttpClient {
         return client.execute(request);
     }
 
-    static HttpUriRequest createRequest(Request request) {
+    static HttpUriRequest createRequest(Request request, RequestCallback requestCallback) {
         if (request.getBody() != null) {
-            return new GenericEntityHttpRequest(request);
+            return new GenericEntityHttpRequest(request, requestCallback);
         }
         return new GenericHttpRequest(request);
     }
@@ -114,9 +114,11 @@ public class ApacheClient implements io.techery.janet.http.HttpClient {
 
     private static class GenericEntityHttpRequest extends HttpEntityEnclosingRequestBase {
         private final String method;
+        private final RequestCallback requestCallback;
 
-        GenericEntityHttpRequest(Request request) {
+        GenericEntityHttpRequest(Request request, RequestCallback requestCallback) {
             super();
+            this.requestCallback = requestCallback;
             method = request.getMethod();
             setURI(URI.create(request.getUrl()));
 
@@ -126,7 +128,7 @@ public class ApacheClient implements io.techery.janet.http.HttpClient {
             }
 
             // Add the content body.
-            setEntity(new TypedOutputEntity(request.getBody()));
+            setEntity(new TypedOutputEntity(request.getBody(), requestCallback));
         }
 
         @Override
@@ -136,10 +138,12 @@ public class ApacheClient implements io.techery.janet.http.HttpClient {
     }
 
     static class TypedOutputEntity extends AbstractHttpEntity {
-        final ActionBody requestBody;
+        private final ActionBody requestBody;
+        private final RequestCallback requestCallback;
 
-        TypedOutputEntity(ActionBody requestBody) {
+        TypedOutputEntity(ActionBody requestBody, RequestCallback requestCallback) {
             this.requestBody = requestBody;
+            this.requestCallback = requestCallback;
             setContentType(requestBody.mimeType());
         }
 
@@ -162,7 +166,11 @@ public class ApacheClient implements io.techery.janet.http.HttpClient {
 
         @Override
         public void writeTo(OutputStream out) throws IOException {
-            requestBody.writeTo(out);
+            requestBody.writeTo(new ProgressOutputStream(out, new ProgressOutputStream.ProgressListener() {
+                @Override public void onProgressChanged(long bytesWritten) {
+                    requestCallback.onProgress((int) ((bytesWritten * 100) / getContentLength()));
+                }
+            }));
         }
 
         @Override
@@ -170,4 +178,5 @@ public class ApacheClient implements io.techery.janet.http.HttpClient {
             return false;
         }
     }
+
 }

@@ -3,30 +3,30 @@ package io.techery.janet.http;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+import io.techery.janet.body.ActionBody;
+import io.techery.janet.body.BytesArrayBody;
 import io.techery.janet.http.model.Header;
 import io.techery.janet.http.model.Request;
 import io.techery.janet.http.model.Response;
-import io.techery.janet.body.ActionBody;
-import io.techery.janet.body.BytesArrayBody;
+import io.techery.janet.http.internal.ProgressOutputStream;
 
 
 public class UrlConnectionClient implements HttpClient {
     private static final int CHUNK_SIZE = 4096;
     private static final int BUFFER_SIZE = 0x1000;
 
-    public UrlConnectionClient() {
-    }
+    public UrlConnectionClient() {}
 
-    @Override
-    public Response execute(Request request) throws IOException {
+    @Override public Response execute(Request request, RequestCallback requestCallback) throws IOException {
         HttpURLConnection connection = openConnection(request);
-        prepareRequest(connection, request);
+        writeRequest(connection, request, requestCallback);
         return readResponse(connection);
     }
 
@@ -37,7 +37,7 @@ public class UrlConnectionClient implements HttpClient {
         return connection;
     }
 
-    private void prepareRequest(HttpURLConnection connection, Request request) throws IOException {
+    private void writeRequest(HttpURLConnection connection, Request request, final RequestCallback requestCallback) throws IOException {
         connection.setRequestMethod(request.getMethod());
         connection.setDoInput(true);
 
@@ -49,14 +49,21 @@ public class UrlConnectionClient implements HttpClient {
         if (body != null) {
             connection.setDoOutput(true);
             connection.addRequestProperty("Content-Type", body.mimeType());
-            long length = body.length();
+            OutputStream outputStream;
+            final long length = body.length();
             if (length != -1) {
                 connection.setFixedLengthStreamingMode((int) length);
                 connection.addRequestProperty("Content-Length", String.valueOf(length));
+                outputStream = new ProgressOutputStream(connection.getOutputStream(), new ProgressOutputStream.ProgressListener() {
+                    @Override public void onProgressChanged(long bytesWritten) {
+                        requestCallback.onProgress((int) ((bytesWritten * 100) / length));
+                    }
+                });
             } else {
+                outputStream = connection.getOutputStream();
                 connection.setChunkedStreamingMode(CHUNK_SIZE);
             }
-            body.writeTo(connection.getOutputStream());
+            body.writeTo(outputStream);
         }
     }
 
@@ -95,4 +102,5 @@ public class UrlConnectionClient implements HttpClient {
         }
         return baos.toByteArray();
     }
+
 }

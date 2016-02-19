@@ -16,7 +16,7 @@ public abstract class ActionAdapter {
 
     abstract protected <T> void sendInternal(T action) throws Throwable;
 
-    final void setOnResponseCallback(Callback callback) {
+    final void setCallback(Callback callback) {
         this.callback = callback;
     }
 
@@ -24,6 +24,7 @@ public abstract class ActionAdapter {
 
     interface Callback {
         void onStart(Object action);
+        void onProgress(Object action, int progress);
         void onSuccess(Object action);
         void onServerError(Object action);
         void onFail(Object action, Throwable throwable);

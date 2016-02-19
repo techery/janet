@@ -17,7 +17,6 @@ public class SimpleService {
     public static void main(String... args) {
         Janet janet = new Janet.Builder()
                 .addAdapter(new HttpActionAdapter(API_URL, new OkClient(), new GsonConverter(new Gson())))
-                .addInterceptor(System.out::println)
                 .build();
 
         ActionPipe<UsersAction> usersPipe = janet.createPipe(UsersAction.class);
@@ -38,6 +37,17 @@ public class SimpleService {
                         .onSuccess(action -> System.out.println("repos request finished " + action))
                         .onFail(throwable -> System.err.println("repos request throwable " + throwable))
                         .onServerError(action -> System.err.println("repos request http throwable " + action)));
+
+
+        janet = new Janet.Builder()
+                .addAdapter(new HttpActionAdapter("http://posttestserver.com", new OkClient(), new GsonConverter(new Gson())))
+                .build();
+
+        janet.createPipe(TestProgressAction.class)
+                .createObservable(new TestProgressAction())
+                .subscribe(new ActionStateSubscriber<TestProgressAction>()
+                        .onSuccess(action -> System.out.println("request finished " + action))
+                        .onProgress((action, progress) -> System.out.println(String.format("progress value:%s", progress))));
 
     }
 }
