@@ -57,6 +57,9 @@ public class ActionStateSubscriber<A> extends Subscriber<ActionState<A>> {
             case START:
                 if (onStart != null) onStart.call();
                 break;
+            case PROGRESS:
+                if (onProgress != null) onProgress.call(state.action, state.progress);
+                break;
             case SUCCESS:
                 if (onSuccess != null) onSuccess.call(state.action);
                 break;
@@ -65,9 +68,6 @@ public class ActionStateSubscriber<A> extends Subscriber<ActionState<A>> {
                 break;
             case SERVER_ERROR:
                 if (onServerError != null) onServerError.call(state.action);
-                break;
-            case PROGRESS:
-                if (onProgress != null) onProgress.call(state.action, state.progress);
                 break;
         }
         if (afterEach != null) afterEach.call(state);

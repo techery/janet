@@ -14,6 +14,8 @@ public class ActionStateToActionTransformer<A> implements Observable.Transformer
                 switch (state.status) {
                     case START:
                         return Observable.never();
+                    case PROGRESS:
+                        return Observable.never();
                     case SUCCESS:
                         return Observable.just(state.action);
                     case SERVER_ERROR:
