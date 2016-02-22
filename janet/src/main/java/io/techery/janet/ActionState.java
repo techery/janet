@@ -1,36 +1,47 @@
 package io.techery.janet;
 
-public class ActionState<A> {
+public final class ActionState<A> {
 
-    public enum Status{
+    public enum Status {
         START, PROGRESS, SUCCESS, FAIL, SERVER_ERROR
     }
 
-    public A action;
+    public final A action;
+    public final Status status;
     public Throwable throwable;
-    public Status status;
     public int progress;
 
-    public ActionState(A action) {
+    private ActionState(A action, Status status) {
         this.action = action;
+        this.status = status;
     }
 
-    public ActionState<A> action(A action) {
-        this.action = action;
-        return this;
+    public static <A> ActionState<A> start(A action) {
+        return new ActionState<A>(action, Status.START);
     }
 
-    public ActionState<A> throwable(Throwable throwable) {
+    public static <A> ActionState<A> progress(A action, int progress) {
+        return new ActionState<A>(action, Status.PROGRESS).progress(progress);
+    }
+
+    public static <A> ActionState<A> success(A action) {
+        return new ActionState<A>(action, Status.SUCCESS);
+    }
+
+    public static <A> ActionState<A> fail(A action, Throwable throwable) {
+        return new ActionState<A>(action, Status.FAIL).throwable(throwable);
+    }
+
+    public static <A> ActionState<A> error(A action) {
+        return new ActionState<A>(action, Status.SERVER_ERROR);
+    }
+
+    private ActionState<A> throwable(Throwable throwable) {
         this.throwable = throwable;
         return this;
     }
 
-    public ActionState<A> status(Status status) {
-        this.status = status;
-        return this;
-    }
-
-    public ActionState<A> progress(int progress) {
+    private ActionState<A> progress(int progress) {
         this.progress = progress;
         return this;
     }
