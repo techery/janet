@@ -32,7 +32,8 @@ public class AsyncSimpleService {
                         .onSuccess(connectAsyncAction -> {
                             messagePipe.createObservable(action)
                                     .subscribe(new ActionStateSubscriber<TestAction>()
-                                            .onSuccess(System.out::println));
+                                            .onSuccess(System.out::println)
+                                            .onFail((testAction, throwable) -> throwable.printStackTrace()));
 
                             janet.createPipe(TestTwoAction.class)
                                     .observeSuccess()
