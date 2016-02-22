@@ -39,9 +39,6 @@ public class App extends Application {
                     .build()));
             gitHubAPI = new Janet.Builder()
                     .addAdapter(new HttpActionAdapter(API_URL, new OkClient(okHttpClient), new GsonConverter(new Gson())))
-                    .addInterceptor(action -> {
-                        // do something
-                    })
                     .build();
         }
         return gitHubAPI;

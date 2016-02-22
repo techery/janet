@@ -20,7 +20,7 @@ fun main(args: Array<String>) {
     val usersPipe = janet.createPipe(UsersAction::class.java)
     val userReposPipe = janet.createPipe(UserReposAction::class.java)
 
-    usersPipe.observeActions()
+    usersPipe.observeSuccess()
             .filter({ it.isSuccess() })
             .subscribe({ println("received $it") }) { println(it) }
 
@@ -33,8 +33,8 @@ fun main(args: Array<String>) {
             .flatMap { userReposPipe.createObservable(UserReposAction(it.getLogin())) }
             .subscribe(ActionStateSubscriber<UserReposAction>()
                     .onSuccess { println("repos request finished $it") }
-                    .onFail { println("repos request throwable $it") }
-                    .onServerError { println("repos request server error $it") })
+                    .onFail { a, t -> println("repos request exception $t") }
+            )
 
 
 }

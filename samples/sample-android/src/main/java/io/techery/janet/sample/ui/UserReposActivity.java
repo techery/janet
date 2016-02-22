@@ -67,7 +67,7 @@ public class UserReposActivity extends RxAppCompatActivity {
                             adapter.setData(action.getRepositories());
                             showProgressLoading(false);
                         })
-                        .onFail(throwable -> showProgressLoading(false)));
+                        .onFail((action, throwable) -> showProgressLoading(false)));
         loadRepos();
     }
 

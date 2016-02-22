@@ -9,8 +9,7 @@ import rx.functions.Action2;
 public class ActionStateSubscriber<A> extends Subscriber<ActionState<A>> {
 
     private Action1<A> onSuccess;
-    private Action1<Throwable> onFail;
-    private Action1<A> onServerError;
+    private Action2<A, Throwable> onFail;
     private Action0 onStart;
     private Action2<A, Integer> onProgress;
     private Action1<ActionState<A>> beforeEach;
@@ -21,12 +20,7 @@ public class ActionStateSubscriber<A> extends Subscriber<ActionState<A>> {
         return this;
     }
 
-    public ActionStateSubscriber<A> onServerError(Action1<A> onServerError) {
-        this.onServerError = onServerError;
-        return this;
-    }
-
-    public ActionStateSubscriber<A> onFail(Action1<Throwable> onError) {
+    public ActionStateSubscriber<A> onFail(Action2<A, Throwable> onError) {
         this.onFail = onError;
         return this;
     }
@@ -64,10 +58,7 @@ public class ActionStateSubscriber<A> extends Subscriber<ActionState<A>> {
                 if (onSuccess != null) onSuccess.call(state.action);
                 break;
             case FAIL:
-                if (onFail != null) onFail.call(state.throwable);
-                break;
-            case SERVER_ERROR:
-                if (onServerError != null) onServerError.call(state.action);
+                if (onFail != null) onFail.call(state.action, state.exception);
                 break;
         }
         if (afterEach != null) afterEach.call(state);
@@ -75,8 +66,5 @@ public class ActionStateSubscriber<A> extends Subscriber<ActionState<A>> {
 
     @Override public void onCompleted() { }
 
-    @Override
-    public void onError(Throwable e) {
-        if (onFail != null) onFail.call(e);
-    }
+    @Override public void onError(Throwable e) { }
 }

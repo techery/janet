@@ -8,9 +8,10 @@ import java.io.InputStreamReader;
 import java.io.UnsupportedEncodingException;
 import java.lang.reflect.Type;
 
-import io.techery.janet.converter.Converter;
 import io.techery.janet.body.ActionBody;
 import io.techery.janet.body.BytesArrayBody;
+import io.techery.janet.converter.Converter;
+import io.techery.janet.converter.ConverterException;
 
 public class GsonConverter implements Converter {
     private final Gson gson;
@@ -25,18 +26,16 @@ public class GsonConverter implements Converter {
         this.charset = charset;
     }
 
-    @Override
-    public Object fromBody(ActionBody body, Type type) {
+    @Override public Object fromBody(ActionBody body, Type type) throws ConverterException {
         String charset = this.charset;
         InputStreamReader isr = null;
         try {
             isr = new InputStreamReader(body.in(), charset);
             return gson.fromJson(isr, type);
         } catch (JsonParseException e) {
-            System.err.println("Parse error of " + type + ": " + e.getMessage());
-            return null;
+            throw ConverterException.forDeserialization(e);
         } catch (IOException e) {
-            throw new RuntimeException(e);
+            throw ConverterException.forDeserialization(e);
         } finally {
             if (isr != null) {
                 try {
@@ -47,12 +46,12 @@ public class GsonConverter implements Converter {
         }
     }
 
-    @Override
-    public ActionBody toBody(Object object) {
+    @Override public ActionBody toBody(Object object) throws ConverterException {
         try {
-            return new BytesArrayBody("application/json; charset=" + charset, gson.toJson(object).getBytes(charset));
+            byte[] bytes = gson.toJson(object).getBytes(charset);
+            return new BytesArrayBody("application/json; charset=" + charset, bytes);
         } catch (UnsupportedEncodingException e) {
-            throw new AssertionError(e);
+            throw ConverterException.forSerialization(e);
         }
     }
 }

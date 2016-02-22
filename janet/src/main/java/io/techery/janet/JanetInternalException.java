@@ -12,4 +12,8 @@ public class JanetInternalException extends RuntimeException {
     public JanetInternalException(Throwable cause) {
         super(cause);
     }
+
+    public JanetInternalException(String message, Throwable cause) {
+        super(message, cause);
+    }
 }

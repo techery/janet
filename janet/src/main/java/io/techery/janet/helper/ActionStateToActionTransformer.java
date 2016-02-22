@@ -18,10 +18,8 @@ public class ActionStateToActionTransformer<A> implements Observable.Transformer
                         return Observable.never();
                     case SUCCESS:
                         return Observable.just(state.action);
-                    case SERVER_ERROR:
-                        return Observable.just(state.action);
                     case FAIL:
-                        return Observable.error(state.throwable);
+                        return Observable.error(state.exception);
                     default:
                         throw new IllegalArgumentException("Action status is unknown");
                 }

@@ -37,12 +37,8 @@ public class Janet {
                     pipeline.onNext(ActionState.success(action));
                 }
 
-                @Override public void onServerError(Object action) {
-                    pipeline.onNext(ActionState.error(action));
-                }
-
-                @Override public void onFail(Object action, Throwable throwable) {
-                    pipeline.onNext(ActionState.fail(action, throwable));
+                @Override public void onFail(Object action, JanetException e) {
+                    pipeline.onNext(ActionState.fail(action, e));
                 }
             });
         }
