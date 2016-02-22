@@ -22,6 +22,7 @@ import io.techery.janet.body.ActionBody;
 import io.techery.janet.body.BytesArrayBody;
 import io.techery.janet.compiler.utils.Generator;
 import io.techery.janet.converter.Converter;
+import io.techery.janet.converter.ConverterException;
 import io.techery.janet.http.annotations.Body;
 import io.techery.janet.http.annotations.Field;
 import io.techery.janet.http.annotations.HttpAction;
@@ -172,7 +173,8 @@ public class HttpHelpersGenerator extends Generator<HttpActionClass> {
                 .returns(ClassName.get(actionClass.getTypeElement().asType()))
                 .addParameter(actionClass.getTypeName(), "action")
                 .addParameter(Response.class, "response")
-                .addParameter(Converter.class, "converter");
+                .addParameter(Converter.class, "converter")
+                .addException(ConverterException.class);
 
         addStatusField(actionClass, builder);
         addResponses(actionClass, builder);

@@ -6,6 +6,7 @@ import java.util.concurrent.TimeUnit;
 import io.techery.janet.body.ActionBody;
 import io.techery.janet.body.BytesArrayBody;
 import io.techery.janet.converter.Converter;
+import io.techery.janet.converter.ConverterException;
 
 public abstract class AsyncActionWrapper<A> implements Delayed {
 
@@ -17,10 +18,10 @@ public abstract class AsyncActionWrapper<A> implements Delayed {
 
     protected abstract boolean isBytesMessage();
     protected abstract String getEvent();
-    protected abstract ActionBody getMessage(Converter converter);
+    protected abstract ActionBody getMessage(Converter converter) throws ConverterException;
     protected abstract String getResponseEvent();
     protected abstract boolean fillResponse(Object responseAction);
-    protected abstract void fillMessage(BytesArrayBody body, Converter converter);
+    protected abstract void fillMessage(BytesArrayBody body, Converter converter) throws ConverterException;
 
     protected long getResponseTimeout(){
         return AsyncActionSynchronizer.PENDING_TIMEOUT;

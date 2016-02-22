@@ -6,7 +6,7 @@ import io.techery.janet.body.ActionBody;
 
 public interface Converter {
 
-    Object fromBody(ActionBody body, Type type);
+    Object fromBody(ActionBody body, Type type) throws ConverterException;
 
-    ActionBody toBody(Object object);
+    ActionBody toBody(Object object) throws ConverterException;
 }

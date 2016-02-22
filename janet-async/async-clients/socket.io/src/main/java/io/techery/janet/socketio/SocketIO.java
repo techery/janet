@@ -67,11 +67,7 @@ public class SocketIO extends AsyncClient {
                 if (args.length > 0) {
                     throwable = (Throwable) args[0];
                 }
-                callback.onError(throwable);
-            }
-        }).on(Socket.EVENT_CONNECT_TIMEOUT, new Emitter.Listener() {
-            @Override public void call(Object... args) {
-                System.out.println(args);
+                callback.onConnectionError(throwable);
             }
         });
         for (final String event : events) {
