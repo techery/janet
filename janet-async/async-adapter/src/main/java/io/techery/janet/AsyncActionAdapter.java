@@ -9,7 +9,7 @@ import io.techery.janet.async.actions.ConnectAsyncAction;
 import io.techery.janet.async.actions.DisconnectAsyncAction;
 import io.techery.janet.async.actions.ErrorAsyncAction;
 import io.techery.janet.async.annotations.AsyncAction;
-import io.techery.janet.async.exception.AsyncActionException;
+import io.techery.janet.async.exception.AsyncAdapterException;
 import io.techery.janet.body.ActionBody;
 import io.techery.janet.body.BytesArrayBody;
 import io.techery.janet.body.StringBody;
@@ -67,59 +67,72 @@ final public class AsyncActionAdapter extends ActionAdapter {
         return AsyncAction.class;
     }
 
-    @Override protected <T> void sendInternal(T action) throws AsyncActionException {
+    @Override protected <T> void sendInternal(T action) throws AsyncAdapterException {
         callback.onStart(action);
-        if (action instanceof ConnectAsyncAction) {
-            ConnectAsyncAction connectAsyncAction = (ConnectAsyncAction) action;
-            if (client.isConnected() && !connectAsyncAction.reconnectIfConnected) {
-                callback.onSuccess(action);
-            }
-            try {
-                client.connect(url, connectAsyncAction.reconnectIfConnected);
-            } catch (Throwable t) {
-                throw new AsyncActionException(t);
-            }
-            connectActionQueue.add(connectAsyncAction);
+        if (handleConnectionAction(action)) {
             return;
         }
-        if (action instanceof DisconnectAsyncAction) {
-            try {
-                client.disconnect();
-            } catch (Throwable t) {
-                throw new AsyncActionException(t);
-            }
-            disconnectActionQueue.add((DisconnectAsyncAction) action);
-            return;
-        }
-
-        if (!client.isConnected()) {
-            try {
-                client.connect(url, false);
-            } catch (Throwable t) {
-                throw new AsyncActionException(t);
-            }
-        }
-
         AsyncActionWrapper wrapper = actionWrapperFactory.make(action.getClass(), action);
         if (wrapper == null) {
             throw new JanetInternalException(ERROR_GENERATOR);
         }
+        if (!client.isConnected()) {
+            connect(false);
+        }
+        sendAction(wrapper);
+        callback.onProgress(action, 100);
+    }
+
+    private void sendAction(AsyncActionWrapper wrapper) throws AsyncAdapterException {
         String responseEvent = wrapper.getResponseEvent();
         if (responseEvent != null) {
             synchronizer.put(responseEvent, wrapper);
         }
-        ActionBody actionBody = wrapper.getMessage(converter);
         try {
+            ActionBody actionBody = wrapper.getMessage(converter);
             byte[] content = actionBody.getContent();
             if (wrapper.isBytesMessage()) {
                 client.send(wrapper.getEvent(), content);
             } else {
                 client.send(wrapper.getEvent(), new String(content));
             }
-        } catch (Throwable e) {
-            throw new AsyncActionException(e);
+        } catch (Throwable t) {
+            throw new AsyncAdapterException(t);
         }
-        callback.onProgress(action, 100);
+    }
+
+    private <T> boolean handleConnectionAction(T action) throws AsyncAdapterException {
+        if (action instanceof ConnectAsyncAction) {
+            ConnectAsyncAction connectAsyncAction = (ConnectAsyncAction) action;
+            if (client.isConnected() && !connectAsyncAction.reconnectIfConnected) {
+                callback.onSuccess(action);
+            }
+            connect(connectAsyncAction.reconnectIfConnected);
+            connectActionQueue.add(connectAsyncAction);
+            return true;
+        }
+        if (action instanceof DisconnectAsyncAction) {
+            disconnect();
+            disconnectActionQueue.add((DisconnectAsyncAction) action);
+            return true;
+        }
+        return false;
+    }
+
+    private void connect(boolean reconnectIfConnected) throws AsyncAdapterException {
+        try {
+            client.connect(url, reconnectIfConnected);
+        } catch (Throwable t) {
+            throw new AsyncAdapterException(t);
+        }
+    }
+
+    private void disconnect() throws AsyncAdapterException {
+        try {
+            client.disconnect();
+        } catch (Throwable t) {
+            throw new AsyncAdapterException(t);
+        }
     }
 
     private void onMessageReceived(String event, BytesArrayBody body) {
@@ -134,7 +147,7 @@ final public class AsyncActionAdapter extends ActionAdapter {
             try {
                 messageWrapper.fillMessage(body, converter);
             } catch (ConverterException e) {
-                callback.onFail(action, new AsyncActionException(e));
+                callback.onFail(action, new AsyncAdapterException(e));
             }
             if (synchronizer.contains(event)) {
                 for (AsyncActionWrapper wrapper : synchronizer.sync(event, messageWrapper.action, new AsyncActionSynchronizer.Predicate() {
@@ -142,7 +155,7 @@ final public class AsyncActionAdapter extends ActionAdapter {
                         try {
                             return wrapper.fillResponse(responseAction);
                         } catch (ConverterException e) {
-                            callback.onFail(wrapper.action, new AsyncActionException(e));
+                            callback.onFail(wrapper.action, new AsyncAdapterException(e));
                         }
                         return false;
                     }
@@ -160,7 +173,7 @@ final public class AsyncActionAdapter extends ActionAdapter {
         private QueuePoller queuePoller = new QueuePoller();
 
         @Override public void onConnect() {
-            new QueuePoller().poll(connectActionQueue, new PollCallback<ConnectAsyncAction>() {
+            queuePoller.poll(connectActionQueue, new PollCallback<ConnectAsyncAction>() {
                 @Override public ConnectAsyncAction createIfEmpty() {
                     return new ConnectAsyncAction();
                 }
@@ -190,13 +203,13 @@ final public class AsyncActionAdapter extends ActionAdapter {
                 }
 
                 @Override public void onNext(ConnectAsyncAction item) {
-                    callback.onFail(item, new AsyncActionException("ConnectionError", t));
+                    callback.onFail(item, new AsyncAdapterException("ConnectionError", t));
                 }
             });
         }
 
         @Override public void onError(Throwable t) {
-            callback.onFail(new ErrorAsyncAction(t), new AsyncActionException("Server sent error", t));
+            callback.onFail(new ErrorAsyncAction(t), new AsyncAdapterException("Server sent error", t));
         }
 
         @Override public void onMessage(String event, String string) {

@@ -2,15 +2,15 @@ package io.techery.janet.converter;
 
 public class ConverterException extends RuntimeException {
 
-    public ConverterException(String message) {
+    private ConverterException(String message) {
         super(message);
     }
 
-    public ConverterException(String message, Throwable cause) {
+    private ConverterException(String message, Throwable cause) {
         super(message, cause);
     }
 
-    public ConverterException(Throwable cause) {
+    private ConverterException(Throwable cause) {
         super(cause);
     }
 

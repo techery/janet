@@ -8,7 +8,7 @@ import io.techery.janet.converter.Converter;
 import io.techery.janet.converter.ConverterException;
 import io.techery.janet.http.HttpClient;
 import io.techery.janet.http.annotations.HttpAction;
-import io.techery.janet.http.exception.HttpActionException;
+import io.techery.janet.http.exception.HttpAdapterException;
 import io.techery.janet.http.exception.HttpException;
 import io.techery.janet.http.model.Request;
 import io.techery.janet.http.model.Response;
@@ -47,7 +47,7 @@ final public class HttpActionAdapter extends ActionAdapter {
         return HttpAction.class;
     }
 
-    @Override protected <A> void sendInternal(A action) throws HttpActionException {
+    @Override protected <A> void sendInternal(A action) throws HttpAdapterException {
         callback.onStart(action);
         final ActionHelper<A> helper = getActionHelper(action.getClass());
         if (helper == null) {
@@ -73,11 +73,11 @@ final public class HttpActionAdapter extends ActionAdapter {
             }
             action = helper.onResponse(action, response, converter);
         } catch (IOException e) {
-            throw new HttpActionException(e);
+            throw new HttpAdapterException(e);
         } catch (ConverterException e) {
-            throw new HttpActionException(e);
+            throw new HttpAdapterException(e);
         } catch (HttpException e) {
-            throw new HttpActionException(e);
+            throw new HttpAdapterException(e);
         }
         this.callback.onSuccess(action);
     }
