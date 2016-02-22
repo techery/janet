@@ -10,16 +10,18 @@ import java.util.concurrent.DelayQueue;
 final class AsyncActionSynchronizer {
 
     final static long PENDING_TIMEOUT = 60 * 1000;
-    final static long PENDING_ACTIONS_EVENT_LIMIT = 20;
+    final static int PENDING_ACTIONS_EVENT_LIMIT = 20;
 
     private final ConcurrentHashMap<String, CopyOnWriteArrayList<AsyncActionWrapper>> pendingForResponse;
 
     private final DelayQueue<AsyncActionWrapper> delayQueue;
+    private final OnCleanedListener cleanedListener;
 
 
-    AsyncActionSynchronizer() {
-        pendingForResponse = new ConcurrentHashMap<String, CopyOnWriteArrayList<AsyncActionWrapper>>();
-        delayQueue = new DelayQueue<AsyncActionWrapper>();
+    AsyncActionSynchronizer(OnCleanedListener cleanedListener) {
+        this.cleanedListener = cleanedListener;
+        this.pendingForResponse = new ConcurrentHashMap<String, CopyOnWriteArrayList<AsyncActionWrapper>>();
+        this.delayQueue = new DelayQueue<AsyncActionWrapper>();
     }
 
     void put(String event, AsyncActionWrapper wrapper) {
@@ -35,7 +37,10 @@ final class AsyncActionSynchronizer {
         cache.add(wrapper);
         delayQueue.add(wrapper);
         if (cache.size() > PENDING_ACTIONS_EVENT_LIMIT) {
-            cache.remove(0);
+            AsyncActionWrapper removed = cache.remove(0);
+            if (cleanedListener != null && removed != null) {
+                cleanedListener.onCleaned(removed, OnCleanedListener.Reason.LIMIT);
+            }
         }
     }
 
@@ -65,11 +70,21 @@ final class AsyncActionSynchronizer {
         while (wrapper != null) {
             CopyOnWriteArrayList<AsyncActionWrapper> cache = pendingForResponse.get(wrapper.getResponseEvent());
             cache.remove(wrapper);
+            if (cleanedListener != null) {
+                cleanedListener.onCleaned(wrapper, OnCleanedListener.Reason.TIMEOUT);
+            }
             wrapper = delayQueue.poll();
         }
     }
 
     interface Predicate {
         boolean call(AsyncActionWrapper wrapper, Object responseAction);
+    }
+
+    interface OnCleanedListener {
+
+        enum Reason {TIMEOUT, LIMIT}
+
+        void onCleaned(AsyncActionWrapper wrapper, Reason reason);
     }
 }
