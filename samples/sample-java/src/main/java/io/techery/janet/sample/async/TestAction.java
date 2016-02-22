@@ -11,7 +11,7 @@ public class TestAction {
     @AsyncMessage
     Body body;
 
-    @SyncedResponse(TestSyncPredicate.class)
+    @SyncedResponse(value = TestSyncPredicate.class, timeout = 3000)
     TestAction response;
 
     @Override public String toString() {
