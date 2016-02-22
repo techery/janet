@@ -237,7 +237,7 @@ final public class AsyncActionAdapter extends ActionAdapter {
             SyncedResponseException exception = null;
             switch (reason) {
                 case TIMEOUT: {
-                    exception = SyncedResponseException.forTimeout(wrapper.getDelayMillis());
+                    exception = SyncedResponseException.forTimeout(wrapper.getResponseTimeout());
                     break;
                 }
                 case LIMIT: {
