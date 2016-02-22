@@ -35,7 +35,7 @@ public class SimpleService {
                 .flatMap(user -> userReposPipe.createObservable(new UserReposAction(user.getLogin())))
                 .subscribe(new ActionStateSubscriber<UserReposAction>()
                         .onSuccess(action -> System.out.println("repos request finished " + action))
-                        .onFail((action, throwable) -> System.err.println("repos request throwable " + throwable))
+                        .onFail((action, throwable) -> System.err.println("repos request exception " + throwable))
                 );
 
 

@@ -33,7 +33,7 @@ fun main(args: Array<String>) {
             .flatMap { userReposPipe.createObservable(UserReposAction(it.getLogin())) }
             .subscribe(ActionStateSubscriber<UserReposAction>()
                     .onSuccess { println("repos request finished $it") }
-                    .onFail { a, t -> println("repos request throwable $t") }
+                    .onFail { a, t -> println("repos request exception $t") }
             )
 
 

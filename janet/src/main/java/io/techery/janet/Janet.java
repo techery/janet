@@ -26,23 +26,19 @@ public class Janet {
         for (ActionAdapter adapter : adapters) {
             adapter.setCallback(new ActionAdapter.Callback() {
                 @Override public void onStart(Object action) {
-                    //noinspection unchecked
-                    pipeline.onNext(new ActionState(action).status(ActionState.Status.START));
+                    pipeline.onNext(ActionState.start(action));
                 }
 
                 @Override public void onProgress(Object action, int progress) {
-                    //noinspection unchecked
-                    pipeline.onNext(new ActionState(action).status(ActionState.Status.PROGRESS).progress(progress));
+                    pipeline.onNext(ActionState.progress(action, progress));
                 }
 
                 @Override public void onSuccess(Object action) {
-                    //noinspection unchecked
-                    pipeline.onNext(new ActionState(action).status(ActionState.Status.SUCCESS));
+                    pipeline.onNext(ActionState.success(action));
                 }
 
                 @Override public void onFail(Object action, JanetException e) {
-                    //noinspection unchecked
-                    pipeline.onNext(new ActionState(action).throwable(e).status(ActionState.Status.FAIL));
+                    pipeline.onNext(ActionState.fail(action, e));
                 }
             });
         }

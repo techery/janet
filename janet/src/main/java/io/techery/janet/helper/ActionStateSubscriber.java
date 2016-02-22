@@ -58,7 +58,7 @@ public class ActionStateSubscriber<A> extends Subscriber<ActionState<A>> {
                 if (onSuccess != null) onSuccess.call(state.action);
                 break;
             case FAIL:
-                if (onFail != null) onFail.call(state.action, state.throwable);
+                if (onFail != null) onFail.call(state.action, state.exception);
                 break;
         }
         if (afterEach != null) afterEach.call(state);
