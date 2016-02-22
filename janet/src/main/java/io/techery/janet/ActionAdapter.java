@@ -12,6 +12,16 @@ public abstract class ActionAdapter {
         }
     }
 
+    final <A> void cancel(A action) {
+        try {
+            cancelInternal(action);
+        } catch (JanetException e) {
+            this.callback.onFail(action, e);
+        }
+    }
+
+    protected abstract <A> void cancelInternal(A action) throws JanetException;
+
     abstract protected <T> void sendInternal(T action) throws JanetException;
 
     final void setCallback(Callback callback) {

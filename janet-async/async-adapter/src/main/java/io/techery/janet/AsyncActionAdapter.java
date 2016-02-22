@@ -68,6 +68,16 @@ final public class AsyncActionAdapter extends ActionAdapter {
         return AsyncAction.class;
     }
 
+    @Override protected <A> void cancelInternal(A action) throws JanetException {
+        AsyncActionWrapper wrapper = actionWrapperFactory.make(action.getClass(), action);
+        if (wrapper == null) {
+            throw new JanetInternalException(ERROR_GENERATOR);
+        }
+        if(wrapper.getResponseEvent()!=null){
+            synchronizer.remove(wrapper);
+        }
+    }
+
     @Override protected <T> void sendInternal(T action) throws AsyncAdapterException {
         callback.onStart(action);
         if (handleConnectionAction(action)) {

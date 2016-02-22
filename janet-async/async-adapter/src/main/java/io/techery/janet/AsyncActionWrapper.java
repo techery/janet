@@ -1,18 +1,16 @@
 package io.techery.janet;
 
-import java.util.concurrent.Delayed;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.ScheduledFuture;
 
 import io.techery.janet.body.ActionBody;
 import io.techery.janet.body.BytesArrayBody;
 import io.techery.janet.converter.Converter;
 import io.techery.janet.converter.ConverterException;
 
-public abstract class AsyncActionWrapper<A> implements Delayed {
+public abstract class AsyncActionWrapper<A> {
 
     protected final A action;
-
-    private final long startTime = System.currentTimeMillis();
+    private ScheduledFuture scheduledFuture;
 
     protected AsyncActionWrapper(A action) {this.action = action;}
 
@@ -23,23 +21,32 @@ public abstract class AsyncActionWrapper<A> implements Delayed {
     protected abstract boolean fillResponse(Object responseAction);
     protected abstract void fillMessage(BytesArrayBody body, Converter converter) throws ConverterException;
 
-    protected long getResponseTimeout(){
+    public void cancelExpireFuture() {
+        if (scheduledFuture != null) {
+            scheduledFuture.cancel(true);
+            scheduledFuture = null;
+        }
+    }
+
+    public void setExpireFuture(ScheduledFuture scheduledFuture) {
+        this.scheduledFuture = scheduledFuture;
+    }
+
+    protected long getResponseTimeout() {
         return AsyncActionSynchronizer.PENDING_TIMEOUT;
     }
 
-    final long getDelayMillis() {
-        return (startTime + getResponseTimeout()) - System.currentTimeMillis();
+    @Override public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        AsyncActionWrapper<?> wrapper = (AsyncActionWrapper<?>) o;
+
+        return action != null ? action.equals(wrapper.action) : wrapper.action == null;
+
     }
 
-    @Override
-    final public long getDelay(TimeUnit unit) {
-        return unit.convert(getDelayMillis(), TimeUnit.MILLISECONDS);
-    }
-
-    @Override
-    public int compareTo(Delayed that) {
-        long thisMillis = this.getDelayMillis();
-        long thatMillis = ((AsyncActionWrapper) that).getDelayMillis();
-        return (thisMillis < thatMillis) ? -1 : ((thisMillis == thatMillis) ? 0 : 1);
+    @Override public int hashCode() {
+        return action != null ? action.hashCode() : 0;
     }
 }
