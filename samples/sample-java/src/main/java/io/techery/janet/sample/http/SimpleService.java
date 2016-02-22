@@ -35,8 +35,8 @@ public class SimpleService {
                 .flatMap(user -> userReposPipe.createObservable(new UserReposAction(user.getLogin())))
                 .subscribe(new ActionStateSubscriber<UserReposAction>()
                         .onSuccess(action -> System.out.println("repos request finished " + action))
-                        .onFail(throwable -> System.err.println("repos request throwable " + throwable))
-                        .onServerError(action -> System.err.println("repos request http throwable " + action)));
+                        .onFail((action, throwable) -> System.err.println("repos request throwable " + throwable))
+                );
 
 
         janet = new Janet.Builder()

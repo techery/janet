@@ -54,7 +54,7 @@ public class UsersActivity extends RxAppCompatActivity {
                             adapter.setData(usersAction.getResponse());
                             showProgressLoading(false);
                         })
-                        .onFail(throwable -> showProgressLoading(false)));
+                        .onFail((action, throwable) -> showProgressLoading(false)));
         loadUsers();
     }
 
