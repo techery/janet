@@ -18,8 +18,6 @@ public class ActionStateToActionTransformer<A> implements Observable.Transformer
                         return Observable.never();
                     case SUCCESS:
                         return Observable.just(state.action);
-                    case SERVER_ERROR:
-                        return Observable.just(state.action);
                     case FAIL:
                         return Observable.error(state.throwable);
                     default:

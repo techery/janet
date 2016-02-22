@@ -2,8 +2,8 @@ package io.techery.janet;
 
 public class ActionState<A> {
 
-    public enum Status{
-        START, PROGRESS, SUCCESS, FAIL, SERVER_ERROR
+    public enum Status {
+        START, PROGRESS, SUCCESS, FAIL
     }
 
     public A action;

@@ -1,11 +1,15 @@
 package io.techery.janet;
 
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
 import io.techery.janet.converter.Converter;
+import io.techery.janet.converter.ConverterException;
 import io.techery.janet.http.HttpClient;
 import io.techery.janet.http.annotations.HttpAction;
+import io.techery.janet.http.exception.HttpActionException;
+import io.techery.janet.http.exception.HttpException;
 import io.techery.janet.http.model.Request;
 import io.techery.janet.http.model.Response;
 
@@ -43,28 +47,37 @@ final public class HttpActionAdapter extends ActionAdapter {
         return HttpAction.class;
     }
 
-    @Override protected <A> void sendInternal(A action) throws Exception {
+    @Override protected <A> void sendInternal(A action) throws HttpActionException {
         callback.onStart(action);
         final ActionHelper<A> helper = getActionHelper(action.getClass());
         if (helper == null) {
             throw new JanetInternalException("Something was happened with code generator. Check dependence of janet-http-compiler");
         }
         RequestBuilder builder = new RequestBuilder(baseUrl, converter);
-        builder = helper.fillRequest(builder, action);
-        Request request = builder.build();
-        Response response = client.execute(request, new ActionRequestCallback<A>(action) {
-            private int lastProgress;
+        Response response;
+        try {
+            builder = helper.fillRequest(builder, action);
+            Request request = builder.build();
+            response = client.execute(request, new ActionRequestCallback<A>(action) {
+                private int lastProgress;
 
-            @Override public void onProgress(int progress) {
-                if (progress > lastProgress + PROGRESS_THRESHOLD) {
-                    callback.onProgress(action, progress);
-                    lastProgress = progress;
+                @Override public void onProgress(int progress) {
+                    if (progress > lastProgress + PROGRESS_THRESHOLD) {
+                        callback.onProgress(action, progress);
+                        lastProgress = progress;
+                    }
                 }
+            });
+            if (!response.isSuccessful()) {
+                throw new HttpException(response.getStatus(), response.getReason());
             }
-        });
-        action = helper.onResponse(action, response, converter);
-        if (!response.isSuccessful()) { //throw exception to change action state
-            callback.onServerError(action);
+            action = helper.onResponse(action, response, converter);
+        } catch (IOException e) {
+            throw new HttpActionException(e);
+        } catch (ConverterException e) {
+            throw new HttpActionException(e);
+        } catch (HttpException e) {
+            throw new HttpActionException(e);
         }
         this.callback.onSuccess(action);
     }
@@ -86,7 +99,7 @@ final public class HttpActionAdapter extends ActionAdapter {
                     = (Class<? extends ActionHelperFactory>) Class.forName(HELPERS_FACTORY_CLASS_NAME);
             actionHelperFactory = clazz.newInstance();
         } catch (Exception e) {
-            //do nothing. actionHelperFactory will be checked on send()
+            throw new JanetInternalException("Can't initialize ActionHelperFactory - generator failed", e);
         }
     }
 
@@ -95,9 +108,9 @@ final public class HttpActionAdapter extends ActionAdapter {
     }
 
     public interface ActionHelper<T> {
-        RequestBuilder fillRequest(RequestBuilder requestBuilder, T action);
+        RequestBuilder fillRequest(RequestBuilder requestBuilder, T action) throws ConverterException;
 
-        T onResponse(T action, Response response, Converter converter);
+        T onResponse(T action, Response response, Converter converter) throws ConverterException;
     }
 
     private static abstract class ActionRequestCallback<A> implements HttpClient.RequestCallback {

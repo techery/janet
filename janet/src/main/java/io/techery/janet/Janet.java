@@ -40,14 +40,9 @@ public class Janet {
                     pipeline.onNext(new ActionState(action).status(ActionState.Status.SUCCESS));
                 }
 
-                @Override public void onServerError(Object action) {
+                @Override public void onFail(Object action, JanetException e) {
                     //noinspection unchecked
-                    pipeline.onNext(new ActionState(action).status(ActionState.Status.SERVER_ERROR));
-                }
-
-                @Override public void onFail(Object action, Throwable throwable) {
-                    //noinspection unchecked
-                    pipeline.onNext(new ActionState(action).throwable(throwable).status(ActionState.Status.FAIL));
+                    pipeline.onNext(new ActionState(action).throwable(e).status(ActionState.Status.FAIL));
                 }
             });
         }

@@ -1,16 +1,20 @@
 package io.techery.janet;
 
 import java.util.List;
+import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
+import io.techery.janet.AsyncActionAdapter.QueuePoller.PollCallback;
 import io.techery.janet.async.actions.ConnectAsyncAction;
 import io.techery.janet.async.actions.DisconnectAsyncAction;
 import io.techery.janet.async.actions.ErrorAsyncAction;
 import io.techery.janet.async.annotations.AsyncAction;
+import io.techery.janet.async.exception.AsyncActionException;
 import io.techery.janet.body.ActionBody;
 import io.techery.janet.body.BytesArrayBody;
 import io.techery.janet.body.StringBody;
 import io.techery.janet.converter.Converter;
+import io.techery.janet.converter.ConverterException;
 
 final public class AsyncActionAdapter extends ActionAdapter {
 
@@ -63,25 +67,37 @@ final public class AsyncActionAdapter extends ActionAdapter {
         return AsyncAction.class;
     }
 
-    @Override protected <T> void sendInternal(T action) throws Throwable {
+    @Override protected <T> void sendInternal(T action) throws AsyncActionException {
         callback.onStart(action);
         if (action instanceof ConnectAsyncAction) {
             ConnectAsyncAction connectAsyncAction = (ConnectAsyncAction) action;
             if (client.isConnected() && !connectAsyncAction.reconnectIfConnected) {
                 callback.onSuccess(action);
             }
-            client.connect(url, connectAsyncAction.reconnectIfConnected);
+            try {
+                client.connect(url, connectAsyncAction.reconnectIfConnected);
+            } catch (Throwable t) {
+                throw new AsyncActionException(t);
+            }
             connectActionQueue.add(connectAsyncAction);
             return;
         }
         if (action instanceof DisconnectAsyncAction) {
-            client.disconnect();
+            try {
+                client.disconnect();
+            } catch (Throwable t) {
+                throw new AsyncActionException(t);
+            }
             disconnectActionQueue.add((DisconnectAsyncAction) action);
             return;
         }
 
         if (!client.isConnected()) {
-            client.connect(url, false);
+            try {
+                client.connect(url, false);
+            } catch (Throwable t) {
+                throw new AsyncActionException(t);
+            }
         }
 
         AsyncActionWrapper wrapper = actionWrapperFactory.make(action.getClass(), action);
@@ -93,10 +109,15 @@ final public class AsyncActionAdapter extends ActionAdapter {
             synchronizer.put(responseEvent, wrapper);
         }
         ActionBody actionBody = wrapper.getMessage(converter);
-        if (wrapper.isBytesMessage()) {
-            client.send(wrapper.getEvent(), actionBody.getContent());
-        } else {
-            client.send(wrapper.getEvent(), new String(actionBody.getContent()));
+        try {
+            byte[] content = actionBody.getContent();
+            if (wrapper.isBytesMessage()) {
+                client.send(wrapper.getEvent(), content);
+            } else {
+                client.send(wrapper.getEvent(), new String(content));
+            }
+        } catch (Throwable e) {
+            throw new AsyncActionException(e);
         }
         callback.onProgress(action, 100);
     }
@@ -112,16 +133,16 @@ final public class AsyncActionAdapter extends ActionAdapter {
             AsyncActionWrapper messageWrapper = actionWrapperFactory.make(actionClass, action);
             try {
                 messageWrapper.fillMessage(body, converter);
-            } catch (Exception e) {
-                callback.onFail(action, e);
+            } catch (ConverterException e) {
+                callback.onFail(action, new AsyncActionException(e));
             }
             if (synchronizer.contains(event)) {
                 for (AsyncActionWrapper wrapper : synchronizer.sync(event, messageWrapper.action, new AsyncActionSynchronizer.Predicate() {
                     @Override public boolean call(AsyncActionWrapper wrapper, Object responseAction) {
                         try {
                             return wrapper.fillResponse(responseAction);
-                        } catch (Exception e) {
-                            callback.onFail(wrapper.action, e);
+                        } catch (ConverterException e) {
+                            callback.onFail(wrapper.action, new AsyncActionException(e));
                         }
                         return false;
                     }
@@ -135,35 +156,52 @@ final public class AsyncActionAdapter extends ActionAdapter {
     }
 
     private final AsyncClient.Callback clientCallback = new AsyncClient.Callback() {
+
+        private QueuePoller queuePoller = new QueuePoller();
+
         @Override public void onConnect() {
-            do {
-                ConnectAsyncAction action = connectActionQueue.poll();
-                if (action != null) {
-                    callback.onSuccess(action);
-                } else {
-                    callback.onSuccess(new ConnectAsyncAction());
+            new QueuePoller().poll(connectActionQueue, new PollCallback<ConnectAsyncAction>() {
+                @Override public ConnectAsyncAction createIfEmpty() {
+                    return new ConnectAsyncAction();
                 }
-            } while (connectActionQueue.peek() != null);
+
+                @Override public void onNext(ConnectAsyncAction item) {
+                    callback.onSuccess(item);
+                }
+            });
         }
 
         @Override public void onDisconnect(String reason) {
-            do {
-                DisconnectAsyncAction action = disconnectActionQueue.poll();
-                if (action != null) {
-                    callback.onSuccess(action);
-                } else {
-                    callback.onSuccess(new DisconnectAsyncAction());
+            queuePoller.poll(disconnectActionQueue, new PollCallback<DisconnectAsyncAction>() {
+                @Override public DisconnectAsyncAction createIfEmpty() {
+                    return new DisconnectAsyncAction();
                 }
-            } while (disconnectActionQueue.peek() != null);
+
+                @Override public void onNext(DisconnectAsyncAction item) {
+                    callback.onSuccess(item);
+                }
+            });
         }
 
-        @Override public void onError(Throwable throwable) {
-            callback.onServerError(new ErrorAsyncAction(throwable));
+        @Override public void onConnectionError(final Throwable t) {
+            queuePoller.poll(connectActionQueue, new PollCallback<ConnectAsyncAction>() {
+                @Override public ConnectAsyncAction createIfEmpty() {
+                    return new ConnectAsyncAction();
+                }
+
+                @Override public void onNext(ConnectAsyncAction item) {
+                    callback.onFail(item, new AsyncActionException("ConnectionError", t));
+                }
+            });
+        }
+
+        @Override public void onError(Throwable t) {
+            callback.onFail(new ErrorAsyncAction(t), new AsyncActionException("Server sent error", t));
         }
 
         @Override public void onMessage(String event, String string) {
             BytesArrayBody body = null;
-            if(string!=null){
+            if (string != null) {
                 body = new StringBody(string);
             }
             onMessageReceived(event, body);
@@ -171,7 +209,7 @@ final public class AsyncActionAdapter extends ActionAdapter {
 
         @Override public void onMessage(String event, byte[] bytes) {
             BytesArrayBody body = null;
-            if(bytes!=null){
+            if (bytes != null) {
                 body = new BytesArrayBody(null, bytes);
             }
             onMessageReceived(event, body);
@@ -213,6 +251,23 @@ final public class AsyncActionAdapter extends ActionAdapter {
 
     interface AsyncActionWrapperFactory {
         <A> AsyncActionWrapper<A> make(Class<A> actionClass, Object action);
+    }
+
+    static class QueuePoller {
+        <U> void poll(Queue<U> q, PollCallback<U> callback) {
+            do {
+                U item = q.poll();
+                if (item == null) {
+                    item = callback.createIfEmpty();
+                }
+                callback.onNext(item);
+            } while (q.peek() != null);
+        }
+
+        interface PollCallback<T> {
+            void onNext(T item);
+            T createIfEmpty();
+        }
     }
 
 }

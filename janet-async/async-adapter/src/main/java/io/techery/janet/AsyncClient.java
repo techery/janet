@@ -23,6 +23,7 @@ public abstract class AsyncClient {
     public interface Callback {
         void onConnect();
         void onDisconnect(String reason);
+        void onConnectionError(Throwable throwable);
         void onError(Throwable throwable);
         void onMessage(String event, String string);
         void onMessage(String event, byte[] bytes);
