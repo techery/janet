@@ -245,7 +245,7 @@ final public class AsyncActionAdapter extends ActionAdapter {
                     break;
                 }
             }
-            callback.onFail(wrapper.action, new AsyncAdapterException("Action " + wrapper.action + " has not waited.", exception));
+            callback.onFail(wrapper.action, new AsyncAdapterException("Action " + wrapper.action + " has not waited for a response.", exception));
         }
     };
 
