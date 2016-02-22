@@ -33,13 +33,13 @@ final public class ActionPipe<A> {
         return cachedPipeline;
     }
 
-    public Observable<A> observeSuccessOnly() {
+    public Observable<A> observeSuccess() {
         return observe()
                 .compose(new ActionStateToActionTransformer<A>());
 
     }
 
-    public Observable<A> observeSuccessOnlyWithReplay() {
+    public Observable<A> observeSuccessWithReplay() {
         return observeWithReplay()
                 .compose(new ActionStateToActionTransformer<A>());
     }
@@ -57,7 +57,7 @@ final public class ActionPipe<A> {
         return this;
     }
 
-    public Observable<A> createSuccessOnlyObservable(A action) {
+    public Observable<A> createSuccessObservable(A action) {
         return createObservable(action).compose(new ActionStateToActionTransformer<A>());
     }
 

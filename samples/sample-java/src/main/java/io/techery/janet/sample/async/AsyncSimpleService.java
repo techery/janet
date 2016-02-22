@@ -35,7 +35,7 @@ public class AsyncSimpleService {
                                             .onSuccess(System.out::println));
 
                             janet.createPipe(TestTwoAction.class)
-                                    .observeSuccessOnly()
+                                    .observeSuccess()
                                     .subscribe(System.out::println);
                         }));
 
