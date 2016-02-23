@@ -10,6 +10,7 @@ import io.techery.janet.async.actions.DisconnectAsyncAction;
 import io.techery.janet.async.actions.ErrorAsyncAction;
 import io.techery.janet.async.annotations.AsyncAction;
 import io.techery.janet.async.exception.AsyncAdapterException;
+import io.techery.janet.async.exception.SyncedResponseException;
 import io.techery.janet.body.ActionBody;
 import io.techery.janet.body.BytesArrayBody;
 import io.techery.janet.body.StringBody;
@@ -54,7 +55,7 @@ final public class AsyncActionAdapter extends ActionAdapter {
         this.converter = converter;
         this.connectActionQueue = new ConcurrentLinkedQueue<ConnectAsyncAction>();
         this.disconnectActionQueue = new ConcurrentLinkedQueue<DisconnectAsyncAction>();
-        this.synchronizer = new AsyncActionSynchronizer();
+        this.synchronizer = new AsyncActionSynchronizer(waitingErrorCallback);
         loadActionWrapperFactory();
         loadAsyncActionRooster();
         client.setCallback(clientCallback);
@@ -229,6 +230,25 @@ final public class AsyncActionAdapter extends ActionAdapter {
         }
     };
 
+    @SuppressWarnings("FieldCanBeLocal")
+    private final AsyncActionSynchronizer.OnCleanedListener waitingErrorCallback = new AsyncActionSynchronizer.OnCleanedListener() {
+        @Override
+        public void onCleaned(AsyncActionWrapper wrapper, Reason reason) {
+            SyncedResponseException exception = null;
+            switch (reason) {
+                case TIMEOUT: {
+                    exception = SyncedResponseException.forTimeout(wrapper.getResponseTimeout());
+                    break;
+                }
+                case LIMIT: {
+                    exception = SyncedResponseException.forLimit(AsyncActionSynchronizer.PENDING_ACTIONS_EVENT_LIMIT);
+                    break;
+                }
+            }
+            callback.onFail(wrapper.action, new AsyncAdapterException("Action " + wrapper.action + " has not waited for a response.", exception));
+        }
+    };
+
     @SuppressWarnings("unchecked")
     private void loadActionWrapperFactory() {
         try {
@@ -282,5 +302,4 @@ final public class AsyncActionAdapter extends ActionAdapter {
             T createIfEmpty();
         }
     }
-
 }
