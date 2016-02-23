@@ -3,6 +3,7 @@ package io.techery.janet;
 import io.techery.janet.helper.ActionStateToActionTransformer;
 import rx.Observable;
 import rx.Scheduler;
+import rx.functions.Action1;
 import rx.functions.Func0;
 import rx.functions.Func1;
 import rx.observables.ConnectableObservable;
@@ -11,12 +12,14 @@ final public class ActionPipe<A> {
 
     private final Func1<A, Observable<ActionState<A>>> syncObservableFactory;
     private final Observable<ActionState<A>> pipeline;
+    private final Action1<A> cancelFunc;
     private ConnectableObservable<ActionState<A>> cachedPipeline;
     private Scheduler subscribeOn;
 
-    ActionPipe(Func1<A, Observable<ActionState<A>>> syncObservableFactory, Func0<Observable<ActionState<A>>> pipelineFactory) {
+    ActionPipe(Func1<A, Observable<ActionState<A>>> syncObservableFactory, Func0<Observable<ActionState<A>>> pipelineFactory, Action1<A> cancelFunc) {
         this.syncObservableFactory = syncObservableFactory;
         this.pipeline = pipelineFactory.call();
+        this.cancelFunc = cancelFunc;
         createCachedPipeline();
     }
 
@@ -50,6 +53,10 @@ final public class ActionPipe<A> {
 
     public void send(A action) {
         createObservable(action).subscribe();
+    }
+
+    public void cancel(A action) {
+        cancelFunc.call(action);
     }
 
     public ActionPipe<A> pimp(Scheduler scheduler) {

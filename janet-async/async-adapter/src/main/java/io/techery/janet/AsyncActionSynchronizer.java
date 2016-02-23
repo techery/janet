@@ -74,6 +74,14 @@ final class AsyncActionSynchronizer {
         return pendingForResponse.containsKey(event);
     }
 
+    void remove(AsyncActionWrapper wrapper) {
+        CopyOnWriteArrayList<AsyncActionWrapper> cache = pendingForResponse.get(wrapper.getResponseEvent());
+        boolean removed = cache.remove(wrapper);
+        if (removed && cleanedListener != null) {
+            cleanedListener.onCleaned(wrapper, OnCleanedListener.Reason.CANCEL);
+        }
+    }
+
     private void onTimeout(AsyncActionWrapper wrapper) {
         CopyOnWriteArrayList<AsyncActionWrapper> cache = pendingForResponse.get(wrapper.getResponseEvent());
         boolean removed = cache.remove(wrapper);
@@ -122,7 +130,7 @@ final class AsyncActionSynchronizer {
 
     interface OnCleanedListener {
 
-        enum Reason {TIMEOUT, LIMIT}
+        enum Reason {TIMEOUT, LIMIT, CANCEL}
 
         void onCleaned(AsyncActionWrapper wrapper, Reason reason);
     }
