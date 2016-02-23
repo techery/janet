@@ -41,7 +41,7 @@ final class AsyncActionSynchronizer {
         cache.add(wrapper);
         ScheduledFuture future = expireExecutor.schedule(new AsyncActionWrapperRunnable(wrapper) {
             @Override void onRun(AsyncActionWrapper wrapper) {
-                clean(wrapper);
+                onTimeout(wrapper);
             }
         }, wrapper.getResponseTimeout(), TimeUnit.MILLISECONDS);
         wrapper.setExpireFuture(future);
@@ -74,7 +74,7 @@ final class AsyncActionSynchronizer {
         return pendingForResponse.containsKey(event);
     }
 
-    private void clean(AsyncActionWrapper wrapper) {
+    private void onTimeout(AsyncActionWrapper wrapper) {
         CopyOnWriteArrayList<AsyncActionWrapper> cache = pendingForResponse.get(wrapper.getResponseEvent());
         boolean removed = cache.remove(wrapper);
         if (removed && cleanedListener != null) {
