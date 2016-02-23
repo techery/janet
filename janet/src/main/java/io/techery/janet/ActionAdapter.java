@@ -14,11 +14,13 @@ public abstract class ActionAdapter {
 
     abstract protected <T> void sendInternal(T action) throws JanetException;
 
+    abstract <A> void cancel(A action);
+
+    abstract Class getSupportedAnnotationType();
+
     final void setCallback(Callback callback) {
         this.callback = callback;
     }
-
-    abstract Class getSupportedAnnotationType();
 
     interface Callback {
         void onStart(Object action);

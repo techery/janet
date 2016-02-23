@@ -7,6 +7,7 @@ import io.techery.janet.internal.CastToState;
 import rx.Observable;
 import rx.Scheduler;
 import rx.functions.Action0;
+import rx.functions.Action1;
 import rx.functions.Func0;
 import rx.functions.Func1;
 import rx.subjects.PublishSubject;
@@ -67,6 +68,10 @@ public class Janet {
                             }
                         }).compose(new CastToState<A>());
             }
+        }, new Action1<A>() {
+            @Override public void call(A a) {
+                doCancel(a);
+            }
         }).pimp(scheduler);
     }
 
@@ -93,6 +98,11 @@ public class Janet {
     private <A> void doSend(A action) {
         ActionAdapter adapter = findActionAdapter(action.getClass());
         adapter.send(action);
+    }
+
+    private <A> void doCancel(A action) {
+        ActionAdapter adapter = findActionAdapter(action.getClass());
+        adapter.cancel(action);
     }
 
     private ActionAdapter findActionAdapter(Class actionClass) {
