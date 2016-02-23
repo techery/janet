@@ -21,11 +21,14 @@ public abstract class AsyncActionWrapper<A> {
     protected abstract boolean fillResponse(Object responseAction);
     protected abstract void fillMessage(BytesArrayBody body, Converter converter) throws ConverterException;
 
-    public ScheduledFuture getScheduledFuture() {
-        return scheduledFuture;
+    public void cancelExpireFuture() {
+        if (scheduledFuture != null) {
+            scheduledFuture.cancel(true);
+            scheduledFuture = null;
+        }
     }
 
-    public void setScheduledFuture(ScheduledFuture scheduledFuture) {
+    public void setExpireFuture(ScheduledFuture scheduledFuture) {
         this.scheduledFuture = scheduledFuture;
     }
 

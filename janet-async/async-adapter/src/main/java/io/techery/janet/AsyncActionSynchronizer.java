@@ -9,14 +9,13 @@ import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 
 final class AsyncActionSynchronizer {
 
     final static long PENDING_TIMEOUT = 60 * 1000;
     final static int PENDING_ACTIONS_EVENT_LIMIT = 20;
-
-    private final static int EXPIRE_THREAD_POOL_SIZE = 3;
 
     private final ConcurrentHashMap<String, CopyOnWriteArrayList<AsyncActionWrapper>> pendingForResponse;
 
@@ -27,7 +26,7 @@ final class AsyncActionSynchronizer {
     AsyncActionSynchronizer(OnCleanedListener cleanedListener) {
         this.cleanedListener = cleanedListener;
         this.pendingForResponse = new ConcurrentHashMap<String, CopyOnWriteArrayList<AsyncActionWrapper>>();
-        this.expireExecutor = Executors.newScheduledThreadPool(EXPIRE_THREAD_POOL_SIZE);
+        this.expireExecutor = Executors.newSingleThreadScheduledExecutor(new SingleNamedThreadFactory("AsyncActionSynchronizer-Expirer"));
     }
 
     void put(String event, AsyncActionWrapper wrapper) {
@@ -45,9 +44,10 @@ final class AsyncActionSynchronizer {
                 clean(wrapper);
             }
         }, wrapper.getResponseTimeout(), TimeUnit.MILLISECONDS);
-        wrapper.setScheduledFuture(future);
+        wrapper.setExpireFuture(future);
         if (cache.size() > PENDING_ACTIONS_EVENT_LIMIT) {
             AsyncActionWrapper removed = cache.remove(0);
+            wrapper.cancelExpireFuture();
             if (cleanedListener != null && removed != null) {
                 cleanedListener.onCleaned(removed, OnCleanedListener.Reason.LIMIT);
             }
@@ -61,10 +61,7 @@ final class AsyncActionSynchronizer {
             for (AsyncActionWrapper wrapper : cache) {
                 if (predicate.call(wrapper, responseAction)) {
                     result.add(wrapper);
-                    if (wrapper.getScheduledFuture() != null) {
-                        wrapper.getScheduledFuture().cancel(false);
-                        wrapper.setScheduledFuture(null);
-                    }
+                    wrapper.cancelExpireFuture();
                 }
             }
             cache.removeAll(result);
@@ -78,9 +75,12 @@ final class AsyncActionSynchronizer {
     }
 
     private void clean(AsyncActionWrapper wrapper) {
-        wrapper.setScheduledFuture(null);
         CopyOnWriteArrayList<AsyncActionWrapper> cache = pendingForResponse.get(wrapper.getResponseEvent());
-        cache.remove(wrapper);
+        boolean removed = cache.remove(wrapper);
+        if (removed && cleanedListener != null) {
+            cleanedListener.onCleaned(wrapper, OnCleanedListener.Reason.TIMEOUT);
+        }
+        wrapper.cancelExpireFuture();
     }
 
     private abstract static class AsyncActionWrapperRunnable implements Runnable {
@@ -98,6 +98,22 @@ final class AsyncActionSynchronizer {
         }
 
         abstract void onRun(AsyncActionWrapper wrapper);
+    }
+
+    private static class SingleNamedThreadFactory implements ThreadFactory {
+
+        private final String name;
+
+        private SingleNamedThreadFactory(String name) {
+            this.name = name;
+        }
+
+        @Override public Thread newThread(Runnable r) {
+            Thread thread = new Thread(r, name);
+            thread.setDaemon(true);
+            return thread;
+        }
+
     }
 
     interface Predicate {
