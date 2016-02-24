@@ -2,7 +2,9 @@ package io.techery.janet;
 
 import java.io.IOException;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 import io.techery.janet.converter.Converter;
 import io.techery.janet.converter.ConverterException;
@@ -26,6 +28,7 @@ final public class HttpActionAdapter extends ActionAdapter {
     private final HttpClient client;
     private final Converter converter;
     private final String baseUrl;
+    private final List<Object> runningActions;
 
     public HttpActionAdapter(String baseUrl, HttpClient client, Converter converter) {
         if (baseUrl == null) {
@@ -40,6 +43,7 @@ final public class HttpActionAdapter extends ActionAdapter {
         this.baseUrl = baseUrl;
         this.client = client;
         this.converter = converter;
+        this.runningActions = new CopyOnWriteArrayList<Object>();
         loadActionHelperFactory();
     }
 
@@ -49,6 +53,7 @@ final public class HttpActionAdapter extends ActionAdapter {
 
     @Override protected <A> void sendInternal(A action) throws HttpAdapterException {
         callback.onStart(action);
+        runningActions.add(action);
         final ActionHelper<A> helper = getActionHelper(action.getClass());
         if (helper == null) {
             throw new JanetInternalException("Something was happened with code generator. Check dependence of janet-http-compiler");
@@ -58,6 +63,7 @@ final public class HttpActionAdapter extends ActionAdapter {
         try {
             builder = helper.fillRequest(builder, action);
             Request request = builder.build();
+            throwIfCanceled(action);
             response = client.execute(request, new ActionRequestCallback<A>(action) {
                 private int lastProgress;
 
@@ -68,6 +74,7 @@ final public class HttpActionAdapter extends ActionAdapter {
                     }
                 }
             });
+            throwIfCanceled(action);
             if (!response.isSuccessful()) {
                 throw new HttpException(response.getStatus(), response.getReason());
             }
@@ -78,8 +85,22 @@ final public class HttpActionAdapter extends ActionAdapter {
             throw new HttpAdapterException(e);
         } catch (HttpException e) {
             throw new HttpAdapterException(e);
+        } catch (CancelException e) {
+            return;
+        } finally {
+            runningActions.remove(action);
         }
         this.callback.onSuccess(action);
+    }
+
+    @Override <A> void cancel(A action) {
+        runningActions.remove(action);
+    }
+
+    private void throwIfCanceled(Object action) throws CancelException {
+        if (!runningActions.contains(action)) {
+            throw new CancelException();
+        }
     }
 
     private ActionHelper getActionHelper(Class actionClass) {
@@ -120,6 +141,8 @@ final public class HttpActionAdapter extends ActionAdapter {
         private ActionRequestCallback(A action) {this.action = action;}
 
     }
+
+    private static class CancelException extends Throwable {}
 
 
 }

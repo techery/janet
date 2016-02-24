@@ -169,6 +169,16 @@ final public class AsyncActionAdapter extends ActionAdapter {
         }
     }
 
+    @Override <A> void cancel(A action) {
+        AsyncActionWrapper wrapper = actionWrapperFactory.make(action.getClass(), action);
+        if (wrapper == null) {
+            throw new JanetInternalException(ERROR_GENERATOR);
+        }
+        if (wrapper.getResponseEvent() != null) {
+            synchronizer.remove(wrapper);
+        }
+    }
+
     private final AsyncClient.Callback clientCallback = new AsyncClient.Callback() {
 
         private QueuePoller queuePoller = new QueuePoller();

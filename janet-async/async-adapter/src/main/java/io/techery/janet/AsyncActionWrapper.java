@@ -35,4 +35,18 @@ public abstract class AsyncActionWrapper<A> {
     protected long getResponseTimeout() {
         return AsyncActionSynchronizer.PENDING_TIMEOUT;
     }
+
+    @Override public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        AsyncActionWrapper<?> wrapper = (AsyncActionWrapper<?>) o;
+
+        return action != null ? action.equals(wrapper.action) : wrapper.action == null;
+
+    }
+
+    @Override public int hashCode() {
+        return action != null ? action.hashCode() : 0;
+    }
 }
