@@ -10,26 +10,26 @@ final class CallbackWrapper implements ActionAdapter.Callback {
         this.interceptor = interceptor;
     }
 
-    @Override public void onStart(Object action) {
-        callback.onStart(interceptor.interceptStart(action));
+    @Override public void onStart(ActionHolder holder) {
+        callback.onStart(interceptor.interceptStart(holder));
     }
 
-    @Override public void onProgress(Object action, int progress) {
-        callback.onProgress(interceptor.interceptProgress(action, progress), progress);
+    @Override public void onProgress(ActionHolder holder, int progress) {
+        callback.onProgress(interceptor.interceptProgress(holder, progress), progress);
     }
 
-    @Override public void onSuccess(Object action) {
-        callback.onSuccess(interceptor.interceptSuccess(action));
+    @Override public void onSuccess(ActionHolder holder) {
+        callback.onSuccess(interceptor.interceptSuccess(holder));
     }
 
-    @Override public void onFail(Object action, JanetException e) {
-        callback.onFail(interceptor.interceptFail(action, e), e);
+    @Override public void onFail(ActionHolder holder, JanetException e) {
+        callback.onFail(interceptor.interceptFail(holder, e), e);
     }
 
     interface Interceptor {
-        <A> A interceptStart(A action);
-        <A> A interceptProgress(A action, int progress);
-        <A> A interceptSuccess(A action);
-        <A> A interceptFail(A action, JanetException e);
+        <A> ActionHolder<A> interceptStart(ActionHolder<A> holder);
+        <A> ActionHolder<A> interceptProgress(ActionHolder<A> holder, int progress);
+        <A> ActionHolder<A> interceptSuccess(ActionHolder<A> holder);
+        <A> ActionHolder<A> interceptFail(ActionHolder<A> holder, JanetException e);
     }
 }

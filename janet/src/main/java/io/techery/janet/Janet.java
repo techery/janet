@@ -15,7 +15,7 @@ import rx.subjects.PublishSubject;
 public class Janet {
 
     private final List<ActionAdapter> adapters;
-    private final PublishSubject<ActionState> pipeline;
+    private final PublishSubject<ActionPair> pipeline;
 
     private Janet(Builder builder) {
         this.adapters = builder.adapters;
@@ -26,20 +26,20 @@ public class Janet {
     private void connectPipeline() {
         for (ActionAdapter adapter : adapters) {
             adapter.setCallback(new ActionAdapter.Callback() {
-                @Override public void onStart(Object action) {
-                    pipeline.onNext(ActionState.start(action));
+                @Override public void onStart(ActionHolder holder) {
+                    pipeline.onNext(new ActionPair(holder, ActionState.start(holder.action())));
                 }
 
-                @Override public void onProgress(Object action, int progress) {
-                    pipeline.onNext(ActionState.progress(action, progress));
+                @Override public void onProgress(ActionHolder holder, int progress) {
+                    pipeline.onNext(new ActionPair(holder, ActionState.progress(holder.action(), progress)));
                 }
 
-                @Override public void onSuccess(Object action) {
-                    pipeline.onNext(ActionState.success(action));
+                @Override public void onSuccess(ActionHolder holder) {
+                    pipeline.onNext(new ActionPair(holder, ActionState.success(holder.action())));
                 }
 
-                @Override public void onFail(Object action, JanetException e) {
-                    pipeline.onNext(ActionState.fail(action, e));
+                @Override public void onFail(ActionHolder holder, JanetException e) {
+                    pipeline.onNext(new ActionPair(holder, ActionState.fail(holder.action(), e)));
                 }
             });
         }
@@ -62,6 +62,11 @@ public class Janet {
         }, new Func0<Observable<ActionState<A>>>() {
             @Override public Observable<ActionState<A>> call() {
                 return pipeline.asObservable()
+                        .map(new Func1<ActionPair, ActionState>() {
+                            @Override public ActionState call(ActionPair pair) {
+                                return pair.state;
+                            }
+                        })
                         .filter(new Func1<ActionState, Boolean>() {
                             @Override public Boolean call(ActionState actionState) {
                                 return actionClass.isInstance(actionState.action);
@@ -81,9 +86,14 @@ public class Janet {
 
     private <A> Observable<ActionState<A>> send(final A action) {
         return pipeline.asObservable()
-                .filter(new Func1<ActionState, Boolean>() {
-                    @Override public Boolean call(ActionState actionState) {
-                        return actionState.action == action;
+                .filter(new Func1<ActionPair, Boolean>() {
+                    @Override public Boolean call(ActionPair pair) {
+                        return pair.holder.isOrigin(action);
+                    }
+                })
+                .map(new Func1<ActionPair, ActionState>() {
+                    @Override public ActionState call(ActionPair pair) {
+                        return pair.state;
                     }
                 })
                 .compose(new CastToState<A>())
@@ -97,7 +107,7 @@ public class Janet {
 
     private <A> void doSend(A action) {
         ActionAdapter adapter = findActionAdapter(action.getClass());
-        adapter.send(action);
+        adapter.send(ActionHolder.create(action));
     }
 
     private <A> void doCancel(A action) {
@@ -131,6 +141,16 @@ public class Janet {
 
         public Janet build() {
             return new Janet(this);
+        }
+    }
+
+    private final static class ActionPair {
+        private final ActionHolder holder;
+        private final ActionState state;
+
+        private ActionPair(ActionHolder holder, ActionState state) {
+            this.holder = holder;
+            this.state = state;
         }
     }
 }

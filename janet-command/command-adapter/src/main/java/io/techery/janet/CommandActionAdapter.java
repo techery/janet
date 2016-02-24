@@ -18,12 +18,13 @@ final public class CommandActionAdapter extends ActionAdapter {
     }
 
     @SuppressWarnings("unchecked")
-    @Override protected <A> void sendInternal(A action) throws JanetException {
-        callback.onStart(action);
+    @Override protected <A> void sendInternal(ActionHolder<A> holder) throws JanetException {
+        callback.onStart(holder);
+        A action = holder.action();
         CommandActionBase commandAction = checkAndCast(action);
         runningActions.add(commandAction);
         try {
-            Object result = commandAction.run(new ActionProgressInvoker<A>(action, callback));
+            Object result = commandAction.run(new ActionProgressInvoker<A>(holder, callback));
             if (isCanceled(commandAction)) return;
             commandAction.setResult(result);
         } catch (Throwable t) {
@@ -33,7 +34,7 @@ final public class CommandActionAdapter extends ActionAdapter {
         } finally {
             runningActions.remove(commandAction);
         }
-        callback.onSuccess(action);
+        callback.onSuccess(holder);
     }
 
     @Override protected <A> void cancel(A action) {
@@ -56,16 +57,16 @@ final public class CommandActionAdapter extends ActionAdapter {
 
     private static class ActionProgressInvoker<A> implements CommandActionBase.CommandCallback {
 
-        private final A action;
+        private final ActionHolder<A> holder;
         private final Callback callback;
 
-        private ActionProgressInvoker(A action, Callback callback) {
-            this.action = action;
+        private ActionProgressInvoker(ActionHolder<A> holder, Callback callback) {
+            this.holder = holder;
             this.callback = callback;
         }
 
         @Override public void onProgress(int progress) {
-            callback.onProgress(action, progress);
+            callback.onProgress(holder, progress);
         }
     }
 }

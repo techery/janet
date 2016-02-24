@@ -8,20 +8,21 @@ public abstract class ActionAdapterWrapper extends ActionAdapter {
         this.actionAdapter = actionAdapter;
     }
 
-    protected abstract <A> A onInterceptSend(A action);
+    protected abstract <A> ActionHolder<A> onInterceptSend(ActionHolder<A> holder);
 
-    protected abstract <A> A onInterceptCancel(A action);
+    protected abstract <A> A onInterceptCancel(A holder);
 
-    protected abstract <A> A onInterceptStart(A action);
+    protected abstract <A> ActionHolder<A> onInterceptStart(ActionHolder<A> holder);
 
-    protected abstract <A> A onInterceptProgress(A action, int progress);
+    protected abstract <A> ActionHolder<A> onInterceptProgress(ActionHolder<A> holder, int progress);
 
-    protected abstract <A> A onInterceptSuccess(A action);
+    protected abstract <A> ActionHolder<A> onInterceptSuccess(ActionHolder<A> holder);
 
-    protected abstract <A> A onInterceptFail(A action, JanetException e);
+    protected abstract <A> ActionHolder<A> onInterceptFail(ActionHolder<A> holder, JanetException e);
 
-    @Override protected <A> void sendInternal(A action) throws JanetException {
-        actionAdapter.sendInternal(onInterceptSend(action));
+    @Override protected <A> void sendInternal(ActionHolder<A> holder) throws JanetException {
+        onInterceptSend(holder);
+        actionAdapter.sendInternal(holder);
     }
 
     @Override protected <A> void cancel(A action) {
@@ -37,20 +38,20 @@ public abstract class ActionAdapterWrapper extends ActionAdapter {
     }
 
     private final CallbackWrapper.Interceptor interceptor = new CallbackWrapper.Interceptor() {
-        @Override public <A> A interceptStart(A action) {
-            return onInterceptStart(action);
+        @Override public <A> ActionHolder<A> interceptStart(ActionHolder<A> holder) {
+            return onInterceptStart(holder);
         }
 
-        @Override public <A> A interceptProgress(A action, int progress) {
-            return onInterceptProgress(action, progress);
+        @Override public <A> ActionHolder<A> interceptProgress(ActionHolder<A> holder, int progress) {
+            return onInterceptProgress(holder, progress);
         }
 
-        @Override public <A> A interceptSuccess(A action) {
-            return onInterceptSuccess(action);
+        @Override public <A> ActionHolder<A> interceptSuccess(ActionHolder<A> holder) {
+            return onInterceptSuccess(holder);
         }
 
-        @Override public <A> A interceptFail(A action, JanetException e) {
-            return onInterceptFail(action, e);
+        @Override public <A> ActionHolder<A> interceptFail(ActionHolder<A> holder, JanetException e) {
+            return onInterceptFail(holder, e);
         }
     };
 }

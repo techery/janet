@@ -9,10 +9,14 @@ import io.techery.janet.converter.ConverterException;
 
 public abstract class AsyncActionWrapper<A> {
 
+    final ActionHolder<A> holder;
     protected final A action;
     private ScheduledFuture scheduledFuture;
 
-    protected AsyncActionWrapper(A action) {this.action = action;}
+    protected AsyncActionWrapper(ActionHolder<A> holder) {
+        this.holder = holder;
+        this.action = holder.action();
+    }
 
     protected abstract boolean isBytesMessage();
     protected abstract String getEvent();
