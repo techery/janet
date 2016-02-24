@@ -51,7 +51,7 @@ final public class HttpActionAdapter extends ActionAdapter {
         return HttpAction.class;
     }
 
-    @Override protected <A> void sendInternal(A action) throws HttpAdapterException {
+    @Override <A> void sendInternal(A action) throws HttpAdapterException {
         callback.onStart(action);
         runningActions.add(action);
         final ActionHelper<A> helper = getActionHelper(action.getClass());

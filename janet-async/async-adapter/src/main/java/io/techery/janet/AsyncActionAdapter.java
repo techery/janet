@@ -68,7 +68,7 @@ final public class AsyncActionAdapter extends ActionAdapter {
         return AsyncAction.class;
     }
 
-    @Override protected <T> void sendInternal(T action) throws AsyncAdapterException {
+    @Override <T> void sendInternal(T action) throws AsyncAdapterException {
         callback.onStart(action);
         if (handleConnectionAction(action)) {
             return;
