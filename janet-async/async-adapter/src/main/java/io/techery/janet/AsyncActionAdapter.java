@@ -64,11 +64,11 @@ final public class AsyncActionAdapter extends ActionAdapter {
         }
     }
 
-    @Override Class getSupportedAnnotationType() {
+    @Override protected Class getSupportedAnnotationType() {
         return AsyncAction.class;
     }
 
-    @Override <T> void sendInternal(T action) throws AsyncAdapterException {
+    @Override protected <T> void sendInternal(T action) throws AsyncAdapterException {
         callback.onStart(action);
         if (handleConnectionAction(action)) {
             return;
@@ -82,6 +82,16 @@ final public class AsyncActionAdapter extends ActionAdapter {
         }
         sendAction(wrapper);
         callback.onProgress(action, 100);
+    }
+
+    @Override protected <A> void cancel(A action) {
+        AsyncActionWrapper wrapper = actionWrapperFactory.make(action.getClass(), action);
+        if (wrapper == null) {
+            throw new JanetInternalException(ERROR_GENERATOR);
+        }
+        if (wrapper.getResponseEvent() != null) {
+            synchronizer.remove(wrapper);
+        }
     }
 
     private void sendAction(AsyncActionWrapper wrapper) throws AsyncAdapterException {
@@ -166,16 +176,6 @@ final public class AsyncActionAdapter extends ActionAdapter {
             } else {
                 callback.onSuccess(action);
             }
-        }
-    }
-
-    @Override <A> void cancel(A action) {
-        AsyncActionWrapper wrapper = actionWrapperFactory.make(action.getClass(), action);
-        if (wrapper == null) {
-            throw new JanetInternalException(ERROR_GENERATOR);
-        }
-        if (wrapper.getResponseEvent() != null) {
-            synchronizer.remove(wrapper);
         }
     }
 

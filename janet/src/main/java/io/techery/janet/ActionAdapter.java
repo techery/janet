@@ -12,11 +12,11 @@ public abstract class ActionAdapter {
         }
     }
 
-    abstract <A> void sendInternal(A action) throws JanetException;
+    abstract protected <A> void sendInternal(A action) throws JanetException;
 
-    abstract <A> void cancel(A action);
+    abstract protected <A> void cancel(A action);
 
-    abstract Class getSupportedAnnotationType();
+    abstract protected Class getSupportedAnnotationType();
 
     void setCallback(Callback callback) {
         this.callback = callback;

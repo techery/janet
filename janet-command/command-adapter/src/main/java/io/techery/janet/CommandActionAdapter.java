@@ -5,7 +5,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
 import io.techery.janet.command.annotations.CommandAction;
 import io.techery.janet.command.exception.CommandAdapterException;
 
-public class CommandActionAdapter extends ActionAdapter {
+final public class CommandActionAdapter extends ActionAdapter {
 
     private final CopyOnWriteArrayList<CommandActionBase> runningActions;
 
@@ -13,7 +13,7 @@ public class CommandActionAdapter extends ActionAdapter {
         this.runningActions = new CopyOnWriteArrayList<CommandActionBase>();
     }
 
-    @Override Class getSupportedAnnotationType() {
+    @Override protected Class getSupportedAnnotationType() {
         return CommandAction.class;
     }
 

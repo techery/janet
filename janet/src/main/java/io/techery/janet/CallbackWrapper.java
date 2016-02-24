@@ -11,25 +11,25 @@ final class CallbackWrapper implements ActionAdapter.Callback {
     }
 
     @Override public void onStart(Object action) {
-        callback.onStart(interceptor.onInterceptStart(action));
+        callback.onStart(interceptor.interceptStart(action));
     }
 
     @Override public void onProgress(Object action, int progress) {
-        callback.onProgress(interceptor.onInterceptProgress(action, progress), progress);
+        callback.onProgress(interceptor.interceptProgress(action, progress), progress);
     }
 
     @Override public void onSuccess(Object action) {
-        callback.onSuccess(interceptor.onInterceptSuccess(action));
+        callback.onSuccess(interceptor.interceptSuccess(action));
     }
 
     @Override public void onFail(Object action, JanetException e) {
-        callback.onFail(interceptor.onInterceptFail(action, e), e);
+        callback.onFail(interceptor.interceptFail(action, e), e);
     }
 
     interface Interceptor {
-        <A> A onInterceptStart(A action);
-        <A> A onInterceptProgress(A action, int progress);
-        <A> A onInterceptSuccess(A action);
-        <A> A onInterceptFail(A action, JanetException e);
+        <A> A interceptStart(A action);
+        <A> A interceptProgress(A action, int progress);
+        <A> A interceptSuccess(A action);
+        <A> A interceptFail(A action, JanetException e);
     }
 }
