@@ -112,7 +112,7 @@ public class Janet {
 
     private <A> void doCancel(A action) {
         ActionAdapter adapter = findActionAdapter(action.getClass());
-        adapter.cancel(action);
+        adapter.cancel(ActionHolder.create(action));
     }
 
     private ActionAdapter findActionAdapter(Class actionClass) {

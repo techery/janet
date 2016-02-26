@@ -14,7 +14,7 @@ public abstract class ActionAdapter {
 
     abstract protected <A> void sendInternal(ActionHolder<A> holder) throws JanetException;
 
-    abstract protected <A> void cancel(A action);
+    abstract protected <A> void cancel(ActionHolder<A> holder);
 
     abstract protected Class getSupportedAnnotationType();
 

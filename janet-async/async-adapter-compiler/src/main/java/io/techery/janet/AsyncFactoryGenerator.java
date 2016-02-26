@@ -29,8 +29,9 @@ public class AsyncFactoryGenerator extends Generator<AsyncActionClass> {
                 .addModifiers(Modifier.PUBLIC)
                 .addAnnotation(Override.class)
                 .returns(ParameterizedTypeName.get(AsyncActionWrapper.class))
-                .addParameter(Class.class, "actionClass")
                 .addParameter(ActionHolder.class, "holder");
+
+        makeMethodBuilder.addStatement("Class actionClass = holder.action().getClass()");
 
         for (AsyncActionClass actionClass : actionClasses) {
             makeMethodBuilder.beginControlFlow("if(actionClass == $T.class)", actionClass.getTypeElement());

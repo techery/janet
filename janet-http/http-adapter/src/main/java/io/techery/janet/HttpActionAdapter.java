@@ -94,8 +94,8 @@ final public class HttpActionAdapter extends ActionAdapter {
         this.callback.onSuccess(holder);
     }
 
-    @Override protected <A> void cancel(A action) {
-        runningActions.remove(action);
+    @Override protected <A> void cancel(ActionHolder<A> holder) {
+        runningActions.remove(holder.action());
     }
 
     private void throwIfCanceled(Object action) throws CancelException {

@@ -70,11 +70,10 @@ final public class AsyncActionAdapter extends ActionAdapter {
 
     @Override protected <A> void sendInternal(ActionHolder<A> holder) throws AsyncAdapterException {
         callback.onStart(holder);
-        A action = holder.action();
         if (handleConnectionAction(holder)) {
             return;
         }
-        AsyncActionWrapper wrapper = actionWrapperFactory.make(action.getClass(), holder);
+        AsyncActionWrapper wrapper = actionWrapperFactory.make(holder);
         if (wrapper == null) {
             throw new JanetInternalException(ERROR_GENERATOR);
         }
@@ -84,8 +83,8 @@ final public class AsyncActionAdapter extends ActionAdapter {
         sendAction(wrapper);
     }
 
-    @Override protected <A> void cancel(A action) {
-        AsyncActionWrapper wrapper = actionWrapperFactory.make(action.getClass(), ActionHolder.create(action));
+    @Override protected <A> void cancel(ActionHolder<A> holder) {
+        AsyncActionWrapper wrapper = actionWrapperFactory.make(holder);
         if (wrapper == null) {
             throw new JanetInternalException(ERROR_GENERATOR);
         }
@@ -156,7 +155,10 @@ final public class AsyncActionAdapter extends ActionAdapter {
         List<Class> actionClassList = actionsRoster.getActionClasses(event);
         for (Class actionClass : actionClassList) {
             ActionHolder holder = ActionHolder.create((createActionInstance(actionClass)));
-            AsyncActionWrapper messageWrapper = actionWrapperFactory.make(actionClass, holder);
+            AsyncActionWrapper messageWrapper = actionWrapperFactory.make(holder);
+            if (messageWrapper == null) {
+                throw new JanetInternalException(ERROR_GENERATOR);
+            }
             try {
                 messageWrapper.fillMessage(body, converter);
             } catch (ConverterException e) {
@@ -298,7 +300,7 @@ final public class AsyncActionAdapter extends ActionAdapter {
     }
 
     interface AsyncActionWrapperFactory {
-        <A> AsyncActionWrapper<A> make(Class<A> actionClass, ActionHolder holder);
+        AsyncActionWrapper make(ActionHolder holder);
     }
 
     static class QueuePoller {
