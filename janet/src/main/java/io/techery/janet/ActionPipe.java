@@ -8,6 +8,16 @@ import rx.functions.Func0;
 import rx.functions.Func1;
 import rx.observables.ConnectableObservable;
 
+/**
+ * End tool for sending and receiving actions with specific type using RXJava.
+ * ActionPipe can work with actions synchronously or asynchronously.
+ * Create instances using method {@link Janet#createPipe(Class)}.
+ * <p>
+ * For example,
+ * <pre>{@code
+ * ActionPipe<UsersAction> usersPipe = janet.createPipe(UsersAction.class);}
+ * </pre>
+ */
 final public class ActionPipe<A> {
 
     private final Func1<A, Observable<ActionState<A>>> syncObservableFactory;
@@ -28,33 +38,66 @@ final public class ActionPipe<A> {
         this.cachedPipeline.connect();
     }
 
+    /**
+     * Observe all states of specified action type
+     */
     public Observable<ActionState<A>> observe() {
         return pipeline;
     }
 
+    /**
+     * Observe all states of specified action type with cache.
+     * Last action state will be emitted immediately after subscribe.
+     *
+     * @see Observable#replay(int)
+     */
     public Observable<ActionState<A>> observeWithReplay() {
         return cachedPipeline;
     }
 
+    /**
+     * Observe successful actions only
+     */
     public Observable<A> observeSuccess() {
         return observe()
                 .compose(new ActionStateToActionTransformer<A>());
 
     }
 
+    /**
+     * Observe successful actions only with cache.
+     * Last action state will be emitted immediately after subscribe.
+     *
+     * @see Observable#replay(int)
+     */
     public Observable<A> observeSuccessWithReplay() {
         return observeWithReplay()
                 .compose(new ActionStateToActionTransformer<A>());
     }
 
+    /**
+     * Clear cached action emits
+     */
     public void clearReplays() {
         createCachedPipeline();
     }
 
+    /**
+     * Send action to {@link Janet}.
+     * Uses relative adapter {@link ActionAdapter#sendInternal(Object)}
+     *
+     * @param action prepared action for sending
+     */
     public void send(A action) {
         createObservable(action).subscribe();
     }
 
+    /**
+     * Cancel running action.
+     * Action cancellation defines in relative adapter {@link ActionAdapter#cancel(Object)}
+     *
+     * @param action prepared action for cancellation
+     */
     public void cancel(A action) {
         cancelFunc.call(action);
     }
