@@ -19,6 +19,9 @@ final public class ActionHolder<A> {
     }
 
     public ActionHolder newAction(A action) {
+        if (action == null) {
+            throw new IllegalArgumentException("action == null");
+        }
         this.action = action;
         return this;
     }
