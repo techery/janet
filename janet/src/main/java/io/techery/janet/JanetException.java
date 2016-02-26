@@ -1,5 +1,8 @@
 package io.techery.janet;
 
+/**
+ * Superclass for all errors and exceptions in Janet
+ */
 public class JanetException extends Throwable {
 
     public JanetException(String message, Throwable cause) {

@@ -3,6 +3,7 @@ package io.techery.janet;
 import io.techery.janet.helper.ActionStateToActionTransformer;
 import rx.Observable;
 import rx.Scheduler;
+import rx.Subscriber;
 import rx.functions.Action1;
 import rx.functions.Func0;
 import rx.functions.Func1;
@@ -56,21 +57,24 @@ final public class ActionPipe<A> {
     }
 
     /**
-     * Observe successful actions only
+     * Observe actions with results
+     * To catch errors use {@link Subscriber#onError(Throwable)}
      */
-    public Observable<A> observeSuccess() {
+    public Observable<A> observeResult() {
         return observe()
                 .compose(new ActionStateToActionTransformer<A>());
 
     }
 
     /**
-     * Observe successful actions only with cache.
-     * Last action state will be emitted immediately after subscribe.
+     * Observe actions with results with cache.
+     * Last result will be emitted immediately after subscribe.
+     * <p>
+     * To catch errors use {@link Subscriber#onError(Throwable)}
      *
      * @see Observable#replay(int)
      */
-    public Observable<A> observeSuccessWithReplay() {
+    public Observable<A> observeResultWithReplay() {
         return observeWithReplay()
                 .compose(new ActionStateToActionTransformer<A>());
     }
@@ -84,7 +88,7 @@ final public class ActionPipe<A> {
 
     /**
      * Send action to {@link Janet}.
-     * Uses relative adapter {@link ActionAdapter#sendInternal(Object)}
+     * Uses relative adapter {@link ActionAdapter#sendInternal(ActionHolder)}
      *
      * @param action prepared action for sending
      */
@@ -94,7 +98,7 @@ final public class ActionPipe<A> {
 
     /**
      * Cancel running action.
-     * Action cancellation defines in relative adapter {@link ActionAdapter#cancel(Object)}
+     * Action cancellation defines in relative adapter {@link ActionAdapter#cancel(ActionHolder)}
      *
      * @param action prepared action for cancellation
      */
@@ -102,15 +106,31 @@ final public class ActionPipe<A> {
         cancelFunc.call(action);
     }
 
+    /**
+     * {@link Scheduler} to do {@link Observable#subscribeOn(Scheduler) subcribeOn} of created Observable.
+     */
     public ActionPipe<A> pimp(Scheduler scheduler) {
         this.subscribeOn = scheduler;
         return this;
     }
 
-    public Observable<A> createSuccessObservable(A action) {
+    /**
+     * Create {@link Observable observable} to send action and receive action with result synchronously
+     * <p>
+     * To catch errors use {@link Subscriber#onError(Throwable)}
+     *
+     * @param action prepared action to send
+     */
+    public Observable<A> createResultObservable(A action) {
         return createObservable(action).compose(new ActionStateToActionTransformer<A>());
     }
 
+    /**
+     * Create {@link Observable observable} to send action and receive results
+     * in the form of action {@link ActionState states} synchronously
+     *
+     * @param action prepared action to send
+     */
     public Observable<ActionState<A>> createObservable(final A action) {
         return syncObservableFactory.call(action)
                 .compose(new Observable.Transformer<ActionState<A>, ActionState<A>>() {
