@@ -8,6 +8,7 @@ import io.techery.janet.Janet;
 import io.techery.janet.gson.GsonConverter;
 import io.techery.janet.helper.ActionStateSubscriber;
 import io.techery.janet.okhttp.OkClient;
+import io.techery.janet.sample.SampleLoggingAdapter;
 import rx.Observable;
 
 public class SimpleService {
@@ -16,7 +17,7 @@ public class SimpleService {
 
     public static void main(String... args) {
         Janet janet = new Janet.Builder()
-                .addAdapter(new HttpActionAdapter(API_URL, new OkClient(), new GsonConverter(new Gson())))
+                .addAdapter(new SampleLoggingAdapter(new HttpActionAdapter(API_URL, new OkClient(), new GsonConverter(new Gson()))))
                 .build();
 
         ActionPipe<UsersAction> usersPipe = janet.createPipe(UsersAction.class);
@@ -40,7 +41,7 @@ public class SimpleService {
 
 
         janet = new Janet.Builder()
-                .addAdapter(new HttpActionAdapter("http://posttestserver.com", new OkClient(), new GsonConverter(new Gson())))
+                .addAdapter(new SampleLoggingAdapter(new HttpActionAdapter("http://posttestserver.com", new OkClient(), new GsonConverter(new Gson()))))
                 .build();
 
         janet.createPipe(TestProgressAction.class)

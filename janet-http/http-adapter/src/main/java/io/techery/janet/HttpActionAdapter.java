@@ -47,12 +47,13 @@ final public class HttpActionAdapter extends ActionAdapter {
         loadActionHelperFactory();
     }
 
-    @Override Class getSupportedAnnotationType() {
+    @Override protected Class getSupportedAnnotationType() {
         return HttpAction.class;
     }
 
-    @Override protected <A> void sendInternal(A action) throws HttpAdapterException {
-        callback.onStart(action);
+    @Override protected <A> void sendInternal(ActionHolder<A> holder) throws HttpAdapterException {
+        callback.onStart(holder);
+        A action = holder.action();
         runningActions.add(action);
         final ActionHelper<A> helper = getActionHelper(action.getClass());
         if (helper == null) {
@@ -64,12 +65,12 @@ final public class HttpActionAdapter extends ActionAdapter {
             builder = helper.fillRequest(builder, action);
             Request request = builder.build();
             throwIfCanceled(action);
-            response = client.execute(request, new ActionRequestCallback<A>(action) {
+            response = client.execute(request, new ActionRequestCallback<A>(holder) {
                 private int lastProgress;
 
                 @Override public void onProgress(int progress) {
                     if (progress > lastProgress + PROGRESS_THRESHOLD) {
-                        callback.onProgress(action, progress);
+                        callback.onProgress(holder, progress);
                         lastProgress = progress;
                     }
                 }
@@ -90,11 +91,11 @@ final public class HttpActionAdapter extends ActionAdapter {
         } finally {
             runningActions.remove(action);
         }
-        this.callback.onSuccess(action);
+        this.callback.onSuccess(holder);
     }
 
-    @Override <A> void cancel(A action) {
-        runningActions.remove(action);
+    @Override protected <A> void cancel(ActionHolder<A> holder) {
+        runningActions.remove(holder.action());
     }
 
     private void throwIfCanceled(Object action) throws CancelException {
@@ -136,9 +137,9 @@ final public class HttpActionAdapter extends ActionAdapter {
 
     private static abstract class ActionRequestCallback<A> implements HttpClient.RequestCallback {
 
-        protected final A action;
+        protected final ActionHolder<A> holder;
 
-        private ActionRequestCallback(A action) {this.action = action;}
+        private ActionRequestCallback(ActionHolder<A> holder) {this.holder = holder;}
 
     }
 

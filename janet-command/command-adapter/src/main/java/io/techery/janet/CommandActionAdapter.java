@@ -5,7 +5,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
 import io.techery.janet.command.annotations.CommandAction;
 import io.techery.janet.command.exception.CommandAdapterException;
 
-public class CommandActionAdapter extends ActionAdapter {
+final public class CommandActionAdapter extends ActionAdapter {
 
     private final CopyOnWriteArrayList<CommandActionBase> runningActions;
 
@@ -13,40 +13,40 @@ public class CommandActionAdapter extends ActionAdapter {
         this.runningActions = new CopyOnWriteArrayList<CommandActionBase>();
     }
 
-    @Override Class getSupportedAnnotationType() {
+    @Override protected Class getSupportedAnnotationType() {
         return CommandAction.class;
     }
 
     @SuppressWarnings("unchecked")
-    @Override protected <A> void sendInternal(A action) throws JanetException {
-        callback.onStart(action);
-        CommandActionBase commandAction = checkAndCast(action);
-        runningActions.add(commandAction);
+    @Override protected <A> void sendInternal(ActionHolder<A> holder) throws JanetException {
+        callback.onStart(holder);
+        CommandActionBase action = checkAndCast(holder.action());
+        runningActions.add(action);
         try {
-            Object result = commandAction.run(new ActionProgressInvoker<A>(action, callback));
-            if (isCanceled(commandAction)) return;
-            commandAction.setResult(result);
+            Object result = action.run(new ActionProgressInvoker<A>(holder, callback));
+            if (isCanceled(action)) return;
+            action.setResult(result);
         } catch (Throwable t) {
             throw new CommandAdapterException(
                     String.format("Something went wrong with %s", action.getClass().getCanonicalName()), t
             );
         } finally {
-            runningActions.remove(commandAction);
+            runningActions.remove(action);
         }
-        callback.onSuccess(action);
+        callback.onSuccess(holder);
     }
 
-    @Override protected <A> void cancel(A action) {
-        CommandActionBase commandAction = checkAndCast(action);
-        commandAction.cancel();
-        runningActions.remove(commandAction);
+    @Override protected <A> void cancel(ActionHolder<A> holder) {
+        CommandActionBase action = checkAndCast(holder.action());
+        action.cancel();
+        runningActions.remove(action);
     }
 
     private boolean isCanceled(CommandActionBase commandAction) {
         return !runningActions.contains(commandAction);
     }
 
-    private CommandActionBase checkAndCast(Object action) {
+    private static CommandActionBase checkAndCast(Object action) {
         if (!(action instanceof CommandActionBase)) {
             throw new JanetInternalException(String.format("%s must extend %s", action.getClass()
                     .getCanonicalName(), CommandActionBase.class.getCanonicalName()));
@@ -56,16 +56,16 @@ public class CommandActionAdapter extends ActionAdapter {
 
     private static class ActionProgressInvoker<A> implements CommandActionBase.CommandCallback {
 
-        private final A action;
+        private final ActionHolder<A> holder;
         private final Callback callback;
 
-        private ActionProgressInvoker(A action, Callback callback) {
-            this.action = action;
+        private ActionProgressInvoker(ActionHolder<A> holder, Callback callback) {
+            this.holder = holder;
             this.callback = callback;
         }
 
         @Override public void onProgress(int progress) {
-            callback.onProgress(action, progress);
+            callback.onProgress(holder, progress);
         }
     }
 }
