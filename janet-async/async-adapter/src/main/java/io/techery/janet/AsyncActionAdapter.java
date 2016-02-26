@@ -33,8 +33,8 @@ final public class AsyncActionAdapter extends ActionAdapter {
     private final AsyncClient client;
     private final Converter converter;
 
-    private final ConcurrentLinkedQueue<ConnectAsyncAction> connectActionQueue;
-    private final ConcurrentLinkedQueue<DisconnectAsyncAction> disconnectActionQueue;
+    private final ConcurrentLinkedQueue<ActionHolder<ConnectAsyncAction>> connectActionQueue;
+    private final ConcurrentLinkedQueue<ActionHolder<DisconnectAsyncAction>> disconnectActionQueue;
     private AsyncActionsRosterBase actionsRoster;
     private final AsyncActionSynchronizer synchronizer;
     private AsyncActionWrapperFactory actionWrapperFactory;
@@ -53,8 +53,8 @@ final public class AsyncActionAdapter extends ActionAdapter {
         this.url = url;
         this.client = client;
         this.converter = converter;
-        this.connectActionQueue = new ConcurrentLinkedQueue<ConnectAsyncAction>();
-        this.disconnectActionQueue = new ConcurrentLinkedQueue<DisconnectAsyncAction>();
+        this.connectActionQueue = new ConcurrentLinkedQueue<ActionHolder<ConnectAsyncAction>>();
+        this.disconnectActionQueue = new ConcurrentLinkedQueue<ActionHolder<DisconnectAsyncAction>>();
         this.synchronizer = new AsyncActionSynchronizer(waitingErrorCallback);
         loadActionWrapperFactory();
         loadAsyncActionRooster();
@@ -68,12 +68,12 @@ final public class AsyncActionAdapter extends ActionAdapter {
         return AsyncAction.class;
     }
 
-    @Override protected <T> void sendInternal(T action) throws AsyncAdapterException {
-        callback.onStart(action);
-        if (handleConnectionAction(action)) {
+    @Override protected <A> void sendInternal(ActionHolder<A> holder) throws AsyncAdapterException {
+        callback.onStart(holder);
+        if (handleConnectionAction(holder)) {
             return;
         }
-        AsyncActionWrapper wrapper = actionWrapperFactory.make(action.getClass(), action);
+        AsyncActionWrapper wrapper = actionWrapperFactory.make(holder);
         if (wrapper == null) {
             throw new JanetInternalException(ERROR_GENERATOR);
         }
@@ -81,11 +81,10 @@ final public class AsyncActionAdapter extends ActionAdapter {
             connect(false);
         }
         sendAction(wrapper);
-        callback.onProgress(action, 100);
     }
 
-    @Override protected <A> void cancel(A action) {
-        AsyncActionWrapper wrapper = actionWrapperFactory.make(action.getClass(), action);
+    @Override protected <A> void cancel(ActionHolder<A> holder) {
+        AsyncActionWrapper wrapper = actionWrapperFactory.make(holder);
         if (wrapper == null) {
             throw new JanetInternalException(ERROR_GENERATOR);
         }
@@ -112,19 +111,21 @@ final public class AsyncActionAdapter extends ActionAdapter {
         }
     }
 
-    private <T> boolean handleConnectionAction(T action) throws AsyncAdapterException {
+    @SuppressWarnings("unchecked")
+    private <A> boolean handleConnectionAction(ActionHolder<A> holder) throws AsyncAdapterException {
+        A action = holder.action();
         if (action instanceof ConnectAsyncAction) {
             ConnectAsyncAction connectAsyncAction = (ConnectAsyncAction) action;
             if (client.isConnected() && !connectAsyncAction.reconnectIfConnected) {
-                callback.onSuccess(action);
+                callback.onSuccess(holder);
             }
             connect(connectAsyncAction.reconnectIfConnected);
-            connectActionQueue.add(connectAsyncAction);
+            connectActionQueue.add((ActionHolder<ConnectAsyncAction>) holder);
             return true;
         }
         if (action instanceof DisconnectAsyncAction) {
             disconnect();
-            disconnectActionQueue.add((DisconnectAsyncAction) action);
+            disconnectActionQueue.add((ActionHolder<DisconnectAsyncAction>) holder);
             return true;
         }
         return false;
@@ -153,12 +154,15 @@ final public class AsyncActionAdapter extends ActionAdapter {
         }
         List<Class> actionClassList = actionsRoster.getActionClasses(event);
         for (Class actionClass : actionClassList) {
-            Object action = createActionInstance(actionClass);
-            AsyncActionWrapper messageWrapper = actionWrapperFactory.make(actionClass, action);
+            ActionHolder holder = ActionHolder.create((createActionInstance(actionClass)));
+            AsyncActionWrapper messageWrapper = actionWrapperFactory.make(holder);
+            if (messageWrapper == null) {
+                throw new JanetInternalException(ERROR_GENERATOR);
+            }
             try {
                 messageWrapper.fillMessage(body, converter);
             } catch (ConverterException e) {
-                callback.onFail(action, new AsyncAdapterException(e));
+                callback.onFail(holder, new AsyncAdapterException(e));
             }
             if (synchronizer.contains(event)) {
                 for (AsyncActionWrapper wrapper : synchronizer.sync(event, messageWrapper.action, new AsyncActionSynchronizer.Predicate() {
@@ -166,15 +170,15 @@ final public class AsyncActionAdapter extends ActionAdapter {
                         try {
                             return wrapper.fillResponse(responseAction);
                         } catch (ConverterException e) {
-                            callback.onFail(wrapper.action, new AsyncAdapterException(e));
+                            callback.onFail(wrapper.holder, new AsyncAdapterException(e));
                         }
                         return false;
                     }
                 })) {
-                    callback.onSuccess(wrapper.action);
+                    callback.onSuccess(wrapper.holder);
                 }
             } else {
-                callback.onSuccess(action);
+                callback.onSuccess(holder);
             }
         }
     }
@@ -184,43 +188,46 @@ final public class AsyncActionAdapter extends ActionAdapter {
         private QueuePoller queuePoller = new QueuePoller();
 
         @Override public void onConnect() {
-            queuePoller.poll(connectActionQueue, new PollCallback<ConnectAsyncAction>() {
-                @Override public ConnectAsyncAction createIfEmpty() {
-                    return new ConnectAsyncAction();
+            queuePoller.poll(connectActionQueue, new PollCallback<ActionHolder<ConnectAsyncAction>>() {
+                @SuppressWarnings("unchecked")
+                @Override public ActionHolder<ConnectAsyncAction> createIfEmpty() {
+                    return ActionHolder.create(new ConnectAsyncAction());
                 }
 
-                @Override public void onNext(ConnectAsyncAction item) {
+                @Override public void onNext(ActionHolder<ConnectAsyncAction> item) {
                     callback.onSuccess(item);
                 }
             });
         }
 
         @Override public void onDisconnect(String reason) {
-            queuePoller.poll(disconnectActionQueue, new PollCallback<DisconnectAsyncAction>() {
-                @Override public DisconnectAsyncAction createIfEmpty() {
-                    return new DisconnectAsyncAction();
+            queuePoller.poll(disconnectActionQueue, new PollCallback<ActionHolder<DisconnectAsyncAction>>() {
+                @SuppressWarnings("unchecked")
+                @Override public ActionHolder<DisconnectAsyncAction> createIfEmpty() {
+                    return ActionHolder.create(new DisconnectAsyncAction());
                 }
 
-                @Override public void onNext(DisconnectAsyncAction item) {
+                @Override public void onNext(ActionHolder<DisconnectAsyncAction> item) {
                     callback.onSuccess(item);
                 }
             });
         }
 
         @Override public void onConnectionError(final Throwable t) {
-            queuePoller.poll(connectActionQueue, new PollCallback<ConnectAsyncAction>() {
-                @Override public ConnectAsyncAction createIfEmpty() {
-                    return new ConnectAsyncAction();
+            queuePoller.poll(connectActionQueue, new PollCallback<ActionHolder<ConnectAsyncAction>>() {
+                @SuppressWarnings("unchecked")
+                @Override public ActionHolder<ConnectAsyncAction> createIfEmpty() {
+                    return ActionHolder.create(new ConnectAsyncAction());
                 }
 
-                @Override public void onNext(ConnectAsyncAction item) {
+                @Override public void onNext(ActionHolder<ConnectAsyncAction> item) {
                     callback.onFail(item, new AsyncAdapterException("ConnectionError", t));
                 }
             });
         }
 
         @Override public void onError(Throwable t) {
-            callback.onFail(new ErrorAsyncAction(t), new AsyncAdapterException("Server sent error", t));
+            callback.onFail(ActionHolder.create(new ErrorAsyncAction(t)), new AsyncAdapterException("Server sent error", t));
         }
 
         @Override public void onMessage(String event, String string) {
@@ -255,7 +262,7 @@ final public class AsyncActionAdapter extends ActionAdapter {
                     break;
                 }
             }
-            callback.onFail(wrapper.action, new AsyncAdapterException("Action " + wrapper.action + " has not waited for a response.", exception));
+            callback.onFail(wrapper.holder, new AsyncAdapterException("Action " + wrapper.action + " has not waited for a response.", exception));
         }
     };
 
@@ -293,7 +300,7 @@ final public class AsyncActionAdapter extends ActionAdapter {
     }
 
     interface AsyncActionWrapperFactory {
-        <A> AsyncActionWrapper<A> make(Class<A> actionClass, Object action);
+        AsyncActionWrapper make(ActionHolder holder);
     }
 
     static class QueuePoller {

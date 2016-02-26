@@ -29,12 +29,13 @@ public class AsyncFactoryGenerator extends Generator<AsyncActionClass> {
                 .addModifiers(Modifier.PUBLIC)
                 .addAnnotation(Override.class)
                 .returns(ParameterizedTypeName.get(AsyncActionWrapper.class))
-                .addParameter(Class.class, "actionClass")
-                .addParameter(Object.class, "action");
+                .addParameter(ActionHolder.class, "holder");
+
+        makeMethodBuilder.addStatement("Class actionClass = holder.action().getClass()");
 
         for (AsyncActionClass actionClass : actionClasses) {
             makeMethodBuilder.beginControlFlow("if(actionClass == $T.class)", actionClass.getTypeElement());
-            makeMethodBuilder.addStatement(" return new $T(($T)action)", ClassName.bestGuess(actionClass.getFullWrapperName()), actionClass
+            makeMethodBuilder.addStatement(" return new $T((ActionHolder<$T>)holder)", ClassName.bestGuess(actionClass.getFullWrapperName()), actionClass
                     .getTypeElement());
             makeMethodBuilder.endControlFlow();
         }

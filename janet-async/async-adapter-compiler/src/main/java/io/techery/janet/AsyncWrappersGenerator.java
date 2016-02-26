@@ -56,8 +56,8 @@ public class AsyncWrappersGenerator extends Generator<AsyncActionClass> {
     private static TypeSpec.Builder createConstructor(TypeSpec.Builder builder, AsyncActionClass actionClass) {
         MethodSpec.Builder constructorBuilder = MethodSpec.constructorBuilder()
                 .addModifiers(Modifier.PUBLIC)
-                .addParameter(actionClass.getTypeName(), "action")
-                .addStatement("super(action)");
+                .addParameter(ParameterizedTypeName.get(ClassName.get(ActionHolder.class), actionClass.getTypeName()), "holder")
+                .addStatement("super(holder)");
         if (actionClass.getResponseInfo() != null) {
             builder.addField(SyncPredicate.class, "syncPredicate", Modifier.PRIVATE, Modifier.FINAL);
             constructorBuilder.addStatement("this.syncPredicate = new $T()", actionClass.getResponseInfo().syncPredicateElement);
@@ -162,7 +162,7 @@ public class AsyncWrappersGenerator extends Generator<AsyncActionClass> {
                 .addAnnotation(Override.class)
                 .addModifiers(Modifier.PUBLIC)
                 .returns(long.class);
-        if (actionClass.getResponseInfo()!=null && actionClass.getResponseInfo().responseTimeout > 0) {
+        if (actionClass.getResponseInfo() != null && actionClass.getResponseInfo().responseTimeout > 0) {
             builder.addStatement("return $Ll", actionClass.getResponseInfo().responseTimeout);
         } else {
             builder.addStatement("return super.getResponseTimeout()");
