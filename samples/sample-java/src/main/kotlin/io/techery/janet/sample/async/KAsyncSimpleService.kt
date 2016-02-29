@@ -1,7 +1,7 @@
 package io.techery.janet.sample.async
 
 import com.google.gson.Gson
-import io.techery.janet.AsyncActionAdapter
+import io.techery.janet.AsyncActionService
 import io.techery.janet.Janet
 import io.techery.janet.async.actions.ConnectAsyncAction
 import io.techery.janet.gson.GsonConverter
@@ -16,7 +16,7 @@ fun main(args: Array<String>) {
 
     val janet = Janet
             .Builder()
-            .addAdapter(AsyncActionAdapter(API_URL, SocketIO(), GsonConverter(Gson())))
+            .addService(AsyncActionService(API_URL, SocketIO(), GsonConverter(Gson())))
             .build()
 
     val messagePipe = janet.createPipe(TestAction::class.java)

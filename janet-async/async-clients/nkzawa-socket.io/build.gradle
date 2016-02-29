@@ -20,6 +20,6 @@ artifacts {
 }
 
 dependencies {
-    compile project(path: ':janet-async:async-adapter')
+    compile project(path: ':janet-async:async-service')
     compile 'com.github.nkzawa:socket.io-client:0.3.0'
 }

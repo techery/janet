@@ -13,33 +13,33 @@ import rx.functions.Func1;
 import rx.subjects.PublishSubject;
 
 /**
- * Action router that can send and receive actions using added {@link ActionAdapter adapters} that know
+ * Action router that can send and receive actions using added {@link ActionService services} that know
  * what do with theirs. Each action must to have an annotation that is defined
- * in {@link ActionAdapter#getSupportedAnnotationType()} and after that Janet will be able to process them.
- * Create instances using {@linkplain Builder the builder} where it's possible to add the necessary adapters
- * using {@link Builder#addAdapter(ActionAdapter)}
+ * in {@link ActionService#getSupportedAnnotationType()} and after that Janet will be able to process them.
+ * Create instances using {@linkplain Builder the builder} where it's possible to add the necessary services
+ * using {@link Builder#addService(ActionService)}
  * <p>
  * For example,
  * <pre>{@code
  * Janet janet = new Janet.Builder()
- *         .addAdapter(new HttpActionAdapter(API_URL, new OkClient(), new GsonConverter(new Gson())))
+ *         .addService(new HttpActionService(API_URL, new OkClient(), new GsonConverter(new Gson())))
  *         .build();}
  * </pre>
  */
 public final class Janet {
 
-    private final List<ActionAdapter> adapters;
+    private final List<ActionService> services;
     private final PublishSubject<ActionPair> pipeline;
 
     private Janet(Builder builder) {
-        this.adapters = builder.adapters;
+        this.services = builder.services;
         this.pipeline = PublishSubject.create();
         connectPipeline();
     }
 
     private void connectPipeline() {
-        for (ActionAdapter adapter : adapters) {
-            adapter.setCallback(new ActionAdapter.Callback() {
+        for (ActionService service : services) {
+            service.setCallback(new ActionService.Callback() {
                 @Override public void onStart(ActionHolder holder) {
                     pipeline.onNext(new ActionPair(holder, ActionState.start(holder.action())));
                 }
@@ -123,22 +123,22 @@ public final class Janet {
     }
 
     private <A> void doSend(A action) {
-        ActionAdapter adapter = findActionAdapter(action.getClass());
-        adapter.send(ActionHolder.create(action));
+        ActionService service = findService(action.getClass());
+        service.send(ActionHolder.create(action));
     }
 
     private <A> void doCancel(A action) {
-        ActionAdapter adapter = findActionAdapter(action.getClass());
-        adapter.cancel(ActionHolder.create(action));
+        ActionService service = findService(action.getClass());
+        service.cancel(ActionHolder.create(action));
     }
 
-    private ActionAdapter findActionAdapter(Class actionClass) {
-        for (ActionAdapter adapter : adapters) {
-            if (actionClass.getAnnotation(adapter.getSupportedAnnotationType()) != null) {
-                return adapter;
+    private ActionService findService(Class actionClass) {
+        for (ActionService service : services) {
+            if (actionClass.getAnnotation(service.getSupportedAnnotationType()) != null) {
+                return service;
             }
         }
-        throw new JanetInternalException("Action class should be annotated by any supported annotation or check dependence of any adapter");
+        throw new JanetInternalException("Action class should be annotated by any supported annotation or check dependence of any service");
     }
 
     /**
@@ -146,24 +146,24 @@ public final class Janet {
      */
     public static final class Builder {
 
-        private List<ActionAdapter> adapters = new ArrayList<ActionAdapter>();
+        private List<ActionService> services = new ArrayList<ActionService>();
 
         /**
-         * Add an adapter for action processing
+         * Add an service for action processing
          */
-        public Builder addAdapter(ActionAdapter adapter) {
-            if (adapter == null) {
-                throw new IllegalArgumentException("ActionAdapter may not be null.");
+        public Builder addService(ActionService service) {
+            if (service == null) {
+                throw new IllegalArgumentException("ActionService may not be null.");
             }
-            if (adapter.getSupportedAnnotationType() == null) {
-                throw new IllegalArgumentException("the ActionAdapter doesn't support any actions");
+            if (service.getSupportedAnnotationType() == null) {
+                throw new IllegalArgumentException("the ActionService doesn't support any actions");
             }
-            adapters.add(adapter);
+            services.add(service);
             return this;
         }
 
         /**
-         * Create the {@link Janet} instance using added adapters.
+         * Create the {@link Janet} instance using added services.
          */
         public Janet build() {
             return new Janet(this);

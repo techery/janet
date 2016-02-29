@@ -22,5 +22,5 @@ artifacts {
 }
 
 dependencies {
-    compile project(':janet-http:http-adapter')
+    compile project(':janet-http:http-service')
 }

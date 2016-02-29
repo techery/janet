@@ -46,8 +46,8 @@ android {
 
 dependencies {
 
-    compile project(":janet-http:http-adapter")
-    compile project(":janet-http:http-adapter-compiler")
+    compile project(":janet-http:http-service")
+    compile project(":janet-http:http-service-compiler")
     compile project(":janet-converters:gson")
     compile project(":janet-http:http-clients:okhttp")
 

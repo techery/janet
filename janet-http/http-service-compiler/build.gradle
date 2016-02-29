@@ -1,10 +1,8 @@
 apply plugin: 'java'
-apply plugin: 'provided-base'
 apply plugin: 'maven'
 
 sourceCompatibility = 1.6
 targetCompatibility = 1.6
-
 
 task sourcesJar(type: Jar, dependsOn: classes) {
     classifier = 'sources'
@@ -21,7 +19,15 @@ artifacts {
     archives javadocJar
 }
 
+
 dependencies {
+    compile project(':janet-base-body')
+    compile project(':janet-base-compiler')
     compile project(':janet-http:http-service')
-    provided 'com.google.android:android:4.1.1.4'
+    compile 'com.squareup:javapoet:1.1.0'
+    compile 'com.google.auto.service:auto-service:1.0-rc2'
+    compile 'com.google.code.findbugs:jsr305:2.0.3'
+    compile 'org.apache.velocity:velocity:1.7'
+    compile 'org.ow2.asm:asm:4.1'
+    compile 'com.google.guava:guava:18.0'
 }
