@@ -1,5 +1,8 @@
 package io.techery.janet;
 
+/**
+ * Internal exception. Something went wrong in Janet internal core
+ */
 public class JanetInternalException extends RuntimeException {
 
     public JanetInternalException() {

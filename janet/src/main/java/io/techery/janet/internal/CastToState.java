@@ -3,6 +3,9 @@ package io.techery.janet.internal;
 import io.techery.janet.ActionState;
 import rx.Observable;
 
+/**
+ * Internal class for casting something to {@link ActionState}
+ */
 public class CastToState<A> implements Observable.Transformer<ActionState, ActionState<A>> {
 
     private final Class<ActionState<A>> type;

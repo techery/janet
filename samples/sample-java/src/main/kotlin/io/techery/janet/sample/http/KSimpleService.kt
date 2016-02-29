@@ -20,7 +20,7 @@ fun main(args: Array<String>) {
     val usersPipe = janet.createPipe(UsersAction::class.java)
     val userReposPipe = janet.createPipe(UserReposAction::class.java)
 
-    usersPipe.observeSuccess()
+    usersPipe.observeResult()
             .filter({ it.isSuccess() })
             .subscribe({ println("received $it") }) { println(it) }
 

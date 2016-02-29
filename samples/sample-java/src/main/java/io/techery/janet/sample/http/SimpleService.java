@@ -23,7 +23,7 @@ public class SimpleService {
         ActionPipe<UsersAction> usersPipe = janet.createPipe(UsersAction.class);
         ActionPipe<UserReposAction> userReposPipe = janet.createPipe(UserReposAction.class);
 
-        usersPipe.observeSuccess()
+        usersPipe.observeResult()
                 .filter(BaseAction::isSuccess)
                 .subscribe(
                         action -> System.out.println("received " + action),

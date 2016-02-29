@@ -1,9 +1,33 @@
 package io.techery.janet;
 
+/**
+ * Use to get action state
+ *
+ * @param <A>
+ */
 public final class ActionState<A> {
 
+    /** Action status **/
     public enum Status {
-        START, PROGRESS, SUCCESS, FAIL
+        /**
+         * Action is just started to send
+         **/
+        START,
+        /**
+         * Sending progress.
+         * Get result from {@link ActionState#action}
+         **/
+        PROGRESS,
+        /**
+         * Action is finished without errors.
+         * Get the percentage of progress from {@link ActionState#progress}
+         **/
+        SUCCESS,
+        /**
+         * Action is fault.
+         * See {@link ActionState#exception}
+         **/
+        FAIL
     }
 
     public final A action;
@@ -16,19 +40,19 @@ public final class ActionState<A> {
         this.status = status;
     }
 
-    public static <A> ActionState<A> start(A action) {
+    static <A> ActionState<A> start(A action) {
         return new ActionState<A>(action, Status.START);
     }
 
-    public static <A> ActionState<A> progress(A action, int progress) {
+    static <A> ActionState<A> progress(A action, int progress) {
         return new ActionState<A>(action, Status.PROGRESS).progress(progress);
     }
 
-    public static <A> ActionState<A> success(A action) {
+    static <A> ActionState<A> success(A action) {
         return new ActionState<A>(action, Status.SUCCESS);
     }
 
-    public static <A> ActionState<A> fail(A action, JanetException e) {
+    static <A> ActionState<A> fail(A action, JanetException e) {
         return new ActionState<A>(action, Status.FAIL).exception(e);
     }
 

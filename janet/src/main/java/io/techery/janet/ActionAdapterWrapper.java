@@ -1,5 +1,8 @@
 package io.techery.janet;
 
+/**
+ * Wrapper for interception lifecycle of delegated ActionAdapter
+ */
 public abstract class ActionAdapterWrapper extends ActionAdapter {
 
     private final ActionAdapter actionAdapter;

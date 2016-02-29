@@ -12,6 +12,20 @@ import rx.functions.Func0;
 import rx.functions.Func1;
 import rx.subjects.PublishSubject;
 
+/**
+ * Action router that can send and receive actions using added {@link ActionAdapter adapters} that know
+ * what do with theirs. Each action must to have an annotation that is defined
+ * in {@link ActionAdapter#getSupportedAnnotationType()} and after that Janet will be able to process them.
+ * Create instances using {@linkplain Builder the builder} where it's possible to add the necessary adapters
+ * using {@link Builder#addAdapter(ActionAdapter)}
+ * <p>
+ * For example,
+ * <pre>{@code
+ * Janet janet = new Janet.Builder()
+ *         .addAdapter(new HttpActionAdapter(API_URL, new OkClient(), new GsonConverter(new Gson())))
+ *         .build();}
+ * </pre>
+ */
 public class Janet {
 
     private final List<ActionAdapter> adapters;
@@ -45,14 +59,21 @@ public class Janet {
         }
     }
 
-    ///////////////////////////////////////////////////////////////////////////
-    // Public API
-    ///////////////////////////////////////////////////////////////////////////
-
+    /**
+     * Create an {@link ActionPipe} for working with actions
+     *
+     * @param actionClass type of action
+     */
     public <A> ActionPipe<A> createPipe(Class<A> actionClass) {
         return createPipe(actionClass, null);
     }
 
+    /**
+     * Create an {@link ActionPipe} for working with specific actions
+     *
+     * @param actionClass type of action
+     * @param scheduler   add {@link rx.Scheduler} to {@link ActionPipe} using {@link ActionPipe#pimp(Scheduler)}
+     */
     public <A> ActionPipe<A> createPipe(final Class<A> actionClass, Scheduler scheduler) {
         return new ActionPipe<A>(new Func1<A, Observable<ActionState<A>>>() {
             @Override
@@ -79,10 +100,6 @@ public class Janet {
             }
         }).pimp(scheduler);
     }
-
-    ///////////////////////////////////////////////////////////////////////////
-    // Send Action Flow
-    ///////////////////////////////////////////////////////////////////////////
 
     private <A> Observable<ActionState<A>> send(final A action) {
         return pipeline.asObservable()
@@ -124,10 +141,16 @@ public class Janet {
         throw new JanetInternalException("Action class should be annotated by any supported annotation or check dependence of any adapter");
     }
 
+    /**
+     * Builds an instance of {@link Janet}.
+     */
     public static class Builder {
 
         private List<ActionAdapter> adapters = new ArrayList<ActionAdapter>();
 
+        /**
+         * Add an adapter for action processing
+         */
         public Builder addAdapter(ActionAdapter adapter) {
             if (adapter == null) {
                 throw new IllegalArgumentException("ActionAdapter may not be null.");
@@ -139,6 +162,9 @@ public class Janet {
             return this;
         }
 
+        /**
+         * Create the {@link Janet} instance using added adapters.
+         */
         public Janet build() {
             return new Janet(this);
         }
