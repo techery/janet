@@ -6,6 +6,9 @@ import rx.functions.Action0;
 import rx.functions.Action1;
 import rx.functions.Action2;
 
+/**
+ * Subscriber that helps to handle states by status using callback
+ */
 public class ActionStateSubscriber<A> extends Subscriber<ActionState<A>> {
 
     private Action1<A> onSuccess;

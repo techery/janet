@@ -1,5 +1,10 @@
 package io.techery.janet;
 
+/**
+ * Base class that needs to extend to create a new adapter.
+ * Adapter processes Janet operations for supported action type with annotation
+ * defined in {@link #getSupportedAnnotationType()}
+ */
 public abstract class ActionAdapter {
 
     protected Callback callback;
@@ -12,10 +17,20 @@ public abstract class ActionAdapter {
         }
     }
 
+    /**
+     * Action sending
+     */
     abstract protected <A> void sendInternal(ActionHolder<A> holder) throws JanetException;
 
+    /**
+     * Action cancellation
+     */
     abstract protected <A> void cancel(ActionHolder<A> holder);
 
+    /**
+     * Getting action annotation type for using to create supported action.
+     * Actions with this annotation will be processed by the ActionAdapter.
+     */
     abstract protected Class getSupportedAnnotationType();
 
     void setCallback(Callback callback) {
