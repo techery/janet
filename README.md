@@ -1,17 +1,18 @@
 # Janet
 
-Reactive library to create command-based architecture. It can be used for both Android and Java.
+Reactive library for command-based architecture creating. It can be used for both Android and Java.
 
 ### What does Janet give?
-1. Flexibility and scalability. Scale functionality using [services](https://github.com/techery/janet/blob/master/janet/src/main/java/io/techery/janet/ActionAdapter.java)
-2. Reactive approach to manipulate any actions with [RXJava](https://github.com/ReactiveX/RxJava)
+
+1. Flexibility and scalability. Scale functionality using [services](https://github.com/techery/janet/blob/master/janet/src/main/java/io/techery/janet/ActionService.java)
+2. Reactive approach for any actions manipulating with a help of [RXJava](https://github.com/ReactiveX/RxJava)
 3. Throw-safety architecture.
  
 ### Introduction
 
-Janet helps write clear maintainable code because each an individual operation is an individual class where this operation is described. Let's call it as Action. 
+Janet helps to write clear maintainable code because each individual operation is an individual class where this operation is described. Let's call it as Action. 
 
-But Janet doesn't perform actions. For that Janet uses services that has algorithm of action processing. Each action is linked to service using an annotation that defined in the method ActionService.getSupportedAnnotationType(). Janet is like action router that can send and receive actions using added services that know what to do with them. 
+But Janet doesn't perform actions. For that Janet uses services that has algorithm of action processing. Each action is linked to service using an annotation that is defined in the method `ActionService.getSupportedAnnotationType()`. Janet is like action router that can send and receive actions using added services. And service knows what to do with the action. 
 
 To use any service add it to the [Builder](https://github.com/techery/janet/blob/readme/janet/src/main/java/io/techery/janet/Janet.java) using method `addService`
 
@@ -20,18 +21,19 @@ To use any service add it to the [Builder](https://github.com/techery/janet/blob
              .addService(new HttpActionService(API_URL, new OkClient(), new GsonConverter(new Gson())))
 ```
 
-Currently there are 3 services in Janet:
+At this moment there are 3 services in Janet:
 
-1. [HttpActionService](#HttpActionService) to provide HTTP/HTTPS requests execution
-2. [AsyncActionService](#AsyncActionService) to provide support async protocols like [socket.io](http://socket.io/)
-3. [CommandActionService](#CommandActionService) to invoke custom logic as [command](#https://en.wikipedia.org/wiki/Command_pattern)   
+1. [HttpActionService](#httpactionservice) to provide HTTP/HTTPS requests execution
+2. [AsyncActionService](#asyncactionservice) to provide support async protocols like [socket.io](http://socket.io/)
+3. [CommandActionService](#commandactionservice) to invoke custom logic as [command](#https://en.wikipedia.org/wiki/Command_pattern)   
+
 Also there is an ability to add custom service if needed
 
-After Janet's instance creation all works with action performs using [ActionPipe](#ActionPipe)  
+After Janet's instance creation all works with action are performed using [ActionPipe](#ActionPipe)  
 
 ### ActionPipe
 
-End tool for sending and receiving actions with specific type using RXJava. ActionPipe can work with actions synchronously or asynchronously. Create instances using method `Janet.createPipe`.
+End tool for sending and receiving actions with specific type using RXJava. [ActionPipe](https://github.com/techery/janet/blob/readme/janet/src/main/java/io/techery/janet/ActionPipe.java) can work with actions synchronously or asynchronously. Create instances using method `Janet.createPipe`.
 For example,
 ```java
     ActionPipe<UsersAction> usersPipe = janet.createPipe(UsersAction.class);
@@ -46,9 +48,9 @@ For example,
 ```
 
 
-#### HttpActionService
+###  HttpActionService
 
-Each HTTP request in Janet is an individual class that contains all information about the request and response.  
+Each HTTP request for [HttpActionService](https://github.com/techery/janet/blob/master/janet-http/http-service/src/main/java/io/techery/janet/HttpActionService.java) is an individual class that contains all information about the request and response.  
 
 Http action must be annotated with [@HttpAction](https://github.com/techery/janet/blob/readme/janet-http/http-service/src/main/java/io/techery/janet/http/annotations/HttpAction.java)
 ```java
@@ -85,7 +87,7 @@ public class ExampleAction {
     @Body
     ExampleModel exampleModel;
     @Response
-    ExampleDataModel exampleDataModel;не
+    ExampleDataModel exampleDataModel;
     @ResponseHeader("Example-Responseheader-Name")
     String responseHeaderValue;
 }
@@ -93,7 +95,80 @@ public class ExampleAction {
 
 ### AsyncActionService
 
+[AsyncActionService](https://github.com/techery/janet/blob/master/janet-async/async-service/src/main/java/io/techery/janet/AsyncActionService.java) performs actions with annotation [@AsyncAction](https://github.com/techery/janet/blob/master/janet-async/async-service/src/main/java/io/techery/janet/async/annotations/AsyncAction.java). Every action is async message that contains message data as a field annotated with [@AsyncMessage](https://github.com/techery/janet/blob/master/janet-async/async-service/src/main/java/io/techery/janet/async/annotations/AsyncMessage.java).
+ 
+Also [AsyncActionService](https://github.com/techery/janet/blob/master/janet-async/async-service/src/main/java/io/techery/janet/AsyncActionService.java) has algorithm to synchronize outcoming and incoming messages. To receive action response may add field with annotation [@SyncedResponse](https://github.com/techery/janet/blob/master/janet-async/async-service/src/main/java/io/techery/janet/async/annotations/SyncedResponse.java). Type of that field must be a class of incoming action. To link action with its response set class in the annotation implemented by [SyncPredicate](https://github.com/techery/janet/blob/master/janet-async/async-service/src/main/java/io/techery/janet/async/SyncPredicate.java) where the condition for synchronization present.
+```java
+@AsyncAction(value = "test", incoming = true)
+public class TestAction {
+
+    @AsyncMessage
+    Body body;
+
+    @SyncedResponse(value = TestSyncPredicate.class, timeout = 3000)
+    TestAction response;
+
+    @Override public String toString() {
+        return "TestAction{" +
+                "body=" + body +
+                ", response=" + response +
+                '}';
+    }
+
+    public static class TestSyncPredicate implements SyncPredicate<TestAction, TestAction> {
+
+        @Override public boolean isResponse(TestAction requestAction, TestAction response) {
+            return requestAction.body.id == response.body.id;
+        }
+    }
+}
+```
+
 ### CommandActionService
 
-### Master Build Status
-[![](https://jitpack.io/v/techery/janet.svg)](https://jitpack.io/#techery/janet)
+# Download
+Grab via Maven
+```xml
+<repositories>
+	<repository>
+	    <id>jitpack.io</id>
+        <url>https://jitpack.io</url>
+	</repository>
+</repositories>
+
+<dependency>
+    <groupId>com.github.techery.janet</groupId>
+    <artifactId>janet</artifactId>
+    <version>0.0.3</version>
+</dependency>
+```
+or Gradle:
+```groovy
+repositories {
+    ...
+    maven { url "https://jitpack.io" }
+}
+dependencies {
+    compile 'com.github.techery.janet:janet:0.0.3'
+}
+```
+
+List of additional artifacts:
+```groovy
+compile 'com.github.techery.janet:http-service:0.0.3'
+apt 'com.github.techery.janet:http-service-compiler:0.0.3'   
+compile 'com.github.techery.janet:okhttp:0.0.3'
+compile 'com.github.techery.janet:android-apache-client:0.0.3'
+compile 'com.github.techery.janet:url-connection:0.0.3'
+
+compile 'com.github.techery.janet:async-service:0.0.3'
+apt 'com.github.techery.janet:async-service-compiler:0.0.3'
+compile 'com.github.techery.janet:nkzawa-socket.io:0.0.3'
+compile 'com.github.techery.janet:socket.io:0.0.3'
+
+compile 'com.github.techery.janet:gson:0.0.3'
+compile 'com.github.techery.janet:protobuf:0.0.3'
+
+compile 'com.github.techery.janet:command-service:0.0.3'
+```
+
