@@ -8,10 +8,10 @@ import rx.functions.Func1;
 /**
  * To transform {@link ActionState} to action.
  * <pre>
- *     START -> nothing
- *     PROGRESS - > nothing
- *     SUCCESS -> action with result
- *     FAIL -> error. it's necessary to handle it using {@link Subscriber#onError(Throwable)}
+ *     START - nothing
+ *     PROGRESS - nothing
+ *     SUCCESS - action with result
+ *     FAIL - error. it's necessary to handle it using {@link Subscriber#onError(Throwable)}
  * </pre>
  */
 public class ActionStateToActionTransformer<A> implements Observable.Transformer<ActionState<A>, A> {
