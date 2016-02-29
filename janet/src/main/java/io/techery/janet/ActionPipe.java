@@ -1,7 +1,9 @@
 package io.techery.janet;
 
+import io.techery.janet.helper.ActionStateToActionTransformer;
 import rx.Observable;
 import rx.Scheduler;
+import rx.Subscriber;
 import rx.functions.Action1;
 import rx.functions.Func0;
 import rx.functions.Func1;
@@ -134,6 +136,17 @@ final public class ActionPipe<A> {
                         return observable;
                     }
                 });
+    }
+
+    /**
+     * Create {@link Observable observable} to send action and receive action with result synchronously
+     * <p>
+     * To catch errors use {@link Subscriber#onError(Throwable)}
+     *
+     * @param action prepared action to send
+     */
+    public Observable<A> createActionObservable(A action) {
+        return createObservable(action).compose(new ActionStateToActionTransformer<A>());
     }
 
     private static final class ActionSuccessOnlyTransformer<T> implements Observable.Transformer<ActionState<T>, T> {
