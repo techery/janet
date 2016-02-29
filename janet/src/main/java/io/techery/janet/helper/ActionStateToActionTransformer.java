@@ -7,7 +7,6 @@ import rx.functions.Func1;
 
 /**
  * To transform {@link ActionState} to action.
- * <p>
  * <pre>
  *     START - nothing
  *     PROGRESS - nothing
@@ -15,7 +14,7 @@ import rx.functions.Func1;
  *     FAIL - error. it's necessary to handle it using {@link Subscriber#onError(Throwable)}
  * </pre>
  */
-public class ActionStateToActionTransformer<A> implements Observable.Transformer<ActionState<A>, A> {
+public final class ActionStateToActionTransformer<A> implements Observable.Transformer<ActionState<A>, A> {
 
     @Override
     public Observable<A> call(Observable<ActionState<A>> observable) {

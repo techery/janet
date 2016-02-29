@@ -1,7 +1,5 @@
 package io.techery.janet;
 
-import io.techery.janet.helper.ActionStateToActionTransformer;
-import io.techery.janet.helper.ActionSuccessOnlyTransformer;
 import rx.Observable;
 import rx.Scheduler;
 import rx.Subscriber;
@@ -36,7 +34,7 @@ final public class ActionPipe<A> {
         this.cancelFunc = cancelFunc;
 
         createCachedPipeline();
-        createSuccessCachedPipeline();
+        createCachedSuccessPipeline();
     }
 
     private void createCachedPipeline() {
@@ -44,7 +42,7 @@ final public class ActionPipe<A> {
         this.cachedPipeline.connect();
     }
 
-    private void createSuccessCachedPipeline() {
+    private void createCachedSuccessPipeline() {
         this.cachedSuccessPipeline = pipeline
                 .compose(new ActionSuccessOnlyTransformer<A>())
                 .replay(1);
@@ -69,8 +67,7 @@ final public class ActionPipe<A> {
     }
 
     /**
-     * Observe actions with results
-     * To catch errors use {@link Subscriber#onError(Throwable)}
+     * Observe success action only, if you want to catch any exceptions, use {@link ActionPipe#observe()}
      */
     public Observable<A> observeSuccess() {
         return observe()
@@ -78,19 +75,18 @@ final public class ActionPipe<A> {
     }
 
     /**
-     * Observe actions with results with cache.
-     * Last result will be emitted immediately after subscribe.
-     * <p>
-     * To catch errors use {@link Subscriber#onError(Throwable)}
+     * Observe action result with cache.
+     * Emmit the latest result, if exist, immediately after subscribe.
      *
      * @see Observable#replay(int)
+     * @see ActionPipe#observeSuccess()
      */
     public Observable<A> observeSuccessWithReplay() {
         return cachedSuccessPipeline;
     }
 
     /**
-     * Clear cached action emits
+     * Clear cached action
      */
     public void clearReplays() {
         createCachedPipeline();
@@ -98,7 +94,6 @@ final public class ActionPipe<A> {
 
     /**
      * Send action to {@link Janet}.
-     * Uses relative adapter {@link ActionAdapter#sendInternal(ActionHolder)}
      *
      * @param action prepared action for sending
      */
@@ -125,18 +120,7 @@ final public class ActionPipe<A> {
     }
 
     /**
-     * Create {@link Observable observable} to send action and receive action with result synchronously
-     * <p>
-     * To catch errors use {@link Subscriber#onError(Throwable)}
-     *
-     * @param action prepared action to send
-     */
-    public Observable<A> createResultObservable(A action) {
-        return createObservable(action).compose(new ActionStateToActionTransformer<A>());
-    }
-
-    /**
-     * Create {@link Observable observable} to send action and receive results
+     * Create {@link Observable observable} to send action and receive result
      * in the form of action {@link ActionState states} synchronously
      *
      * @param action prepared action to send
@@ -151,5 +135,21 @@ final public class ActionPipe<A> {
                         return observable;
                     }
                 });
+    }
+
+    private static final class ActionSuccessOnlyTransformer<T> implements Observable.Transformer<ActionState<T>, T> {
+        @Override public Observable<T> call(Observable<ActionState<T>> actionStateObservable) {
+            return actionStateObservable
+                    .filter(new Func1<ActionState<T>, Boolean>() {
+                        @Override public Boolean call(ActionState<T> actionState) {
+                            return actionState.status == ActionState.Status.SUCCESS;
+                        }
+                    })
+                    .map(new Func1<ActionState<T>, T>() {
+                        @Override public T call(ActionState<T> actionState) {
+                            return actionState.action;
+                        }
+                    });
+        }
     }
 }
