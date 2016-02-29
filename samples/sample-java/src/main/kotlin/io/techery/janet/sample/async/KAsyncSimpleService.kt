@@ -34,7 +34,9 @@ fun main(args: Array<String>) {
                                 .subscribe(ActionStateSubscriber<TestAction>()
                                         .onSuccess({ println(it) }))
 
-                        janet.createPipe(TestTwoAction::class.java).observeResult().subscribe(Action1<TestTwoAction> { println(it) })
+                        janet.createPipe(TestTwoAction::class.java)
+                                .observeSuccess()
+                                .subscribe(Action1<TestTwoAction> { println(it) })
                     })
 
 

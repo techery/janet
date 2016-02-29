@@ -3,7 +3,7 @@ package io.techery.janet;
 import java.util.ArrayList;
 import java.util.List;
 
-import io.techery.janet.internal.CastToState;
+import io.techery.janet.internal.TypeToken;
 import rx.Observable;
 import rx.Scheduler;
 import rx.functions.Action0;
@@ -177,6 +177,19 @@ public final class Janet {
         private ActionPair(ActionHolder holder, ActionState state) {
             this.holder = holder;
             this.state = state;
+        }
+    }
+
+    private final static class CastToState<A> implements Observable.Transformer<ActionState, ActionState<A>> {
+
+        private final Class<ActionState<A>> type;
+
+        @SuppressWarnings("unchecked") public CastToState() {
+            type = (Class<ActionState<A>>) new TypeToken<ActionState<A>>() {}.getRawType();
+        }
+
+        @Override public Observable<ActionState<A>> call(Observable<ActionState> source) {
+            return source.cast(type);
         }
     }
 }
