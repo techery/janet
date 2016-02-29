@@ -18,6 +18,7 @@ import io.techery.janet.sample.R;
 import io.techery.janet.sample.network.UsersAction;
 import io.techery.janet.sample.ui.adapter.UsersAdapter;
 import rx.android.schedulers.AndroidSchedulers;
+import rx.functions.Action1;
 
 public class UsersActivity extends RxAppCompatActivity {
 
@@ -45,16 +46,21 @@ public class UsersActivity extends RxAppCompatActivity {
     @Override
     protected void onResume() {
         super.onResume();
-        usersPipe.observeWithReplay()
+        usersPipe.observeSuccessWithReplay()
                 .compose(bindToLifecycle())
                 .observeOn(AndroidSchedulers.mainThread())
-                .subscribe(new ActionStateSubscriber<UsersAction>()
-                        .onStart(() -> showProgressLoading(true))
-                        .onSuccess(usersAction -> {
-                            adapter.setData(usersAction.getResponse());
-                            showProgressLoading(false);
-                        })
-                        .onFail((action, throwable) -> showProgressLoading(false)));
+                .subscribe(new Action1<UsersAction>() {
+                    @Override public void call(UsersAction usersAction) {
+                        adapter.setData(usersAction.getResponse());
+                    }
+                });
+//                .subscribe(new ActionStateSubscriber<UsersAction>()
+//                        .onStart(() -> showProgressLoading(true))
+//                        .onSuccess(usersAction -> {
+//                            adapter.setData(usersAction.getResponse());
+//                            showProgressLoading(false);
+//                        })
+//                        .onFail((action, throwable) -> showProgressLoading(false)));
         loadUsers();
     }
 

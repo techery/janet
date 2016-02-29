@@ -1,6 +1,7 @@
 package io.techery.janet;
 
 import io.techery.janet.helper.ActionStateToActionTransformer;
+import io.techery.janet.helper.ActionSuccessOnlyTransformer;
 import rx.Observable;
 import rx.Scheduler;
 import rx.functions.Action1;
@@ -9,23 +10,34 @@ import rx.functions.Func1;
 import rx.observables.ConnectableObservable;
 
 final public class ActionPipe<A> {
-
     private final Func1<A, Observable<ActionState<A>>> syncObservableFactory;
     private final Observable<ActionState<A>> pipeline;
     private final Action1<A> cancelFunc;
+
     private ConnectableObservable<ActionState<A>> cachedPipeline;
+    private ConnectableObservable<A> cachedSuccessPipeline;
+
     private Scheduler subscribeOn;
 
     ActionPipe(Func1<A, Observable<ActionState<A>>> syncObservableFactory, Func0<Observable<ActionState<A>>> pipelineFactory, Action1<A> cancelFunc) {
         this.syncObservableFactory = syncObservableFactory;
         this.pipeline = pipelineFactory.call();
         this.cancelFunc = cancelFunc;
+
         createCachedPipeline();
+        createSuccessCachedPipeline();
     }
 
     private void createCachedPipeline() {
         this.cachedPipeline = pipeline.replay(1);
         this.cachedPipeline.connect();
+    }
+
+    private void createSuccessCachedPipeline() {
+        this.cachedSuccessPipeline = pipeline
+                .compose(new ActionSuccessOnlyTransformer<A>())
+                .replay(1);
+        this.cachedSuccessPipeline.connect();
     }
 
     public Observable<ActionState<A>> observe() {
@@ -38,13 +50,11 @@ final public class ActionPipe<A> {
 
     public Observable<A> observeSuccess() {
         return observe()
-                .compose(new ActionStateToActionTransformer<A>());
-
+                .compose(new ActionSuccessOnlyTransformer<A>());
     }
 
     public Observable<A> observeSuccessWithReplay() {
-        return observeWithReplay()
-                .compose(new ActionStateToActionTransformer<A>());
+        return cachedSuccessPipeline;
     }
 
     public void clearReplays() {
@@ -79,5 +89,4 @@ final public class ActionPipe<A> {
                     }
                 });
     }
-
 }
