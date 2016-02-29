@@ -103,7 +103,7 @@ final public class ActionPipe<A> {
 
     /**
      * Cancel running action.
-     * Action cancellation defines in relative adapter {@link ActionAdapter#cancel(ActionHolder)}
+     * Action cancellation defines in relative service {@link ActionService#cancel(ActionHolder)}
      *
      * @param action prepared action for cancellation
      */

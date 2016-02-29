@@ -1,11 +1,11 @@
 package io.techery.janet;
 
-final class CallbackWrapper implements ActionAdapter.Callback {
+final class CallbackWrapper implements ActionService.Callback {
 
-    private final ActionAdapter.Callback callback;
+    private final ActionService.Callback callback;
     private final Interceptor interceptor;
 
-    CallbackWrapper(ActionAdapter.Callback callback, Interceptor interceptor) {
+    CallbackWrapper(ActionService.Callback callback, Interceptor interceptor) {
         this.callback = callback;
         this.interceptor = interceptor;
     }

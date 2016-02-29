@@ -20,7 +20,7 @@ artifacts {
 }
 
 dependencies {
-    compile project(path: ':janet-async:async-adapter')
+    compile project(path: ':janet-async:async-service')
     compile ('io.socket:socket.io-client:+')
     compile ('org.java-websocket:Java-WebSocket:+')
 }

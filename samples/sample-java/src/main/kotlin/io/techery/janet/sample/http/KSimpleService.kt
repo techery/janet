@@ -1,7 +1,7 @@
 package io.techery.janet.sample.http
 
 import com.google.gson.Gson
-import io.techery.janet.HttpActionAdapter
+import io.techery.janet.HttpActionService
 import io.techery.janet.Janet
 import io.techery.janet.gson.GsonConverter
 import io.techery.janet.helper.ActionStateSubscriber
@@ -14,7 +14,7 @@ const private val API_URL = "https://api.github.com"
 fun main(args: Array<String>) {
 
     val janet = Janet.Builder()
-            .addAdapter(HttpActionAdapter(API_URL, OkClient(), GsonConverter(Gson())))
+            .addService(HttpActionService(API_URL, OkClient(), GsonConverter(Gson())))
             .build()
 
     val usersPipe = janet.createPipe(UsersAction::class.java)
