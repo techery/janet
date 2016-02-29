@@ -26,7 +26,7 @@ import rx.subjects.PublishSubject;
  *         .build();}
  * </pre>
  */
-public class Janet {
+public final class Janet {
 
     private final List<ActionAdapter> adapters;
     private final PublishSubject<ActionPair> pipeline;
@@ -144,7 +144,7 @@ public class Janet {
     /**
      * Builds an instance of {@link Janet}.
      */
-    public static class Builder {
+    public static final class Builder {
 
         private List<ActionAdapter> adapters = new ArrayList<ActionAdapter>();
 

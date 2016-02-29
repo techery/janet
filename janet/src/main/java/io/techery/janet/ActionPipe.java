@@ -1,6 +1,5 @@
 package io.techery.janet;
 
-import io.techery.janet.helper.ActionStateToActionTransformer;
 import rx.Observable;
 import rx.Scheduler;
 import rx.Subscriber;
@@ -20,23 +19,34 @@ import rx.observables.ConnectableObservable;
  * </pre>
  */
 final public class ActionPipe<A> {
-
     private final Func1<A, Observable<ActionState<A>>> syncObservableFactory;
     private final Observable<ActionState<A>> pipeline;
     private final Action1<A> cancelFunc;
+
     private ConnectableObservable<ActionState<A>> cachedPipeline;
+    private ConnectableObservable<A> cachedSuccessPipeline;
+
     private Scheduler subscribeOn;
 
     ActionPipe(Func1<A, Observable<ActionState<A>>> syncObservableFactory, Func0<Observable<ActionState<A>>> pipelineFactory, Action1<A> cancelFunc) {
         this.syncObservableFactory = syncObservableFactory;
         this.pipeline = pipelineFactory.call();
         this.cancelFunc = cancelFunc;
+
         createCachedPipeline();
+        createCachedSuccessPipeline();
     }
 
     private void createCachedPipeline() {
         this.cachedPipeline = pipeline.replay(1);
         this.cachedPipeline.connect();
+    }
+
+    private void createCachedSuccessPipeline() {
+        this.cachedSuccessPipeline = pipeline
+                .compose(new ActionSuccessOnlyTransformer<A>())
+                .replay(1);
+        this.cachedSuccessPipeline.connect();
     }
 
     /**
@@ -57,30 +67,26 @@ final public class ActionPipe<A> {
     }
 
     /**
-     * Observe actions with results
-     * To catch errors use {@link Subscriber#onError(Throwable)}
+     * Observe success action only, if you want to catch any exceptions, use {@link ActionPipe#observe()}
      */
-    public Observable<A> observeResult() {
+    public Observable<A> observeSuccess() {
         return observe()
-                .compose(new ActionStateToActionTransformer<A>());
-
+                .compose(new ActionSuccessOnlyTransformer<A>());
     }
 
     /**
-     * Observe actions with results with cache.
-     * Last result will be emitted immediately after subscribe.
-     * <p>
-     * To catch errors use {@link Subscriber#onError(Throwable)}
+     * Observe action result with cache.
+     * Emmit the latest result, if exist, immediately after subscribe.
      *
      * @see Observable#replay(int)
+     * @see ActionPipe#observeSuccess()
      */
-    public Observable<A> observeResultWithReplay() {
-        return observeWithReplay()
-                .compose(new ActionStateToActionTransformer<A>());
+    public Observable<A> observeSuccessWithReplay() {
+        return cachedSuccessPipeline;
     }
 
     /**
-     * Clear cached action emits
+     * Clear cached action
      */
     public void clearReplays() {
         createCachedPipeline();
@@ -88,7 +94,6 @@ final public class ActionPipe<A> {
 
     /**
      * Send action to {@link Janet}.
-     * Uses relative adapter {@link ActionAdapter#sendInternal(ActionHolder)}
      *
      * @param action prepared action for sending
      */
@@ -115,18 +120,7 @@ final public class ActionPipe<A> {
     }
 
     /**
-     * Create {@link Observable observable} to send action and receive action with result synchronously
-     * <p>
-     * To catch errors use {@link Subscriber#onError(Throwable)}
-     *
-     * @param action prepared action to send
-     */
-    public Observable<A> createResultObservable(A action) {
-        return createObservable(action).compose(new ActionStateToActionTransformer<A>());
-    }
-
-    /**
-     * Create {@link Observable observable} to send action and receive results
+     * Create {@link Observable observable} to send action and receive result
      * in the form of action {@link ActionState states} synchronously
      *
      * @param action prepared action to send
@@ -143,4 +137,19 @@ final public class ActionPipe<A> {
                 });
     }
 
+    private static final class ActionSuccessOnlyTransformer<T> implements Observable.Transformer<ActionState<T>, T> {
+        @Override public Observable<T> call(Observable<ActionState<T>> actionStateObservable) {
+            return actionStateObservable
+                    .filter(new Func1<ActionState<T>, Boolean>() {
+                        @Override public Boolean call(ActionState<T> actionState) {
+                            return actionState.status == ActionState.Status.SUCCESS;
+                        }
+                    })
+                    .map(new Func1<ActionState<T>, T>() {
+                        @Override public T call(ActionState<T> actionState) {
+                            return actionState.action;
+                        }
+                    });
+        }
+    }
 }
