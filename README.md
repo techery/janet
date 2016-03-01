@@ -33,7 +33,7 @@ After Janet's instance creation all works with action are performed using [Actio
 
 ### ActionPipe
 
-End tool for sending and receiving actions with specific type using RXJava. [ActionPipe](https://github.com/techery/janet/blob/readme/janet/src/main/java/io/techery/janet/ActionPipe.java) can work with actions synchronously or asynchronously. Create instances using method `Janet.createPipe`.
+End tool for sending and receiving actions with specific type using RXJava. [ActionPipe](https://github.com/techery/janet/blob/readme/janet/src/main/java/io/techery/janet/ActionPipe.java) works with actions asynchronously. Create instances using method `Janet.createPipe`.
 For example,
 ```java
     ActionPipe<UsersAction> usersPipe = janet.createPipe(UsersAction.class);
@@ -130,9 +130,9 @@ public class TestAction {
  
 ```java
 @CommandAction
-public class ExampleCommandAction extends CommandActionBase<Observable<?>> {
+public class ExampleCommandAction extends CommandActionBase<String> {
 
-    @Override protected Observable<?> run(CommandCallback callback) throws Throwable {
+    @Override protected String run(CommandCallback callback) throws Throwable {
         //perform logic to return result
     }
 
