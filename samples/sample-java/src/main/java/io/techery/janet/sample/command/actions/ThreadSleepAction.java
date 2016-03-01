@@ -5,7 +5,7 @@ import io.techery.janet.command.annotations.CommandAction;
 import rx.Observable;
 
 @CommandAction
-public class ThreadSleepAction extends CommandActionBase {
+public class ThreadSleepAction extends CommandActionBase<Observable<?>> {
 
     public final static long DURATION = 10 * 1000;
 

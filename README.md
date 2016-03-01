@@ -126,6 +126,23 @@ public class TestAction {
 
 ### CommandActionService
 
+[CommandActionService](https://github.com/techery/janet/blob/readme/janet-command/command-service/src/main/java/io/techery/janet/CommandActionService.java) performs actions executing with a help of annotation [@CommandAction](https://github.com/techery/janet/blob/readme/janet-command/command-service/src/main/java/io/techery/janet/command/annotations/CommandAction.java). Also to create command action it's necessary to implement the interface [CommandActionBase](https://github.com/techery/janet/blob/readme/janet-command/command-service/src/main/java/io/techery/janet/CommandActionBase.java). It contains the command's methods for running and cancellation.
+ 
+```java
+@CommandAction
+public class ExampleCommandAction extends CommandActionBase<Observable<?>> {
+
+    @Override protected Observable<?> run(CommandCallback callback) throws Throwable {
+        //perform logic to return result
+    }
+
+    @Override public void cancel() {
+        //cancellation if needed
+    }
+}
+```
+  
+
 # Download
 Grab via Maven
 ```xml
