@@ -4,6 +4,7 @@ import io.techery.janet.helper.ActionStateToActionTransformer;
 import rx.Observable;
 import rx.Scheduler;
 import rx.Subscriber;
+import rx.functions.Action0;
 import rx.functions.Action1;
 import rx.functions.Func0;
 import rx.functions.Func1;
@@ -126,13 +127,32 @@ final public class ActionPipe<A> {
      *
      * @param action prepared action to send
      */
-    public Observable<ActionState<A>> createObservable(final A action) {
+    public Observable<ActionState<A>> createObservable(A action) {
+        return createObservable(action, false);
+    }
+
+    /**
+     * Create {@link Observable observable} to send action and receive result
+     * in the form of action {@link ActionState states} synchronously
+     *
+     * @param action              prepared action to send
+     * @param cancelOnUnsubscribe cancel on unsubscribe from subscriber.
+     */
+    public Observable<ActionState<A>> createObservable(final A action, final boolean cancelOnUnsubscribe) {
         return syncObservableFactory.call(action)
                 .compose(new Observable.Transformer<ActionState<A>, ActionState<A>>() {
                     @Override
                     public Observable<ActionState<A>> call(Observable<ActionState<A>> observable) {
-                        if (subscribeOn != null)
+                        if (subscribeOn != null) {
                             observable = observable.subscribeOn(subscribeOn);
+                        }
+                        if (cancelOnUnsubscribe) {
+                            observable = observable.doOnUnsubscribe(new Action0() {
+                                @Override public void call() {
+                                    cancel(action);
+                                }
+                            });
+                        }
                         return observable;
                     }
                 });
@@ -146,7 +166,19 @@ final public class ActionPipe<A> {
      * @param action prepared action to send
      */
     public Observable<A> createActionObservable(A action) {
-        return createObservable(action).compose(new ActionStateToActionTransformer<A>());
+        return createActionObservable(action, false);
+    }
+
+    /**
+     * Create {@link Observable observable} to send action and receive action with result synchronously
+     * <p>
+     * To catch errors use {@link Subscriber#onError(Throwable)}
+     *
+     * @param action              prepared action to send
+     * @param cancelOnUnsubscribe cancel on unsubscribe from subscriber.
+     */
+    public Observable<A> createActionObservable(A action, boolean cancelOnUnsubscribe) {
+        return createObservable(action, cancelOnUnsubscribe).compose(new ActionStateToActionTransformer<A>());
     }
 
     private static final class ActionSuccessOnlyTransformer<T> implements Observable.Transformer<ActionState<T>, T> {
