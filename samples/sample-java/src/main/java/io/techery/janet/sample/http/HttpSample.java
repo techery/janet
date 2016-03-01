@@ -23,12 +23,14 @@ public class HttpSample {
         ActionPipe<UsersAction> usersPipe = janet.createPipe(UsersAction.class);
         ActionPipe<UserReposAction> userReposPipe = janet.createPipe(UserReposAction.class);
 
-        usersPipe.observeResult()
+        usersPipe.observeSuccess()
                 .filter(BaseAction::isSuccess)
                 .subscribe(
                         action -> System.out.println("received " + action),
                         System.err::println
                 );
+
+        usersPipe.send(new UsersAction());
 
         usersPipe.createObservable(new UsersAction())
                 .filter(state -> state.action.isSuccess())
