@@ -9,6 +9,7 @@ import io.techery.janet.helper.ActionStateSubscriber;
 import io.techery.janet.sample.command.actions.ThreadSleepAction;
 import io.techery.janet.sample.command.actions.WrongAction;
 import rx.Observable;
+import rx.schedulers.Schedulers;
 
 public class CommandSample {
 
@@ -21,7 +22,8 @@ public class CommandSample {
 
         actionPipe.observe()
                 .subscribe(new ActionStateSubscriber<ThreadSleepAction>()
-                        .onProgress((action, progress) -> System.out.println(progress)));
+                        .onProgress((action, progress) -> System.out.println(progress))
+                        .onSuccess(threadSleepAction -> System.out.println(threadSleepAction.getResult())));
 
         ThreadSleepAction action = new ThreadSleepAction();
 
