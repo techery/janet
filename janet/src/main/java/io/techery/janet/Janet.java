@@ -5,7 +5,6 @@ import java.util.List;
 
 import io.techery.janet.internal.TypeToken;
 import rx.Observable;
-import rx.Scheduler;
 import rx.functions.Action0;
 import rx.functions.Action1;
 import rx.functions.Func0;
@@ -60,21 +59,11 @@ public final class Janet {
     }
 
     /**
-     * Create an {@link ActionPipe} for working with actions
-     *
-     * @param actionClass type of action
-     */
-    public <A> ActionPipe<A> createPipe(Class<A> actionClass) {
-        return createPipe(actionClass, null);
-    }
-
-    /**
      * Create an {@link ActionPipe} for working with specific actions
      *
      * @param actionClass type of action
-     * @param scheduler   add {@link rx.Scheduler} to {@link ActionPipe} using {@link ActionPipe#pimp(Scheduler)}
      */
-    public <A> ActionPipe<A> createPipe(final Class<A> actionClass, Scheduler scheduler) {
+    public <A> ActionPipe<A> createPipe(final Class<A> actionClass) {
         return new ActionPipe<A>(new Func1<A, Observable<ActionState<A>>>() {
             @Override
             public Observable<ActionState<A>> call(A action) {
@@ -98,7 +87,7 @@ public final class Janet {
             @Override public void call(A a) {
                 doCancel(a);
             }
-        }).pimp(scheduler);
+        });
     }
 
     private <A> Observable<ActionState<A>> send(final A action) {

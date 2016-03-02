@@ -26,8 +26,9 @@ public class AsyncSample {
         action.body.id = 1;
         action.body.data = "test";
 
-        janet.createPipe(ConnectAsyncAction.class, Schedulers.io())
+        janet.createPipe(ConnectAsyncAction.class)
                 .createObservable(new ConnectAsyncAction())
+                .subscribeOn(Schedulers.io())
                 .subscribe(new ActionStateSubscriber<ConnectAsyncAction>()
                         .onSuccess(connectAsyncAction -> {
                             messagePipe.createObservable(action)
@@ -36,7 +37,7 @@ public class AsyncSample {
                                             .onFail((testAction, throwable) -> throwable.printStackTrace()));
 
                             janet.createPipe(TestTwoAction.class)
-                                    .observeResult()
+                                    .observeSuccess()
                                     .subscribe(System.out::println);
                         }));
 
