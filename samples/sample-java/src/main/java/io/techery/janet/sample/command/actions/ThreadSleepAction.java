@@ -10,7 +10,7 @@ public class ThreadSleepAction extends CommandActionBase<String> {
 
     private boolean cancel;
 
-    @Override protected void run(CommandCallback<String> callback) throws Throwable {
+    @Override protected void run(CommandCallback<String> callback) {
         new Thread(() -> {
             int seconds = 0;
             while (!cancel) {
@@ -18,6 +18,7 @@ public class ThreadSleepAction extends CommandActionBase<String> {
                     Thread.sleep(1000);
                 } catch (InterruptedException e) {
                     e.printStackTrace();
+                    callback.onFail(e);
                 }
                 callback.onProgress((int) ((++seconds * 100) / (DURATION / 1000)));
             }

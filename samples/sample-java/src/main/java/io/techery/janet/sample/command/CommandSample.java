@@ -23,7 +23,8 @@ public class CommandSample {
         actionPipe.observe()
                 .subscribe(new ActionStateSubscriber<ThreadSleepAction>()
                         .onProgress((action, progress) -> System.out.println(progress))
-                        .onSuccess(threadSleepAction -> System.out.println(threadSleepAction.getResult())));
+                        .onSuccess(threadSleepAction -> System.out.println(threadSleepAction.getResult()))
+                        .onFail((threadSleepAction1, throwable) -> throwable.printStackTrace()));
 
         ThreadSleepAction action = new ThreadSleepAction();
 

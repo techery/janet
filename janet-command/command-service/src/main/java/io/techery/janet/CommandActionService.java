@@ -17,9 +17,7 @@ final public class CommandActionService extends ActionService {
             action.run(new ActionProgressInvoker((ActionHolder<CommandActionBase>) holder, callback));
         } catch (Throwable t) {
             if (action.isCanceled()) return;
-            throw new CommandServiceException(
-                    String.format("Something went wrong with %s", action.getClass().getCanonicalName()), t
-            );
+            throw new CommandServiceException(action, t);
         }
     }
 
@@ -60,9 +58,7 @@ final public class CommandActionService extends ActionService {
 
         @Override public void onFail(Throwable throwable) {
             if (!holder.action().isCanceled()) {
-                callback.onFail(holder, new CommandServiceException("Something went wrong with " + holder.action()
-                        .getClass()
-                        .getSimpleName(), throwable));
+                callback.onFail(holder, new CommandServiceException(holder.action(), throwable));
             }
         }
     }

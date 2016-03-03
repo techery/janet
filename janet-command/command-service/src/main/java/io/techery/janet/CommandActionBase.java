@@ -5,7 +5,7 @@ public abstract class CommandActionBase<T> {
     private T result;
     private boolean canceled;
 
-    protected abstract void run(CommandCallback<T> callback) throws Throwable;
+    protected abstract void run(CommandCallback<T> callback);
 
     public void cancel() {
         //do nothing
