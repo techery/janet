@@ -38,7 +38,9 @@ public abstract class ActionServiceWrapper extends ActionService {
     }
 
     @Override void setCallback(Callback callback) {
-        actionService.setCallback(new CallbackWrapper(callback, interceptor));
+        callback = new CallbackWrapper(callback, interceptor);
+        super.setCallback(callback);
+        actionService.setCallback(callback);
     }
 
     private final CallbackWrapper.Interceptor interceptor = new CallbackWrapper.Interceptor() {
