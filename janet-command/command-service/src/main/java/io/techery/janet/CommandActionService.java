@@ -16,11 +16,11 @@ final public class CommandActionService extends ActionService {
         try {
             action.run(new ActionProgressInvoker((ActionHolder<CommandActionBase>) holder, callback));
         } catch (Throwable t) {
+            if (action.isCanceled()) return;
             throw new CommandServiceException(
                     String.format("Something went wrong with %s", action.getClass().getCanonicalName()), t
             );
         }
-        callback.onSuccess(holder);
     }
 
     @Override protected <A> void cancel(ActionHolder<A> holder) {
