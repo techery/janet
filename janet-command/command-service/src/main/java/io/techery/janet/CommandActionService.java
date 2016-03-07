@@ -3,6 +3,12 @@ package io.techery.janet;
 import io.techery.janet.command.annotations.CommandAction;
 import io.techery.janet.command.exception.CommandServiceException;
 
+/**
+ * For invoking custom logic as a command. {@linkplain CommandActionService} performs actions executing with a help of
+ * annotation {@linkplain CommandAction @CommandAction}. Also to create command action it's necessary to implement
+ * the interface {@linkplain CommandActionBase}. It contains the command's methods for running and cancellation.
+ * To get command result use method {@linkplain CommandActionBase#getResult()}
+ */
 final public class CommandActionService extends ActionService {
 
     @Override protected Class getSupportedAnnotationType() {

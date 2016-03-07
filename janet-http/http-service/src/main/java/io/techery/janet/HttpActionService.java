@@ -9,12 +9,45 @@ import java.util.concurrent.CopyOnWriteArrayList;
 import io.techery.janet.converter.Converter;
 import io.techery.janet.converter.ConverterException;
 import io.techery.janet.http.HttpClient;
+import io.techery.janet.http.annotations.Body;
+import io.techery.janet.http.annotations.Field;
 import io.techery.janet.http.annotations.HttpAction;
+import io.techery.janet.http.annotations.Part;
+import io.techery.janet.http.annotations.Path;
+import io.techery.janet.http.annotations.Query;
+import io.techery.janet.http.annotations.RequestHeader;
+import io.techery.janet.http.annotations.ResponseHeader;
+import io.techery.janet.http.annotations.Status;
 import io.techery.janet.http.exception.HttpServiceException;
 import io.techery.janet.http.exception.HttpException;
 import io.techery.janet.http.model.Request;
 import io.techery.janet.http.model.Response;
 
+/**
+ * Provide HTTP/HTTPS requests execution. Each HTTP request for {@linkplain HttpActionService} is an individual class that contains
+ * all information about the request and response. Http action must be annotated with {@linkplain HttpAction @HttpAction}.
+ * <pre>{@code
+ * @literal @HttpAction(value = "/demo", method = HttpAction.Method.GET)
+ * public class ExampleAction {}
+ * }
+ * </pre>
+ * To configure request, Action fields can be annotated with:
+ * <ul>
+ * <li>{@linkplain Path @Path} for path value</li>
+ * <li>{@linkplain Query @Query} for request URL parameters</li>
+ * <li>{@linkplain Body @Body}  for POST request body</li>
+ * <li>{@linkplain RequestHeader @RequestHeader} for request headers</li>
+ * <li>{@linkplain Field @Field} for request fields if request type is {@linkplain HttpAction.Type#FORM_URL_ENCODED}</li>
+ * <li>{@linkplain Part @Part} for multipart request parts</li>
+ * </ul>
+ * To process response, special annotations can be used:
+ * <ul>
+ * <li>{@linkplain Response @Response} for getting response body</li>
+ * <li>{@linkplain Status @Status} for getting response status. Field types Integer, Long, int or long can be used
+ * to get status code or use boolean to know that request was sent successfully</li>
+ * <li>{@linkplain ResponseHeader @ResponseHeader} for getting response headers</li>
+ * </ul>
+ */
 final public class HttpActionService extends ActionService {
 
     final static String HELPERS_FACTORY_CLASS_SIMPLE_NAME = "HttpActionHelperFactory";

@@ -5,10 +5,13 @@ import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
 import io.techery.janet.AsyncActionService.QueuePoller.PollCallback;
+import io.techery.janet.async.SyncPredicate;
 import io.techery.janet.async.actions.ConnectAsyncAction;
 import io.techery.janet.async.actions.DisconnectAsyncAction;
 import io.techery.janet.async.actions.ErrorAsyncAction;
 import io.techery.janet.async.annotations.AsyncAction;
+import io.techery.janet.async.annotations.AsyncMessage;
+import io.techery.janet.async.annotations.SyncedResponse;
 import io.techery.janet.async.exception.AsyncServiceException;
 import io.techery.janet.async.exception.SyncedResponseException;
 import io.techery.janet.body.ActionBody;
@@ -17,6 +20,16 @@ import io.techery.janet.body.StringBody;
 import io.techery.janet.converter.Converter;
 import io.techery.janet.converter.ConverterException;
 
+/**
+ * Provide support async protocols. {@link AsyncActionService} performs actions with annotation
+ * {@linkplain AsyncAction @AsyncAction}. Every action is async message that contains message data as a field annotated
+ * with {@linkplain AsyncMessage @AsyncMessage}.
+ * <p>
+ * Also {@linkplain AsyncActionService} has algorithm to synchronize outcoming and incoming messages. To receive action
+ * response may add field with annotation {@linkplain SyncedResponse @SyncedResponse}. Type of that field must be
+ * a class of incoming action. To link action with its response set class in the annotation implemented by
+ * {@linkplain SyncPredicate} where the condition for synchronization present.
+ */
 final public class AsyncActionService extends ActionService {
 
     static final String ROSTER_CLASS_SIMPLE_NAME = "AsyncActionsRoster";
