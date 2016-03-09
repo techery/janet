@@ -1,5 +1,4 @@
 apply plugin: 'java'
-apply plugin: 'provided-base'
 apply plugin: 'maven'
 
 sourceCompatibility = 1.6
@@ -22,7 +21,6 @@ artifacts {
 }
 
 dependencies {
-    compile project(':janet-http:http-clients:url-connection')
+    compile project(':janet-http:http-service')
     compile 'com.squareup.okhttp:okhttp:2.7.5'
-    compile 'com.squareup.okhttp:okhttp-urlconnection:2.7.5'
 }

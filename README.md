@@ -177,6 +177,7 @@ List of additional artifacts:
 compile 'com.github.techery.janet:http-service:0.0.9'
 apt 'com.github.techery.janet:http-service-compiler:0.0.9'   
 compile 'com.github.techery.janet:okhttp:0.0.9'
+compile 'com.github.techery.janet:okhttp3:0.0.9'
 compile 'com.github.techery.janet:android-apache-client:0.0.9'
 compile 'com.github.techery.janet:url-connection:0.0.9'
 
