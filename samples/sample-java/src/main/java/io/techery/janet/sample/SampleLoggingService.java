@@ -11,8 +11,9 @@ public class SampleLoggingService extends ActionServiceWrapper {
         super(actionService);
     }
 
-    @Override protected <A> void onInterceptSend(ActionHolder<A> holder) {
+    @Override protected <A> boolean onInterceptSend(ActionHolder<A> holder) {
         System.out.println("send " + holder.action());
+        return false;
     }
 
     @Override protected <A> void onInterceptCancel(ActionHolder<A> holder) {
