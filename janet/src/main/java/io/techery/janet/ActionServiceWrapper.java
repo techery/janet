@@ -11,32 +11,73 @@ public abstract class ActionServiceWrapper extends ActionService {
         this.actionService = actionService;
     }
 
-    protected abstract <A> void onInterceptSend(ActionHolder<A> holder);
+    /**
+     * Called before action sending
+     * @param holder action holder for intercepting
+     * @return If returns true action won't be processed by decorated service.
+     */
+    protected abstract <A> boolean onInterceptSend(ActionHolder<A> holder);
 
+    /**
+     * Called before action cancellation
+     * @param holder action holder for intercepting
+     */
     protected abstract <A> void onInterceptCancel(ActionHolder<A> holder);
 
+    /**
+     * Called from service callback before changing action status to {@linkplain ActionState.Status#START START}
+     * @param holder action holder for intercepting
+     */
     protected abstract <A> void onInterceptStart(ActionHolder<A> holder);
 
+    /**
+     * Called from service callback before changing action status to {@linkplain ActionState.Status#PROGRESS PROGRESS}
+     * @param holder action holder for intercepting
+     */
     protected abstract <A> void onInterceptProgress(ActionHolder<A> holder, int progress);
 
+    /**
+     * Called from service callback before changing action status to {@linkplain ActionState.Status#SUCCESS SUCCESS}
+     * @param holder action holder for intercepting
+     */
     protected abstract <A> void onInterceptSuccess(ActionHolder<A> holder);
 
+    /**
+     * Called from service callback before changing action status to {@linkplain ActionState.Status#FAIL FAIL}
+     * @param holder action holder for intercepting
+     */
     protected abstract <A> void onInterceptFail(ActionHolder<A> holder, JanetException e);
 
+    /**
+     * {@inheritDoc}
+     */
     @Override protected <A> void sendInternal(ActionHolder<A> holder) throws JanetException {
-        onInterceptSend(holder);
-        actionService.sendInternal(holder);
+        boolean finished = onInterceptSend(holder);
+        if (finished) {
+            callback.onSuccess(holder);
+        } else {
+            actionService.sendInternal(holder);
+        }
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override protected <A> void cancel(ActionHolder<A> holder) {
         onInterceptCancel(holder);
         actionService.cancel(holder);
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override protected Class getSupportedAnnotationType() {
         return actionService.getSupportedAnnotationType();
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override void setCallback(Callback callback) {
         callback = new CallbackWrapper(callback, interceptor);
         super.setCallback(callback);
