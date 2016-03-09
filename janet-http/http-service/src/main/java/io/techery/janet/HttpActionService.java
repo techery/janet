@@ -113,14 +113,10 @@ final public class HttpActionService extends ActionService {
                 throw new HttpException(response.getStatus(), response.getReason());
             }
             action = helper.onResponse(action, response, converter);
-        } catch (IOException e) {
-            throw new HttpServiceException(e);
-        } catch (ConverterException e) {
-            throw new HttpServiceException(e);
-        } catch (HttpException e) {
-            throw new HttpServiceException(e);
         } catch (CancelException e) {
             return;
+        } catch (Throwable e) {
+            throw new HttpServiceException(e);
         } finally {
             runningActions.remove(action);
         }
