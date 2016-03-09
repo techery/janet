@@ -1,6 +1,5 @@
 package io.techery.janet;
 
-import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -26,8 +25,7 @@ import io.techery.janet.http.model.Response;
 /**
  * Provide HTTP/HTTPS requests execution. Each HTTP request for {@linkplain HttpActionService} is an individual class that contains
  * all information about the request and response. Http action must be annotated with {@linkplain HttpAction @HttpAction}.
- * <pre>{@code
- * @literal @HttpAction(value = "/demo", method = HttpAction.Method.GET)
+ * <pre>{@code  @HttpAction(value = "/demo", method = HttpAction.Method.GET)
  * public class ExampleAction {}
  * }
  * </pre>
