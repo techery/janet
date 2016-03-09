@@ -34,5 +34,6 @@ public class SampleLoggingService extends ActionServiceWrapper {
 
     @Override protected <A> void onInterceptFail(ActionHolder<A> holder, JanetException e) {
         System.out.println("onFail " + holder.action());
+        e.printStackTrace();
     }
 }

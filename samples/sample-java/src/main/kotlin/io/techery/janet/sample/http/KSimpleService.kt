@@ -5,7 +5,7 @@ import io.techery.janet.HttpActionService
 import io.techery.janet.Janet
 import io.techery.janet.gson.GsonConverter
 import io.techery.janet.helper.ActionStateSubscriber
-import io.techery.janet.okhttp.OkClient
+import io.techery.janet.okhttp3.OkClient
 import rx.Observable
 
 const private val API_URL = "https://api.github.com"

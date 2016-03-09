@@ -1,9 +1,4 @@
-package io.techery.janet.okhttp;
-
-import com.squareup.okhttp.MediaType;
-import com.squareup.okhttp.OkHttpClient;
-import com.squareup.okhttp.RequestBody;
-import com.squareup.okhttp.internal.Util;
+package io.techery.janet.okhttp3;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -16,6 +11,9 @@ import io.techery.janet.http.HttpClient;
 import io.techery.janet.http.model.Header;
 import io.techery.janet.http.model.Request;
 import io.techery.janet.http.model.Response;
+import okhttp3.MediaType;
+import okhttp3.OkHttpClient;
+import okhttp3.internal.Util;
 import okio.BufferedSink;
 import okio.Okio;
 import okio.Source;
@@ -23,24 +21,24 @@ import okio.Source;
 public class OkClient implements HttpClient {
 
     private static OkHttpClient defaultOkHttp() {
-        OkHttpClient client = new OkHttpClient();
-        client.setConnectTimeout(CONNECT_TIMEOUT_MILLIS, TimeUnit.MILLISECONDS);
-        client.setReadTimeout(READ_TIMEOUT_MILLIS, TimeUnit.MILLISECONDS);
-        return client;
+        return new OkHttpClient.Builder()
+                .connectTimeout(CONNECT_TIMEOUT_MILLIS, TimeUnit.MILLISECONDS)
+                .readTimeout(READ_TIMEOUT_MILLIS, TimeUnit.MILLISECONDS)
+                .build();
     }
 
-    private final com.squareup.okhttp.OkHttpClient client;
+    private final OkHttpClient client;
 
     public OkClient() {
         this(defaultOkHttp());
     }
 
-    public OkClient(com.squareup.okhttp.OkHttpClient okHttpClient) {
+    public OkClient(OkHttpClient okHttpClient) {
         this.client = okHttpClient;
     }
 
     @Override public Response execute(Request request, final RequestCallback requestCallback) throws IOException {
-        com.squareup.okhttp.Request.Builder okRequestBuilder = new com.squareup.okhttp.Request.Builder();
+        okhttp3.Request.Builder okRequestBuilder = new okhttp3.Request.Builder();
         okRequestBuilder.url(request.getUrl());
         for (Header header : request.getHeaders()) {
             okRequestBuilder.addHeader(header.getName(), header.getValue());
@@ -54,8 +52,8 @@ public class OkClient implements HttpClient {
                 }
             });
         }
-        com.squareup.okhttp.Request okRequest = okRequestBuilder.method(request.getMethod(), requestBody).build();
-        com.squareup.okhttp.Response okResponse = client.newCall(okRequest).execute();
+        okhttp3.Request okRequest = okRequestBuilder.method(request.getMethod(), requestBody).build();
+        okhttp3.Response okResponse = client.newCall(okRequest).execute();
         List<Header> responseHeaders = new ArrayList<Header>();
         for (String headerName : okResponse.headers().names()) {
             responseHeaders.add(new Header(headerName, okResponse.header(headerName)));
@@ -69,7 +67,7 @@ public class OkClient implements HttpClient {
         );
     }
 
-    private static class ActionRequestBody extends RequestBody {
+    private static class ActionRequestBody extends okhttp3.RequestBody {
 
         private final ActionBody actionBody;
         private final ProgressListener listener;

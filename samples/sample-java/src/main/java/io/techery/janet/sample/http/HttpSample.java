@@ -7,7 +7,7 @@ import io.techery.janet.HttpActionService;
 import io.techery.janet.Janet;
 import io.techery.janet.gson.GsonConverter;
 import io.techery.janet.helper.ActionStateSubscriber;
-import io.techery.janet.okhttp.OkClient;
+import io.techery.janet.okhttp3.OkClient;
 import io.techery.janet.sample.SampleLoggingService;
 import rx.Observable;
 
@@ -43,7 +43,7 @@ public class HttpSample {
 
 
         janet = new Janet.Builder()
-                .addService(new SampleLoggingService(new HttpActionService("http://posttestserver.com", new OkClient(), new GsonConverter(new Gson()))))
+                .addService(new SampleLoggingService(new HttpActionService("https://httpbin.org", new OkClient(), new GsonConverter(new Gson()))))
                 .build();
 
         janet.createPipe(TestProgressAction.class)

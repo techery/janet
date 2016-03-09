@@ -5,11 +5,11 @@ import io.techery.janet.http.annotations.Part;
 import io.techery.janet.http.annotations.Query;
 import io.techery.janet.http.annotations.Response;
 
-@HttpAction(value = "/post.php", type = HttpAction.Type.MULTIPART)
+@HttpAction(method = HttpAction.Method.POST, value = "/post", type = HttpAction.Type.MULTIPART)
 public class TestProgressAction extends BaseAction {
 
     @Query("dir")
-    String name = "testDir";
+    String name = "janet";
 
     @Part("name")
     String part = CONTENT;
@@ -21,6 +21,11 @@ public class TestProgressAction extends BaseAction {
         return response;
     }
 
+    @Override public String toString() {
+        return "TestProgressAction{" +
+                "response='" + response + '\'' +
+                '}';
+    }
 
     //the large string instead of a file
     private final static String CONTENT = "test-test-test-test-test-test-test-test-testtest-test-test-test-test-test-test-test-testtest-test-test-test-test-test-test-test-testtest-test-test-test-test-test-test-test-testtest-test-test-test-test-test-test-test-testtest-test-test-test-test-test-test-test-testtest-test-test" +
