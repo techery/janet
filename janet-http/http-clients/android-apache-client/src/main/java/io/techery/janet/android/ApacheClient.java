@@ -33,6 +33,7 @@ import io.techery.janet.http.model.Response;
 
 
 public class ApacheClient implements io.techery.janet.http.HttpClient {
+
     private static HttpClient createDefaultClient() {
         HttpParams params = new BasicHttpParams();
         HttpConnectionParams.setConnectionTimeout(params, CONNECT_TIMEOUT_MILLIS);
@@ -52,8 +53,16 @@ public class ApacheClient implements io.techery.janet.http.HttpClient {
 
     @Override public Response execute(Request request, RequestCallback requestCallback) throws IOException {
         HttpUriRequest apacheRequest = createRequest(request, requestCallback);
+        request.tag = apacheRequest; //mark for cancellation
         HttpResponse apacheResponse = execute(client, apacheRequest);
         return parseResponse(request.getUrl(), apacheResponse);
+    }
+
+    @Override public void cancel(Request request) {
+        if (request.tag != null && (request.tag instanceof HttpUriRequest)) {
+            HttpUriRequest apacheRequest = (HttpUriRequest) request.tag;
+            apacheRequest.abort();
+        }
     }
 
     protected HttpResponse execute(HttpClient client, HttpUriRequest request) throws IOException {

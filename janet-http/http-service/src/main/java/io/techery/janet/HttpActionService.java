@@ -3,6 +3,7 @@ package io.techery.janet;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 import io.techery.janet.converter.Converter;
@@ -17,8 +18,8 @@ import io.techery.janet.http.annotations.Query;
 import io.techery.janet.http.annotations.RequestHeader;
 import io.techery.janet.http.annotations.ResponseHeader;
 import io.techery.janet.http.annotations.Status;
-import io.techery.janet.http.exception.HttpServiceException;
 import io.techery.janet.http.exception.HttpException;
+import io.techery.janet.http.exception.HttpServiceException;
 import io.techery.janet.http.model.Request;
 import io.techery.janet.http.model.Response;
 
@@ -54,12 +55,12 @@ final public class HttpActionService extends ActionService {
     private final int PROGRESS_THRESHOLD = 5;
 
     private ActionHelperFactory actionHelperFactory;
-    private final Map<Class, ActionHelper> actionHelperCache = new HashMap<Class, ActionHelper>();
+    private final Map<Class, ActionHelper> actionHelperCache;
+    private final Map<Object, List<Request>> runningRequests;
 
     private final HttpClient client;
     private final Converter converter;
     private final String baseUrl;
-    private final List<Object> runningActions;
 
     public HttpActionService(String baseUrl, HttpClient client, Converter converter) {
         if (baseUrl == null) {
@@ -74,7 +75,8 @@ final public class HttpActionService extends ActionService {
         this.baseUrl = baseUrl;
         this.client = client;
         this.converter = converter;
-        this.runningActions = new CopyOnWriteArrayList<Object>();
+        this.actionHelperCache = new HashMap<Class, ActionHelper>();
+        this.runningRequests = new ConcurrentHashMap<Object, List<Request>>();
         loadActionHelperFactory();
     }
 
@@ -85,16 +87,17 @@ final public class HttpActionService extends ActionService {
     @Override protected <A> void sendInternal(ActionHolder<A> holder) throws HttpServiceException {
         callback.onStart(holder);
         A action = holder.action();
-        runningActions.add(action);
         final ActionHelper<A> helper = getActionHelper(action.getClass());
         if (helper == null) {
             throw new JanetInternalException("Something was happened with code generator. Check dependence of janet-http-compiler");
         }
         RequestBuilder builder = new RequestBuilder(baseUrl, converter);
         Response response;
+        Request request = null;
         try {
             builder = helper.fillRequest(builder, action);
-            Request request = builder.build();
+            request = builder.build();
+            putRunningRequest(action, request);
             throwIfCanceled(action);
             response = client.execute(request, new ActionRequestCallback<A>(holder) {
                 private int lastProgress;
@@ -116,17 +119,35 @@ final public class HttpActionService extends ActionService {
         } catch (Throwable e) {
             throw new HttpServiceException(e);
         } finally {
-            runningActions.remove(action);
+            if (request != null && runningRequests.containsKey(action)) {
+                runningRequests.get(action).remove(request);
+            }
         }
         this.callback.onSuccess(holder);
     }
 
     @Override protected <A> void cancel(ActionHolder<A> holder) {
-        runningActions.remove(holder.action());
+        A action = holder.action();
+        try {
+            if (runningRequests.containsKey(action)) {
+                for (Request request : runningRequests.get(action)) {
+                    client.cancel(request);
+                }
+            }
+        } catch (Throwable ignored) {} finally {
+            runningRequests.remove(action);
+        }
+    }
+
+    private void putRunningRequest(Object action, Request request) {
+        if (!runningRequests.containsKey(action)) {
+            runningRequests.put(action, new CopyOnWriteArrayList<Request>());
+        }
+        runningRequests.get(action).add(request);
     }
 
     private void throwIfCanceled(Object action) throws CancelException {
-        if (!runningActions.contains(action)) {
+        if (!runningRequests.containsKey(action)) {
             throw new CancelException();
         }
     }

@@ -1,5 +1,6 @@
 package io.techery.janet.okhttp;
 
+import com.squareup.okhttp.Call;
 import com.squareup.okhttp.MediaType;
 import com.squareup.okhttp.OkHttpClient;
 import com.squareup.okhttp.RequestBody;
@@ -55,7 +56,9 @@ public class OkClient implements HttpClient {
             });
         }
         com.squareup.okhttp.Request okRequest = okRequestBuilder.method(request.getMethod(), requestBody).build();
-        com.squareup.okhttp.Response okResponse = client.newCall(okRequest).execute();
+        Call call = client.newCall(okRequest);
+        request.tag = call; //mark for cancellation
+        com.squareup.okhttp.Response okResponse = call.execute();
         List<Header> responseHeaders = new ArrayList<Header>();
         for (String headerName : okResponse.headers().names()) {
             responseHeaders.add(new Header(headerName, okResponse.header(headerName)));
@@ -67,6 +70,13 @@ public class OkClient implements HttpClient {
                 okResponse.request().url().toString(),
                 okResponse.code(), okResponse.message(), responseHeaders, responseBody
         );
+    }
+
+    @Override public void cancel(Request request) {
+        if (request.tag != null && (request.tag instanceof Call)) {
+            Call call = (Call) request.tag;
+            call.cancel();
+        }
     }
 
     private static class ActionRequestBody extends RequestBody {

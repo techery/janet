@@ -12,10 +12,10 @@ import java.util.Map;
 
 import io.techery.janet.body.ActionBody;
 import io.techery.janet.body.BytesArrayBody;
+import io.techery.janet.http.internal.ProgressOutputStream;
 import io.techery.janet.http.model.Header;
 import io.techery.janet.http.model.Request;
 import io.techery.janet.http.model.Response;
-import io.techery.janet.http.internal.ProgressOutputStream;
 
 
 public class UrlConnectionClient implements HttpClient {
@@ -26,8 +26,16 @@ public class UrlConnectionClient implements HttpClient {
 
     @Override public Response execute(Request request, RequestCallback requestCallback) throws IOException {
         HttpURLConnection connection = openConnection(request);
+        request.tag = connection; //mark for cancellation
         writeRequest(connection, request, requestCallback);
         return readResponse(connection);
+    }
+
+    @Override public void cancel(Request request) {
+        if (request.tag != null && (request.tag instanceof HttpURLConnection)) {
+            HttpURLConnection connection = (HttpURLConnection) request.tag;
+            connection.disconnect();
+        }
     }
 
     protected HttpURLConnection openConnection(Request request) throws IOException {
