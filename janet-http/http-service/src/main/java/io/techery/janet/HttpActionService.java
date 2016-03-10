@@ -98,7 +98,7 @@ final public class HttpActionService extends ActionService {
             builder = helper.fillRequest(builder, action);
             request = builder.build();
             putRunningRequest(action, request);
-            throwIfCanceled(action);
+            throwIfCanceled(action, request);
             response = client.execute(request, new ActionRequestCallback<A>(holder) {
                 private int lastProgress;
 
@@ -109,7 +109,7 @@ final public class HttpActionService extends ActionService {
                     }
                 }
             });
-            throwIfCanceled(action);
+            throwIfCanceled(action, request);
             if (!response.isSuccessful()) {
                 throw new HttpException(response.getStatus(), response.getReason());
             }
@@ -146,8 +146,9 @@ final public class HttpActionService extends ActionService {
         runningRequests.get(action).add(request);
     }
 
-    private void throwIfCanceled(Object action) throws CancelException {
-        if (!runningRequests.containsKey(action)) {
+    private void throwIfCanceled(Object action, Request request) throws CancelException {
+        if (!runningRequests.containsKey(action)
+                || !runningRequests.get(action).contains(request)) {
             throw new CancelException();
         }
     }
