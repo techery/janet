@@ -91,6 +91,7 @@ final public class HttpActionService extends ActionService {
         if (helper == null) {
             throw new JanetInternalException("Something was happened with code generator. Check dependence of janet-http-compiler");
         }
+        putRunningAction(action);
         RequestBuilder builder = new RequestBuilder(baseUrl, converter);
         Response response;
         Request request = null;
@@ -99,28 +100,37 @@ final public class HttpActionService extends ActionService {
             request = builder.build();
             putRunningRequest(action, request);
             throwIfCanceled(action, request);
-            response = client.execute(request, new ActionRequestCallback<A>(holder) {
-                private int lastProgress;
+            try {
+                response = client.execute(request, new ActionRequestCallback<A>(holder) {
+                    private int lastProgress;
 
-                @Override public void onProgress(int progress) {
-                    if (progress > lastProgress + PROGRESS_THRESHOLD) {
-                        callback.onProgress(holder, progress);
-                        lastProgress = progress;
+                    @Override public void onProgress(int progress) {
+                        if (progress > lastProgress + PROGRESS_THRESHOLD) {
+                            callback.onProgress(holder, progress);
+                            lastProgress = progress;
+                        }
                     }
-                }
-            });
-            throwIfCanceled(action, request);
+                });
+            } finally {
+                throwIfCanceled(action, request);
+            }
             if (!response.isSuccessful()) {
                 throw new HttpException(response.getStatus(), response.getReason());
             }
             action = helper.onResponse(action, response, converter);
+            throwIfCanceled(action, request);
         } catch (CancelException e) {
             return;
         } catch (Throwable e) {
             throw new HttpServiceException(e);
         } finally {
-            if (request != null && runningRequests.containsKey(action)) {
-                runningRequests.get(action).remove(request);
+            if (request != null) {
+                List<Request> requests = runningRequests.get(action);
+                if (requests != null) {
+                    requests.remove(request);
+                }
+            } else {
+                runningRequests.remove(action);
             }
         }
         this.callback.onSuccess(holder);
@@ -128,27 +138,30 @@ final public class HttpActionService extends ActionService {
 
     @Override protected <A> void cancel(ActionHolder<A> holder) {
         A action = holder.action();
+        List<Request> requests = runningRequests.remove(action);
         try {
-            if (runningRequests.containsKey(action)) {
-                for (Request request : runningRequests.get(action)) {
+            if (requests != null) {
+                for (Request request : requests) {
                     client.cancel(request);
                 }
             }
-        } catch (Throwable ignored) {} finally {
-            runningRequests.remove(action);
-        }
+        } catch (Throwable ignored) {}
     }
 
     private void putRunningRequest(Object action, Request request) {
-        if (!runningRequests.containsKey(action)) {
-            runningRequests.put(action, new CopyOnWriteArrayList<Request>());
-        }
+        putRunningAction(action);
         runningRequests.get(action).add(request);
     }
 
+    private void putRunningAction(Object action) {
+        if (!runningRequests.containsKey(action)) {
+            runningRequests.put(action, new CopyOnWriteArrayList<Request>());
+        }
+    }
+
     private void throwIfCanceled(Object action, Request request) throws CancelException {
-        if (!runningRequests.containsKey(action)
-                || !runningRequests.get(action).contains(request)) {
+        List<Request> requests = runningRequests.get(action);
+        if (requests == null || !requests.contains(request)) {
             throw new CancelException();
         }
     }

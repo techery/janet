@@ -11,6 +11,7 @@ import io.techery.janet.http.HttpClient;
 import io.techery.janet.http.model.Header;
 import io.techery.janet.http.model.Request;
 import io.techery.janet.http.model.Response;
+import io.techery.janet.http.utils.RequestUtils;
 import okhttp3.Call;
 import okhttp3.MediaType;
 import okhttp3.OkHttpClient;
@@ -54,6 +55,7 @@ public class OkClient implements HttpClient {
             });
         }
         okhttp3.Request okRequest = okRequestBuilder.method(request.getMethod(), requestBody).build();
+        RequestUtils.throwIfCanceled(request);
         Call call = client.newCall(okRequest);
         request.tag = call; //mark for cancellation
         okhttp3.Response okResponse = call.execute();
@@ -75,6 +77,7 @@ public class OkClient implements HttpClient {
             Call call = (Call) request.tag;
             call.cancel();
         }
+        request.tag = RequestUtils.TAG_CANCELED;
     }
 
     private static class ActionRequestBody extends okhttp3.RequestBody {

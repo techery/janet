@@ -17,6 +17,7 @@ import io.techery.janet.http.HttpClient;
 import io.techery.janet.http.model.Header;
 import io.techery.janet.http.model.Request;
 import io.techery.janet.http.model.Response;
+import io.techery.janet.http.utils.RequestUtils;
 import okio.BufferedSink;
 import okio.Okio;
 import okio.Source;
@@ -56,6 +57,7 @@ public class OkClient implements HttpClient {
             });
         }
         com.squareup.okhttp.Request okRequest = okRequestBuilder.method(request.getMethod(), requestBody).build();
+        RequestUtils.throwIfCanceled(request);
         Call call = client.newCall(okRequest);
         request.tag = call; //mark for cancellation
         com.squareup.okhttp.Response okResponse = call.execute();
@@ -77,6 +79,7 @@ public class OkClient implements HttpClient {
             Call call = (Call) request.tag;
             call.cancel();
         }
+        request.tag = RequestUtils.TAG_CANCELED;
     }
 
     private static class ActionRequestBody extends RequestBody {

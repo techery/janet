@@ -16,6 +16,7 @@ import io.techery.janet.http.internal.ProgressOutputStream;
 import io.techery.janet.http.model.Header;
 import io.techery.janet.http.model.Request;
 import io.techery.janet.http.model.Response;
+import io.techery.janet.http.utils.RequestUtils;
 
 
 public class UrlConnectionClient implements HttpClient {
@@ -26,8 +27,10 @@ public class UrlConnectionClient implements HttpClient {
 
     @Override public Response execute(Request request, RequestCallback requestCallback) throws IOException {
         HttpURLConnection connection = openConnection(request);
-        request.tag = connection; //mark for cancellation
+        RequestUtils.throwIfCanceled(request);
+        request.tag = connection;
         writeRequest(connection, request, requestCallback);
+        RequestUtils.throwIfCanceled(request);
         return readResponse(connection);
     }
 
@@ -35,7 +38,18 @@ public class UrlConnectionClient implements HttpClient {
         if (request.tag != null && (request.tag instanceof HttpURLConnection)) {
             HttpURLConnection connection = (HttpURLConnection) request.tag;
             connection.disconnect();
+            if (connection.getDoOutput()) {
+                try {
+                    connection.getOutputStream().close();
+                } catch (IOException ignored) {}
+            }
+            if (connection.getDoInput()) {
+                try {
+                    connection.getInputStream().close();
+                } catch (IOException ignored) {}
+            }
         }
+        request.tag = RequestUtils.TAG_CANCELED; //mark request as canceled
     }
 
     protected HttpURLConnection openConnection(Request request) throws IOException {
