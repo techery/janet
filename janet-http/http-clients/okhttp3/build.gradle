@@ -21,7 +21,6 @@ artifacts {
 }
 
 dependencies {
-    compile project(':janet-http:http-clients:url-connection')
+    compile project(':janet-http:http-service')
     compile 'com.squareup.okhttp3:okhttp:3.2.0'
-    compile 'com.squareup.okhttp3:okhttp-urlconnection:3.2.0'
 }
