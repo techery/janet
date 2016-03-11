@@ -2,6 +2,7 @@ package io.techery.janet.helper;
 
 import io.techery.janet.ActionState;
 import rx.Subscriber;
+import rx.exceptions.OnErrorNotImplementedException;
 import rx.functions.Action0;
 import rx.functions.Action1;
 import rx.functions.Action2;
@@ -69,5 +70,7 @@ public class ActionStateSubscriber<A> extends Subscriber<ActionState<A>> {
 
     @Override public void onCompleted() { }
 
-    @Override public void onError(Throwable e) { }
+    @Override public void onError(Throwable e) {
+        throw new OnErrorNotImplementedException(e);
+    }
 }

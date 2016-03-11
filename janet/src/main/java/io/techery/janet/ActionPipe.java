@@ -70,7 +70,7 @@ final public class ActionPipe<A> {
      * @see Observable#replay(int)
      */
     public Observable<ActionState<A>> observeWithReplay() {
-        return cachedPipeline;
+        return cachedPipeline.asObservable();
     }
 
     /**
@@ -89,7 +89,7 @@ final public class ActionPipe<A> {
      * @see ActionPipe#observeSuccess()
      */
     public Observable<A> observeSuccessWithReplay() {
-        return cachedSuccessPipeline;
+        return cachedSuccessPipeline.asObservable();
     }
 
     /**
