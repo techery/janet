@@ -8,6 +8,7 @@ import rx.functions.Action1;
 import rx.functions.Func0;
 import rx.functions.Func1;
 import rx.observables.ConnectableObservable;
+import rx.subjects.PublishSubject;
 
 /**
  * End tool for sending and receiving actions with specific type using RXJava.
@@ -24,6 +25,7 @@ final public class ActionPipe<A> {
     private final Observable<ActionState<A>> pipeline;
     private final Action1<A> cancelFunc;
     private final Scheduler defaultSubscribeOn;
+    private final PublishSubject<A> cancelSignal;
 
     private ConnectableObservable<ActionState<A>> cachedPipeline;
     private ConnectableObservable<A> cachedSuccessPipeline;
@@ -36,6 +38,7 @@ final public class ActionPipe<A> {
         this.pipeline = pipelineFactory.call();
         this.cancelFunc = cancelFunc;
         this.defaultSubscribeOn = defaultSubscribeOn;
+        this.cancelSignal = PublishSubject.create();
 
         createCachedPipeline();
         createCachedSuccessPipeline();
@@ -129,6 +132,7 @@ final public class ActionPipe<A> {
      * @param action prepared action for cancellation
      */
     public void cancel(A action) {
+        cancelSignal.onNext(action);
         cancelFunc.call(action);
     }
 
@@ -139,7 +143,14 @@ final public class ActionPipe<A> {
      * @param action prepared action to send
      */
     public Observable<ActionState<A>> createObservable(final A action) {
-        return syncObservableFactory.call(action);
+        return syncObservableFactory.call(action)
+                .takeUntil(cancelSignal
+                        .asObservable()
+                        .filter(new Func1<A, Boolean>() {
+                            @Override public Boolean call(A a) {
+                                return a == action;
+                            }
+                        }));
     }
 
     /**
