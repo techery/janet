@@ -12,7 +12,7 @@ import rx.observables.ConnectableObservable;
 /**
  * End tool for sending and receiving actions with specific type using RXJava.
  * ActionPipe can work with actions synchronously or asynchronously.
- * Create instances using method {@link Janet#createPipe(Class)}.
+ * Create instances using method {@linkplain Janet#createPipe(Class)}.
  * <p>
  * For example,
  * <pre>{@code
@@ -23,14 +23,19 @@ final public class ActionPipe<A> {
     private final Func1<A, Observable<ActionState<A>>> syncObservableFactory;
     private final Observable<ActionState<A>> pipeline;
     private final Action1<A> cancelFunc;
+    private final Scheduler defaultSubscribeOn;
 
     private ConnectableObservable<ActionState<A>> cachedPipeline;
     private ConnectableObservable<A> cachedSuccessPipeline;
 
-    ActionPipe(Func1<A, Observable<ActionState<A>>> syncObservableFactory, Func0<Observable<ActionState<A>>> pipelineFactory, Action1<A> cancelFunc) {
+    ActionPipe(Func1<A, Observable<ActionState<A>>> syncObservableFactory,
+            Func0<Observable<ActionState<A>>> pipelineFactory,
+            Action1<A> cancelFunc,
+            Scheduler defaultSubscribeOn) {
         this.syncObservableFactory = syncObservableFactory;
         this.pipeline = pipelineFactory.call();
         this.cancelFunc = cancelFunc;
+        this.defaultSubscribeOn = defaultSubscribeOn;
 
         createCachedPipeline();
         createCachedSuccessPipeline();
@@ -92,7 +97,7 @@ final public class ActionPipe<A> {
     }
 
     /**
-     * Send action to {@link Janet}.
+     * Send action to {@linkplain Janet}.
      *
      * @param action prepared action for sending
      */
@@ -101,27 +106,25 @@ final public class ActionPipe<A> {
     }
 
     /**
-     * Send action to {@link Janet}.
+     * Send action to {@linkplain Janet}.
      *
      * @param action      prepared action for sending
-     * @param subscribeOn {@link Scheduler} to do {@link Observable#subscribeOn(Scheduler) subcribeOn} of created Observable.
+     * @param subscribeOn {@linkplain Scheduler} to do {@linkplain Observable#subscribeOn(Scheduler) subcribeOn} of created Observable.
      */
-    public void send(A action, final Scheduler subscribeOn) {
-        createObservable(action)
-                .compose(new Observable.Transformer<ActionState<A>, ActionState<A>>() {
-                    @Override
-                    public Observable<ActionState<A>> call(Observable<ActionState<A>> observable) {
-                        if (subscribeOn != null) {
-                            observable = observable.subscribeOn(subscribeOn);
-                        }
-                        return observable;
-                    }
-                }).subscribe();
+    public void send(A action, Scheduler subscribeOn) {
+        Observable observable = createObservable(action);
+        if (subscribeOn == null) {
+            subscribeOn = defaultSubscribeOn;
+        }
+        if (subscribeOn != null) {
+            observable = observable.subscribeOn(subscribeOn);
+        }
+        observable.subscribe();
     }
 
     /**
      * Cancel running action.
-     * Action cancellation defines in relative service {@link ActionService#cancel(ActionHolder)}
+     * Action cancellation defines in relative service {@linkplain ActionService#cancel(ActionHolder)}
      *
      * @param action prepared action for cancellation
      */
@@ -130,8 +133,8 @@ final public class ActionPipe<A> {
     }
 
     /**
-     * Create {@link Observable observable} to send action and receive result
-     * in the form of action {@link ActionState states} synchronously
+     * Create {@linkplain Observable observable} to send action and receive result
+     * in the form of action {@linkplain ActionState states} synchronously
      *
      * @param action prepared action to send
      */
@@ -140,9 +143,9 @@ final public class ActionPipe<A> {
     }
 
     /**
-     * Create {@link Observable observable} to send action and receive action with result synchronously
+     * Create {@linkplain Observable observable} to send action and receive action with result synchronously
      * <p>
-     * To catch errors use {@link Subscriber#onError(Throwable)}
+     * To catch errors use {@linkplain Subscriber#onError(Throwable)}
      *
      * @param action prepared action to send
      */

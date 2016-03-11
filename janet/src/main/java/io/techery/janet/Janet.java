@@ -5,6 +5,7 @@ import java.util.List;
 
 import io.techery.janet.internal.TypeToken;
 import rx.Observable;
+import rx.Scheduler;
 import rx.functions.Action0;
 import rx.functions.Action1;
 import rx.functions.Func0;
@@ -12,11 +13,11 @@ import rx.functions.Func1;
 import rx.subjects.PublishSubject;
 
 /**
- * Action router that can send and receive actions using added {@link ActionService services} that know
+ * Action router that can send and receive actions using added {@linkplain ActionService services} that know
  * what do with theirs. Each action must to have an annotation that is defined
- * in {@link ActionService#getSupportedAnnotationType()} and after that Janet will be able to process them.
+ * in {@linkplain ActionService#getSupportedAnnotationType()} and after that Janet will be able to process them.
  * Create instances using {@linkplain Builder the builder} where it's possible to add the necessary services
- * using {@link Builder#addService(ActionService)}
+ * using {@linkplain Builder#addService(ActionService)}
  * <p>
  * For example,
  * <pre>{@code
@@ -59,14 +60,23 @@ public final class Janet {
     }
 
     /**
-     * Create an {@link ActionPipe} for working with specific actions
+     * Create an {@linkplain ActionPipe} for working with specific actions
      *
      * @param actionClass type of action
      */
-    public <A> ActionPipe<A> createPipe(final Class<A> actionClass) {
+    public <A> ActionPipe<A> createPipe(Class<A> actionClass) {
+        return createPipe(actionClass, null);
+    }
+
+    /**
+     * Create an {@linkplain ActionPipe} for working with specific actions
+     *
+     * @param actionClass        type of action
+     * @param defaultSubscribeOn default {@linkplain Scheduler} to do {@linkplain Observable#subscribeOn(Scheduler) subcribeOn} of created Observable in this ActionPipe
+     */
+    public <A> ActionPipe<A> createPipe(final Class<A> actionClass, Scheduler defaultSubscribeOn) {
         return new ActionPipe<A>(new Func1<A, Observable<ActionState<A>>>() {
-            @Override
-            public Observable<ActionState<A>> call(A action) {
+            @Override public Observable<ActionState<A>> call(A action) {
                 return send(action);
             }
         }, new Func0<Observable<ActionState<A>>>() {
@@ -87,7 +97,7 @@ public final class Janet {
             @Override public void call(A a) {
                 doCancel(a);
             }
-        });
+        }, defaultSubscribeOn);
     }
 
     private <A> Observable<ActionState<A>> send(final A action) {
@@ -131,7 +141,7 @@ public final class Janet {
     }
 
     /**
-     * Builds an instance of {@link Janet}.
+     * Builds an instance of {@linkplain Janet}.
      */
     public static final class Builder {
 
@@ -152,7 +162,7 @@ public final class Janet {
         }
 
         /**
-         * Create the {@link Janet} instance using added services.
+         * Create the {@linkplain Janet} instance using added services.
          */
         public Janet build() {
             return new Janet(this);
