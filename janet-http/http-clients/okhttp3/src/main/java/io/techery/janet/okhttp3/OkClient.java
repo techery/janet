@@ -11,6 +11,8 @@ import io.techery.janet.http.HttpClient;
 import io.techery.janet.http.model.Header;
 import io.techery.janet.http.model.Request;
 import io.techery.janet.http.model.Response;
+import io.techery.janet.http.utils.RequestUtils;
+import okhttp3.Call;
 import okhttp3.MediaType;
 import okhttp3.OkHttpClient;
 import okhttp3.internal.Util;
@@ -53,7 +55,10 @@ public class OkClient implements HttpClient {
             });
         }
         okhttp3.Request okRequest = okRequestBuilder.method(request.getMethod(), requestBody).build();
-        okhttp3.Response okResponse = client.newCall(okRequest).execute();
+        RequestUtils.throwIfCanceled(request);
+        Call call = client.newCall(okRequest);
+        request.tag = call; //mark for cancellation
+        okhttp3.Response okResponse = call.execute();
         List<Header> responseHeaders = new ArrayList<Header>();
         for (String headerName : okResponse.headers().names()) {
             responseHeaders.add(new Header(headerName, okResponse.header(headerName)));
@@ -65,6 +70,14 @@ public class OkClient implements HttpClient {
                 okResponse.request().url().toString(),
                 okResponse.code(), okResponse.message(), responseHeaders, responseBody
         );
+    }
+
+    @Override public void cancel(Request request) {
+        if (request.tag != null && (request.tag instanceof Call)) {
+            Call call = (Call) request.tag;
+            call.cancel();
+        }
+        request.tag = RequestUtils.TAG_CANCELED;
     }
 
     private static class ActionRequestBody extends okhttp3.RequestBody {

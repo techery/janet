@@ -13,6 +13,11 @@ public final class Request {
     private final String url;
     private final List<Header> headers;
     private final ActionBody body;
+    /**
+     * Some object to mark a request.
+     * For example, it'is using for cancellation in OkClient, ApacheClient, UrlConnectionClient
+     */
+    public volatile Object tag;
 
     public Request(String method, String url, List<Header> headers, ActionBody body) {
         if (method == null) {
@@ -47,15 +52,5 @@ public final class Request {
 
     public ActionBody getBody() {
         return body;
-    }
-
-    @Override
-    public String toString() {
-        return "Request{" +
-                "body=" + body +
-                ", headers=" + headers +
-                ", url='" + url + '\'' +
-                ", method='" + method + '\'' +
-                '}';
     }
 }

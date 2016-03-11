@@ -30,9 +30,11 @@ import io.techery.janet.http.internal.ProgressOutputStream;
 import io.techery.janet.http.model.Header;
 import io.techery.janet.http.model.Request;
 import io.techery.janet.http.model.Response;
+import io.techery.janet.http.utils.RequestUtils;
 
 
 public class ApacheClient implements io.techery.janet.http.HttpClient {
+
     private static HttpClient createDefaultClient() {
         HttpParams params = new BasicHttpParams();
         HttpConnectionParams.setConnectionTimeout(params, CONNECT_TIMEOUT_MILLIS);
@@ -52,8 +54,19 @@ public class ApacheClient implements io.techery.janet.http.HttpClient {
 
     @Override public Response execute(Request request, RequestCallback requestCallback) throws IOException {
         HttpUriRequest apacheRequest = createRequest(request, requestCallback);
+        RequestUtils.throwIfCanceled(request);
+        request.tag = apacheRequest; //mark for cancellation
         HttpResponse apacheResponse = execute(client, apacheRequest);
+        RequestUtils.throwIfCanceled(request);
         return parseResponse(request.getUrl(), apacheResponse);
+    }
+
+    @Override public void cancel(Request request) {
+        if (request.tag != null && (request.tag instanceof HttpUriRequest)) {
+            HttpUriRequest apacheRequest = (HttpUriRequest) request.tag;
+            apacheRequest.abort();
+        }
+        request.tag = RequestUtils.TAG_CANCELED;
     }
 
     protected HttpResponse execute(HttpClient client, HttpUriRequest request) throws IOException {
@@ -114,11 +127,9 @@ public class ApacheClient implements io.techery.janet.http.HttpClient {
 
     private static class GenericEntityHttpRequest extends HttpEntityEnclosingRequestBase {
         private final String method;
-        private final RequestCallback requestCallback;
 
         GenericEntityHttpRequest(Request request, RequestCallback requestCallback) {
             super();
-            this.requestCallback = requestCallback;
             method = request.getMethod();
             setURI(URI.create(request.getUrl()));
 
