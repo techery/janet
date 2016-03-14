@@ -41,7 +41,7 @@ import io.techery.janet.http.model.Response;
  * </ul>
  * To process response, special annotations can be used:
  * <ul>
- * <li>{@linkplain Response @Response} for getting response body</li>
+ * <li>{@linkplain io.techery.janet.http.annotations.Response @Response} for getting response body</li>
  * <li>{@linkplain Status @Status} for getting response status. Field types Integer, Long, int or long can be used
  * to get status code or use boolean to know that request was sent successfully</li>
  * <li>{@linkplain ResponseHeader @ResponseHeader} for getting response headers</li>
@@ -204,8 +204,5 @@ final public class HttpActionService extends ActionService {
         private ActionRequestCallback(ActionHolder<A> holder) {this.holder = holder;}
 
     }
-
-    private static class CancelException extends Throwable {}
-
 
 }

@@ -3,6 +3,7 @@ package io.techery.janet;
 import java.util.List;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 import io.techery.janet.AsyncActionService.QueuePoller.PollCallback;
 import io.techery.janet.async.SyncPredicate;
@@ -51,6 +52,7 @@ final public class AsyncActionService extends ActionService {
     private AsyncActionsRosterBase actionsRoster;
     private final AsyncActionSynchronizer synchronizer;
     private AsyncActionWrapperFactory actionWrapperFactory;
+    private final List<Object> runningActions;
 
 
     public AsyncActionService(String url, AsyncClient client, Converter converter) {
@@ -69,6 +71,7 @@ final public class AsyncActionService extends ActionService {
         this.connectActionQueue = new ConcurrentLinkedQueue<ActionHolder<ConnectAsyncAction>>();
         this.disconnectActionQueue = new ConcurrentLinkedQueue<ActionHolder<DisconnectAsyncAction>>();
         this.synchronizer = new AsyncActionSynchronizer(waitingErrorCallback);
+        this.runningActions = new CopyOnWriteArrayList<Object>();
         loadActionWrapperFactory();
         loadAsyncActionRooster();
         client.setCallback(clientCallback);
@@ -86,14 +89,23 @@ final public class AsyncActionService extends ActionService {
         if (handleConnectionAction(holder)) {
             return;
         }
-        AsyncActionWrapper wrapper = actionWrapperFactory.make(holder);
-        if (wrapper == null) {
-            throw new JanetInternalException(ERROR_GENERATOR);
+        try {
+            runningActions.add(holder.action());
+            AsyncActionWrapper wrapper = actionWrapperFactory.make(holder);
+            if (wrapper == null) {
+                throw new JanetInternalException(ERROR_GENERATOR);
+            }
+            if (!client.isConnected()) {
+                connect(false);
+            }
+            sendAction(wrapper);
+            if (wrapper.getResponseEvent() == null) {
+                callback.onSuccess(holder);
+            }
+        } catch (CancelException ignored) {
+        } finally {
+            runningActions.remove(holder.action());
         }
-        if (!client.isConnected()) {
-            connect(false);
-        }
-        sendAction(wrapper);
     }
 
     @Override protected <A> void cancel(ActionHolder<A> holder) {
@@ -101,12 +113,13 @@ final public class AsyncActionService extends ActionService {
         if (wrapper == null) {
             throw new JanetInternalException(ERROR_GENERATOR);
         }
+        runningActions.remove(holder.action());
         if (wrapper.getResponseEvent() != null) {
             synchronizer.remove(wrapper);
         }
     }
 
-    private void sendAction(AsyncActionWrapper wrapper) throws AsyncServiceException {
+    private void sendAction(AsyncActionWrapper wrapper) throws AsyncServiceException, CancelException {
         String responseEvent = wrapper.getResponseEvent();
         if (responseEvent != null) {
             synchronizer.put(responseEvent, wrapper);
@@ -119,8 +132,17 @@ final public class AsyncActionService extends ActionService {
             } else {
                 client.send(wrapper.getEvent(), new String(content));
             }
+            throwIfCanceled(wrapper.action);
+        } catch (CancelException e) {
+            throw e;
         } catch (Throwable t) {
             throw new AsyncServiceException(t);
+        }
+    }
+
+    private void throwIfCanceled(Object action) throws CancelException {
+        if (!runningActions.contains(action)) {
+            throw new CancelException();
         }
     }
 
