@@ -16,9 +16,12 @@ final public class CommandActionService extends ActionService {
     }
 
     @SuppressWarnings("unchecked")
-    @Override protected <A> void sendInternal(ActionHolder<A> holder) throws JanetException {
+    @Override protected <A> void sendInternal(ActionHolder<A> holder) throws CommandServiceException {
         callback.onStart(holder);
         CommandActionBase action = checkAndCast(holder.action());
+        if (action.isCanceled()) {
+            return;
+        }
         try {
             action.run(new ActionProgressInvoker((ActionHolder<CommandActionBase>) holder, callback));
         } catch (Throwable t) {

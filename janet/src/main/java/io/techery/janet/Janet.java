@@ -133,8 +133,10 @@ public final class Janet {
     }
 
     private <A> void doCancel(A action) {
+        ActionHolder holder = ActionHolder.create(action);
+        pipeline.onNext(new ActionPair(holder, ActionState.fail(action, new CancelException())));
         ActionService service = findService(action.getClass());
-        service.cancel(ActionHolder.create(action));
+        service.cancel(holder);
     }
 
     private ActionService findService(Class actionClass) {

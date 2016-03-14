@@ -1,5 +1,6 @@
 package io.techery.janet;
 
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.invocation.InvocationOnMock;
@@ -15,11 +16,10 @@ import rx.observers.TestSubscriber;
 
 import static java.lang.annotation.ElementType.TYPE;
 import static java.lang.annotation.RetentionPolicy.RUNTIME;
+import static org.hamcrest.core.IsInstanceOf.instanceOf;
 import static org.mockito.Matchers.any;
-import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doThrow;
-import static org.mockito.Mockito.only;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -122,7 +122,12 @@ public class JanetTest {
                         }));
         actionPipe.createObservable(action).subscribe(subscriber);
         subscriber.unsubscribe();
-        assertSubscriberWithSingleValue(subscriber);
+        subscriber.assertNoErrors();
+        subscriber.assertUnsubscribed();
+        List<ActionState<TestAction>> values = subscriber.getOnNextEvents();
+        assertStatusCount(values, ActionState.Status.START, 1);
+        assertStatusCount(values, ActionState.Status.FAIL, 1);
+        Assert.assertThat(values.get(1).exception, instanceOf(CancelException.class));
         verify(service, times(1)).cancel(any(ActionHolder.class));
     }
 

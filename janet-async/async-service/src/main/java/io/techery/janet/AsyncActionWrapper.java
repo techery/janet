@@ -46,6 +46,8 @@ public abstract class AsyncActionWrapper<A> {
 
         AsyncActionWrapper<?> wrapper = (AsyncActionWrapper<?>) o;
 
+        if (action == wrapper.action) return true;
+
         return action != null ? action.equals(wrapper.action) : wrapper.action == null;
 
     }
