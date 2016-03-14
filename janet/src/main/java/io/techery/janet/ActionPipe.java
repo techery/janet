@@ -97,6 +97,7 @@ final public class ActionPipe<A> {
      */
     public void clearReplays() {
         createCachedPipeline();
+        createCachedSuccessPipeline();
     }
 
     /**

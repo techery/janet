@@ -16,9 +16,13 @@ import rx.observers.TestSubscriber;
 import static java.lang.annotation.ElementType.TYPE;
 import static java.lang.annotation.RetentionPolicy.RUNTIME;
 import static org.mockito.Matchers.any;
+import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.only;
 import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 public class JanetTest {
@@ -56,8 +60,7 @@ public class JanetTest {
     @Test
     public void sendWithObserveWithReplay() {
         TestSubscriber<ActionState<TestAction>> subscriber = new TestSubscriber<ActionState<TestAction>>();
-        actionPipe.observeWithReplay()
-                .subscribe(subscriber);
+        actionPipe.observeWithReplay().subscribe(subscriber);
         actionPipe.send(new TestAction());
         subscriber.unsubscribe();
         assertSubscriberWithStates(subscriber);
@@ -120,6 +123,7 @@ public class JanetTest {
         actionPipe.createObservable(action).subscribe(subscriber);
         subscriber.unsubscribe();
         assertSubscriberWithSingleValue(subscriber);
+        verify(service, times(1)).cancel(any(ActionHolder.class));
     }
 
     @Test
@@ -129,9 +133,17 @@ public class JanetTest {
         TestSubscriber<ActionState<TestAction>> subscriber = new TestSubscriber<ActionState<TestAction>>();
         actionPipe.observeWithReplay().subscribe(subscriber);
         subscriber.unsubscribe();
-        subscriber.assertNoErrors();
-        subscriber.assertNoValues();
-        subscriber.assertUnsubscribed();
+        assertSubscriberWithoutValues(subscriber);
+    }
+
+    @Test
+    public void clearReplaysSuccess() {
+        actionPipe.send(new TestAction());
+        actionPipe.clearReplays();
+        TestSubscriber<TestAction> subscriber = new TestSubscriber<TestAction>();
+        actionPipe.observeSuccessWithReplay().subscribe(subscriber);
+        subscriber.unsubscribe();
+        assertSubscriberWithoutValues(subscriber);
     }
 
     @Test
@@ -158,6 +170,12 @@ public class JanetTest {
     private static void assertSubscriberWithSingleValue(TestSubscriber<?> subscriber) {
         subscriber.assertNoErrors();
         subscriber.assertValueCount(1);
+        subscriber.assertUnsubscribed();
+    }
+
+    private static void assertSubscriberWithoutValues(TestSubscriber<?> subscriber) {
+        subscriber.assertNoErrors();
+        subscriber.assertNoValues();
         subscriber.assertUnsubscribed();
     }
 
