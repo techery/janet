@@ -38,14 +38,14 @@ public class JanetTest {
     }
 
     @Test
-    public void testCreateObservable() {
+    public void createObservable() {
         TestSubscriber<ActionState<TestAction>> subscriber = new TestSubscriber<ActionState<TestAction>>();
         actionPipe.createObservable(new TestAction()).subscribe(subscriber);
         assertSubscriberWithStates(subscriber);
     }
 
     @Test
-    public void testSendWithObserve() {
+    public void sendWithObserve() {
         TestSubscriber<ActionState<TestAction>> subscriber = new TestSubscriber<ActionState<TestAction>>();
         actionPipe.observe().subscribe(subscriber);
         actionPipe.send(new TestAction());
@@ -54,7 +54,7 @@ public class JanetTest {
     }
 
     @Test
-    public void testSendWithObserveWithReplay() {
+    public void sendWithObserveWithReplay() {
         TestSubscriber<ActionState<TestAction>> subscriber = new TestSubscriber<ActionState<TestAction>>();
         actionPipe.observeWithReplay()
                 .subscribe(subscriber);
@@ -69,7 +69,7 @@ public class JanetTest {
     }
 
     @Test
-    public void testCreateObservableSuccess() {
+    public void createObservableSuccess() {
         TestSubscriber<TestAction> subscriber = new TestSubscriber<TestAction>();
         TestAction action = new TestAction();
         actionPipe.createObservableSuccess(action).subscribe(subscriber);
@@ -79,7 +79,7 @@ public class JanetTest {
     }
 
     @Test
-    public void testSendWithObserveSuccess() {
+    public void sendWithObserveSuccess() {
         TestSubscriber<TestAction> subscriber = new TestSubscriber<TestAction>();
         TestAction action = new TestAction();
         actionPipe.observeSuccess().subscribe(subscriber);
@@ -90,11 +90,10 @@ public class JanetTest {
     }
 
     @Test
-    public void testSendWithObserveSuccessWithReplay() {
+    public void sendWithObserveSuccessWithReplay() {
         TestSubscriber<TestAction> subscriber = new TestSubscriber<TestAction>();
         TestAction action = new TestAction();
-        actionPipe.observeSuccessWithReplay()
-                .subscribe(subscriber);
+        actionPipe.observeSuccessWithReplay().subscribe(subscriber);
         actionPipe.send(action);
         subscriber.unsubscribe();
         assertSubscriberWithSingleValue(subscriber);
@@ -109,7 +108,7 @@ public class JanetTest {
     }
 
     @Test
-    public void testCancel() {
+    public void cancelAfterSend() {
         final TestAction action = new TestAction();
         TestSubscriber<ActionState<TestAction>> subscriber = new TestSubscriber<ActionState<TestAction>>(
                 new ActionStateSubscriber<TestAction>()
@@ -124,7 +123,7 @@ public class JanetTest {
     }
 
     @Test
-    public void testClearReplays() {
+    public void clearReplays() {
         actionPipe.send(new TestAction());
         actionPipe.clearReplays();
         TestSubscriber<ActionState<TestAction>> subscriber = new TestSubscriber<ActionState<TestAction>>();
@@ -136,7 +135,7 @@ public class JanetTest {
     }
 
     @Test
-    public void testStatusFail() throws JanetException {
+    public void statusFail() throws JanetException {
         TestSubscriber<ActionState<TestAction>> subscriber = new TestSubscriber<ActionState<TestAction>>();
         doThrow(JanetException.class).when(service).sendInternal(any(ActionHolder.class));
         actionPipe.createObservable(new TestAction()).subscribe(subscriber);
