@@ -118,7 +118,13 @@ public final class Janet {
                             @Override public void call() {
                                 doSend(action);
                             }
-                        }));
+                        }))
+                .takeUntil(new Func1<ActionState, Boolean>() {
+                    @Override public Boolean call(ActionState actionState) {
+                        return actionState.status == ActionState.Status.SUCCESS
+                                || actionState.status == ActionState.Status.FAIL;
+                    }
+                });
     }
 
     private <A> void doSend(A action) {

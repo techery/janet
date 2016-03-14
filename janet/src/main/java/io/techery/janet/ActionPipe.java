@@ -160,7 +160,7 @@ final public class ActionPipe<A> {
      *
      * @param action prepared action to send
      */
-    public Observable<A> createActionObservable(A action) {
+    public Observable<A> createObservableSuccess(A action) {
         return createObservable(action).compose(new ActionStateToActionTransformer<A>());
     }
 
