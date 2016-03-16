@@ -63,9 +63,15 @@ public class OkClient implements HttpClient {
         for (String headerName : okResponse.headers().names()) {
             responseHeaders.add(new Header(headerName, okResponse.header(headerName)));
         }
-        ActionBody responseBody = new BytesArrayBody(
-                okResponse.body().contentType().toString(), okResponse.body().bytes()
-        );
+        ActionBody responseBody = null;
+        if (okResponse.body() != null) {
+            String contentType = null;
+            MediaType mediaType = okResponse.body().contentType();
+            if (mediaType != null) {
+                contentType = mediaType.toString();
+            }
+            responseBody = new BytesArrayBody(contentType, okResponse.body().bytes());
+        }
         return new Response(
                 okResponse.request().url().toString(),
                 okResponse.code(), okResponse.message(), responseHeaders, responseBody
