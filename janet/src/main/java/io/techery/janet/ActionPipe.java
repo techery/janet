@@ -3,7 +3,6 @@ package io.techery.janet;
 import io.techery.janet.helper.ActionStateToActionTransformer;
 import rx.Observable;
 import rx.Scheduler;
-import rx.Subscriber;
 import rx.functions.Action1;
 import rx.functions.Func0;
 import rx.functions.Func1;
@@ -19,7 +18,7 @@ import rx.observables.ConnectableObservable;
  * ActionPipe<UsersAction> usersPipe = janet.createPipe(UsersAction.class);}
  * </pre>
  */
-final public class ActionPipe<A> {
+public final class ActionPipe<A> implements ReadActionPipe<A>, WriteActionPipe<A> {
     private final Func1<A, Observable<ActionState<A>>> syncObservableFactory;
     private final Observable<ActionState<A>> pipeline;
     private final Action1<A> cancelFunc;
@@ -54,24 +53,21 @@ final public class ActionPipe<A> {
     }
 
     /**
-     * Observe all states of specified action type
+     * {@inheritDoc}
      */
     public Observable<ActionState<A>> observe() {
         return pipeline;
     }
 
     /**
-     * Observe all states of specified action type with cache.
-     * Last action state will be emitted immediately after subscribe.
-     *
-     * @see Observable#replay(int)
+     * {@inheritDoc}
      */
     public Observable<ActionState<A>> observeWithReplay() {
         return cachedPipeline.asObservable();
     }
 
     /**
-     * Observe success action only, if you want to catch any exceptions, use {@link ActionPipe#observe()}
+     * {@inheritDoc}
      */
     public Observable<A> observeSuccess() {
         return observe()
@@ -79,11 +75,7 @@ final public class ActionPipe<A> {
     }
 
     /**
-     * Observe action result with cache.
-     * Emmit the latest result, if exist, immediately after subscribe.
-     *
-     * @see Observable#replay(int)
-     * @see ActionPipe#observeSuccess()
+     * {@inheritDoc}
      */
     public Observable<A> observeSuccessWithReplay() {
         return cachedSuccessPipeline.asObservable();
@@ -98,19 +90,14 @@ final public class ActionPipe<A> {
     }
 
     /**
-     * Send action to {@linkplain Janet}.
-     *
-     * @param action prepared action for sending
+     * {@inheritDoc}
      */
     public void send(A action) {
         send(action, null);
     }
 
     /**
-     * Send action to {@linkplain Janet}.
-     *
-     * @param action      prepared action for sending
-     * @param subscribeOn {@linkplain Scheduler} to do {@linkplain Observable#subscribeOn(Scheduler) subcribeOn} of created Observable.
+     * {@inheritDoc}
      */
     public void send(A action, Scheduler subscribeOn) {
         Observable observable = createObservable(action);
@@ -124,34 +111,33 @@ final public class ActionPipe<A> {
     }
 
     /**
-     * Cancel running action.
-     * Action cancellation defines in relative service {@linkplain ActionService#cancel(ActionHolder)}
-     *
-     * @param action prepared action for cancellation
+     * {@inheritDoc}
      */
     public void cancel(A action) {
         cancelFunc.call(action);
     }
 
     /**
-     * Create {@linkplain Observable observable} to send action and receive result
-     * in the form of action {@linkplain ActionState states} synchronously
-     *
-     * @param action prepared action to send
+     * {@inheritDoc}
      */
     public Observable<ActionState<A>> createObservable(final A action) {
         return syncObservableFactory.call(action);
     }
 
     /**
-     * Create {@linkplain Observable observable} to send action and receive action with result synchronously
-     * <p>
-     * To catch errors use {@linkplain Subscriber#onError(Throwable)}
-     *
-     * @param action prepared action to send
+     * {@inheritDoc}
      */
     public Observable<A> createObservableSuccess(A action) {
         return createObservable(action).compose(new ActionStateToActionTransformer<A>());
+    }
+
+    /**
+     * Returns a presentation of the ActionPipe with read only mod
+     *
+     * @return {@linkplain ReadOnlyActionPipe}
+     */
+    public ReadOnlyActionPipe<A> toReadOnly() {
+        return new ReadOnlyActionPipe<A>(this);
     }
 
     private static final class ActionSuccessOnlyTransformer<T> implements Observable.Transformer<ActionState<T>, T> {
