@@ -33,7 +33,7 @@ public final class ActionPipe<A> implements ReadActionPipe<A>, WriteActionPipe<A
         this.pipeline = pipelineFactory.call();
         this.cancelFunc = cancelFunc;
         this.defaultSubscribeOn = defaultSubscribeOn;
-        this.cachedPipelines = new CachedPipelines<A>(observe(), observeSuccess());
+        this.cachedPipelines = new CachedPipelines<A>(this);
     }
 
     /**

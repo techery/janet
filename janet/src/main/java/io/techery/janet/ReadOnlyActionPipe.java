@@ -22,7 +22,7 @@ public final class ReadOnlyActionPipe<A> implements ReadActionPipe<A> {
         this.actionPipe = actionPipe;
         this.filter = filter;
 
-        cachedPipelines = new CachedPipelines<A>(observe(), observeSuccess());
+        cachedPipelines = new CachedPipelines<A>(this);
     }
 
     /**

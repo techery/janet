@@ -11,9 +11,9 @@ class CachedPipelines<A> implements Replays<A> {
     private ConnectableObservable<ActionState<A>> cachedPipeline;
     private ConnectableObservable<A> cachedSuccessPipeline;
 
-    CachedPipelines(Observable<ActionState<A>> source, Observable<A> sourceSuccess) {
-        this.source = source;
-        this.sourceSuccess = sourceSuccess;
+    CachedPipelines(ReadActionPipe<A> actionPipe) {
+        this.source = actionPipe.observe();
+        this.sourceSuccess = actionPipe.observeSuccess();
         createCachedPipeline();
         createCachedSuccessPipeline();
     }
