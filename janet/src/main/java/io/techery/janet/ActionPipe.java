@@ -66,7 +66,7 @@ public final class ActionPipe<A> implements ReadActionPipe<A>, WriteActionPipe<A
     }
 
     /**
-     * Clear cached action
+     * {@inheritDoc}
      */
     public void clearReplays() {
         cachedPipelines.clearReplays();
@@ -121,6 +121,16 @@ public final class ActionPipe<A> implements ReadActionPipe<A>, WriteActionPipe<A
      */
     public ReadOnlyActionPipe<A> toReadOnly() {
         return new ReadOnlyActionPipe<A>(this);
+    }
+
+    /**
+     * Returns a presentation of the ReadOnlyActionPipe with specific predicate
+     *
+     * @return {@linkplain ReadOnlyActionPipe}
+     * @see #toReadOnly()
+     */
+    public ReadOnlyActionPipe<A> filter(Func1<? super A, Boolean> predicate) {
+        return new ReadOnlyActionPipe<A>(this, predicate);
     }
 
     private static final class ActionSuccessOnlyTransformer<T> implements Observable.Transformer<ActionState<T>, T> {

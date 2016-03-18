@@ -55,6 +55,9 @@ public final class ReadOnlyActionPipe<A> implements ReadActionPipe<A> {
         return cachedPipelines.observeSuccessWithReplay();
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override public void clearReplays() {
         cachedPipelines.clearReplays();
     }
