@@ -6,7 +6,6 @@ import rx.Scheduler;
 import rx.functions.Action1;
 import rx.functions.Func0;
 import rx.functions.Func1;
-import rx.observables.ConnectableObservable;
 
 /**
  * End tool for sending and receiving actions with specific type using RXJava.
@@ -24,8 +23,7 @@ public final class ActionPipe<A> implements ReadActionPipe<A>, WriteActionPipe<A
     private final Action1<A> cancelFunc;
     private final Scheduler defaultSubscribeOn;
 
-    private ConnectableObservable<ActionState<A>> cachedPipeline;
-    private ConnectableObservable<A> cachedSuccessPipeline;
+    private CachedPipelines<A> cachedPipelines;
 
     ActionPipe(Func1<A, Observable<ActionState<A>>> syncObservableFactory,
             Func0<Observable<ActionState<A>>> pipelineFactory,
@@ -35,21 +33,7 @@ public final class ActionPipe<A> implements ReadActionPipe<A>, WriteActionPipe<A
         this.pipeline = pipelineFactory.call();
         this.cancelFunc = cancelFunc;
         this.defaultSubscribeOn = defaultSubscribeOn;
-
-        createCachedPipeline();
-        createCachedSuccessPipeline();
-    }
-
-    private void createCachedPipeline() {
-        this.cachedPipeline = pipeline.replay(1);
-        this.cachedPipeline.connect();
-    }
-
-    private void createCachedSuccessPipeline() {
-        this.cachedSuccessPipeline = pipeline
-                .compose(new ActionSuccessOnlyTransformer<A>())
-                .replay(1);
-        this.cachedSuccessPipeline.connect();
+        this.cachedPipelines = new CachedPipelines<A>(observe(), observeSuccess());
     }
 
     /**
@@ -63,7 +47,7 @@ public final class ActionPipe<A> implements ReadActionPipe<A>, WriteActionPipe<A
      * {@inheritDoc}
      */
     public Observable<ActionState<A>> observeWithReplay() {
-        return cachedPipeline.asObservable();
+        return cachedPipelines.observeWithReplay();
     }
 
     /**
@@ -78,15 +62,14 @@ public final class ActionPipe<A> implements ReadActionPipe<A>, WriteActionPipe<A
      * {@inheritDoc}
      */
     public Observable<A> observeSuccessWithReplay() {
-        return cachedSuccessPipeline.asObservable();
+        return cachedPipelines.observeSuccessWithReplay();
     }
 
     /**
      * Clear cached action
      */
     public void clearReplays() {
-        createCachedPipeline();
-        createCachedSuccessPipeline();
+        cachedPipelines.clearReplays();
     }
 
     /**
