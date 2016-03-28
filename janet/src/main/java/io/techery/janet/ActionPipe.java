@@ -1,5 +1,6 @@
 package io.techery.janet;
 
+import io.techery.janet.ActionState.Status;
 import io.techery.janet.helper.ActionStateToActionTransformer;
 import rx.Observable;
 import rx.Scheduler;
@@ -84,6 +85,26 @@ public final class ActionPipe<A> implements ReadActionPipe<A>, WriteActionPipe<A
     }
 
     /** {@inheritDoc} */
+    @Override public void cancelLatest() {
+        cachedPipelines.observeWithReplay().take(1)
+                .filter(new Func1<ActionState<A>, Boolean>() {
+                    @Override public Boolean call(ActionState<A> as) {
+                        return as.status == Status.START || as.status == Status.PROGRESS;
+                    }
+                })
+                .map(new Func1<ActionState<A>, A>() {
+                    @Override public A call(ActionState<A> as) {
+                        return as.action;
+                    }
+                })
+                .subscribe(new Action1<A>() {
+                    @Override public void call(A a) {
+                        cancel(a);
+                    }
+                });
+    }
+
+    /** {@inheritDoc} */
     @Override public Observable<ActionState<A>> createObservable(A action) {
         return syncObservableFactory.call(action);
     }
@@ -112,7 +133,7 @@ public final class ActionPipe<A> implements ReadActionPipe<A>, WriteActionPipe<A
             return actionStateObservable
                     .filter(new Func1<ActionState<T>, Boolean>() {
                         @Override public Boolean call(ActionState<T> actionState) {
-                            return actionState.status == ActionState.Status.SUCCESS;
+                            return actionState.status == Status.SUCCESS;
                         }
                     })
                     .map(new Func1<ActionState<T>, T>() {

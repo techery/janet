@@ -84,21 +84,32 @@ public class TestPipeOperations extends BaseTest {
     }
 
     @Test
-    public void cancelAfterSend() {
+    public void cancelActionAfterStart() {
         final TestAction action = new TestAction();
         TestSubscriber<ActionState<TestAction>> subscriber = new TestSubscriber<ActionState<TestAction>>(
-                new ActionStateSubscriber<TestAction>()
-                        .onStart(new Action0() {
-                            @Override public void call() {
-                                actionPipe.cancel(action);
-                            }
-                        }));
+                new ActionStateSubscriber<TestAction>().onStart(new Action0() {
+                    @Override public void call() {
+                        actionPipe.cancel(action);
+                    }
+                })
+        );
+        actionPipe.createObservable(action).subscribe(subscriber);
+        AssertUtil.assertCanceled(subscriber);
+        verify(service, times(1)).cancel(any(ActionHolder.class));
+    }
+
+    @Test
+    public void cancelLatestAfterStart() {
+        final TestAction action = new TestAction();
+        TestSubscriber<ActionState<TestAction>> subscriber = new TestSubscriber<ActionState<TestAction>>(
+                new ActionStateSubscriber<TestAction>().onStart(new Action0() {
+                    @Override public void call() {
+                        actionPipe.cancelLatest();
+                    }
+                })
+        );
         actionPipe.createObservable(action).subscribe(subscriber);
         subscriber.unsubscribe();
-        subscriber.assertNoErrors();
-        subscriber.assertUnsubscribed();
-        AssertUtil.assertStatusCount(subscriber, ActionState.Status.START, 1);
-        AssertUtil.assertStatusCount(subscriber, ActionState.Status.FAIL, 1);
         AssertUtil.assertCanceled(subscriber);
         verify(service, times(1)).cancel(any(ActionHolder.class));
     }

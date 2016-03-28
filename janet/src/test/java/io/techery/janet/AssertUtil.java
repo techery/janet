@@ -26,6 +26,10 @@ public final class AssertUtil {
     }
 
     public static <T> void assertCanceled(TestSubscriber<ActionState<T>> subscriber) {
+        subscriber.assertNoErrors();
+        subscriber.assertUnsubscribed();
+        AssertUtil.assertStatusCount(subscriber, ActionState.Status.START, 1);
+        AssertUtil.assertStatusCount(subscriber, ActionState.Status.FAIL, 1);
         Assert.assertThat(subscriber.getOnNextEvents().get(1).exception, instanceOf(CancelException.class));
     }
 
