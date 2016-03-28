@@ -36,53 +36,38 @@ public final class ActionPipe<A> implements ReadActionPipe<A>, WriteActionPipe<A
         this.cachedPipelines = new CachedPipelines<A>(this);
     }
 
-    /**
-     * {@inheritDoc}
-     */
-    public Observable<ActionState<A>> observe() {
+    /** {@inheritDoc} */
+    @Override public Observable<ActionState<A>> observe() {
         return pipeline;
     }
 
-    /**
-     * {@inheritDoc}
-     */
-    public Observable<ActionState<A>> observeWithReplay() {
+    /** {@inheritDoc} */
+    @Override public Observable<ActionState<A>> observeWithReplay() {
         return cachedPipelines.observeWithReplay();
     }
 
-    /**
-     * {@inheritDoc}
-     */
-    public Observable<A> observeSuccess() {
-        return observe()
-                .compose(new ActionSuccessOnlyTransformer<A>());
+    /** {@inheritDoc} */
+    @Override public Observable<A> observeSuccess() {
+        return observe().compose(new ActionSuccessOnlyTransformer<A>());
     }
 
-    /**
-     * {@inheritDoc}
-     */
-    public Observable<A> observeSuccessWithReplay() {
+    /** {@inheritDoc} */
+    @Override public Observable<A> observeSuccessWithReplay() {
         return cachedPipelines.observeSuccessWithReplay();
     }
 
-    /**
-     * {@inheritDoc}
-     */
-    public void clearReplays() {
+    /** {@inheritDoc} */
+    @Override public void clearReplays() {
         cachedPipelines.clearReplays();
     }
 
-    /**
-     * {@inheritDoc}
-     */
-    public void send(A action) {
+    /** {@inheritDoc} */
+    @Override public void send(A action) {
         send(action, null);
     }
 
-    /**
-     * {@inheritDoc}
-     */
-    public void send(A action, Scheduler subscribeOn) {
+    /** {@inheritDoc} */
+    @Override public void send(A action, Scheduler subscribeOn) {
         Observable observable = createObservable(action);
         if (subscribeOn == null) {
             subscribeOn = defaultSubscribeOn;
@@ -93,24 +78,18 @@ public final class ActionPipe<A> implements ReadActionPipe<A>, WriteActionPipe<A
         observable.subscribe();
     }
 
-    /**
-     * {@inheritDoc}
-     */
-    public void cancel(A action) {
+    /** {@inheritDoc} */
+    @Override public void cancel(A action) {
         cancelFunc.call(action);
     }
 
-    /**
-     * {@inheritDoc}
-     */
-    public Observable<ActionState<A>> createObservable(final A action) {
+    /** {@inheritDoc} */
+    @Override public Observable<ActionState<A>> createObservable(A action) {
         return syncObservableFactory.call(action);
     }
 
-    /**
-     * {@inheritDoc}
-     */
-    public Observable<A> createObservableSuccess(A action) {
+    /** {@inheritDoc} */
+    @Override public Observable<A> createObservableSuccess(A action) {
         return createObservable(action).compose(new ActionStateToActionTransformer<A>());
     }
 
@@ -119,17 +98,12 @@ public final class ActionPipe<A> implements ReadActionPipe<A>, WriteActionPipe<A
      *
      * @return {@linkplain ReadOnlyActionPipe}
      */
-    public ReadOnlyActionPipe<A> toReadOnly() {
+    public ReadOnlyActionPipe<A> asReadOnly() {
         return new ReadOnlyActionPipe<A>(this);
     }
 
-    /**
-     * Returns a presentation of the ReadOnlyActionPipe with specific predicate
-     *
-     * @return {@linkplain ReadOnlyActionPipe}
-     * @see #toReadOnly()
-     */
-    public ReadOnlyActionPipe<A> filter(Func1<? super A, Boolean> predicate) {
+    /** {@inheritDoc} */
+    @Override public ReadActionPipe<A> filter(Func1<? super A, Boolean> predicate) {
         return new ReadOnlyActionPipe<A>(this, predicate);
     }
 

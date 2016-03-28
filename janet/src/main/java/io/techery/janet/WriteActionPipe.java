@@ -35,7 +35,7 @@ public interface WriteActionPipe<A> {
      *
      * @param action prepared action to send
      */
-    Observable<ActionState<A>> createObservable(final A action);
+    Observable<ActionState<A>> createObservable(A action);
 
     /**
      * Create {@linkplain Observable observable} to send action and receive action with result synchronously

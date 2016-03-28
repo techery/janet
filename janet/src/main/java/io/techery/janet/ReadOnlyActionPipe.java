@@ -21,53 +21,36 @@ public final class ReadOnlyActionPipe<A> implements ReadActionPipe<A> {
     public ReadOnlyActionPipe(ReadActionPipe<A> actionPipe, Func1<? super A, Boolean> filter) {
         this.actionPipe = actionPipe;
         this.filter = filter;
-
         cachedPipelines = new CachedPipelines<A>(this);
     }
 
-    /**
-     * {@inheritDoc}
-     */
+    /** {@inheritDoc} */
     @Override public Observable<ActionState<A>> observe() {
-        return actionPipe.observe()
-                .filter(new FilterStateDecorator<A>(filter));
+        return actionPipe.observe().filter(new FilterStateDecorator<A>(filter));
     }
 
-    /**
-     * {@inheritDoc}
-     */
+    /** {@inheritDoc} */
     @Override public Observable<ActionState<A>> observeWithReplay() {
         return cachedPipelines.observeWithReplay();
     }
 
-    /**
-     * {@inheritDoc}
-     */
+    /** {@inheritDoc} */
     @Override public Observable<A> observeSuccess() {
-        return actionPipe.observeSuccess()
-                .filter(filter);
+        return actionPipe.observeSuccess().filter(filter);
     }
 
-    /**
-     * {@inheritDoc}
-     */
+    /** {@inheritDoc} */
     @Override public Observable<A> observeSuccessWithReplay() {
         return cachedPipelines.observeSuccessWithReplay();
     }
 
-    /**
-     * {@inheritDoc}
-     */
+    /** {@inheritDoc} */
     @Override public void clearReplays() {
         cachedPipelines.clearReplays();
     }
 
-    /**
-     * Returns a presentation of the ReadOnlyActionPipe with specific predicate
-     *
-     * @return {@linkplain ReadOnlyActionPipe}
-     */
-    public ReadOnlyActionPipe<A> filter(Func1<? super A, Boolean> predicate) {
+    /** {@inheritDoc} */
+    @Override public ReadOnlyActionPipe<A> filter(Func1<? super A, Boolean> predicate) {
         return new ReadOnlyActionPipe<A>(this, predicate);
     }
 
