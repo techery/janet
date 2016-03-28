@@ -7,6 +7,7 @@ import rx.Scheduler;
 import rx.functions.Action1;
 import rx.functions.Func0;
 import rx.functions.Func1;
+import rx.subjects.ReplaySubject;
 
 /**
  * End tool for sending and receiving actions with specific type using RXJava.
@@ -19,22 +20,25 @@ import rx.functions.Func1;
  * </pre>
  */
 public final class ActionPipe<A> implements ReadActionPipe<A>, WriteActionPipe<A> {
+
     private final Func1<A, Observable<ActionState<A>>> syncObservableFactory;
     private final Observable<ActionState<A>> pipeline;
     private final Action1<A> cancelFunc;
     private final Scheduler defaultSubscribeOn;
 
-    private CachedPipelines<A> cachedPipelines;
+    private final CachedPipelines<A> cachedPipelines;
+    private final ActiveStream<A> activeStream;
 
     ActionPipe(Func1<A, Observable<ActionState<A>>> syncObservableFactory,
             Func0<Observable<ActionState<A>>> pipelineFactory,
-            Action1<A> cancelFunc,
+            final Action1<A> cancelFunc,
             Scheduler defaultSubscribeOn) {
         this.syncObservableFactory = syncObservableFactory;
         this.pipeline = pipelineFactory.call();
         this.cancelFunc = cancelFunc;
         this.defaultSubscribeOn = defaultSubscribeOn;
         this.cachedPipelines = new CachedPipelines<A>(this);
+        this.activeStream = new ActiveStream<A>(this);
     }
 
     /** {@inheritDoc} */
@@ -86,26 +90,16 @@ public final class ActionPipe<A> implements ReadActionPipe<A>, WriteActionPipe<A
 
     /** {@inheritDoc} */
     @Override public void cancelLatest() {
-        cachedPipelines.observeWithReplay().take(1)
-                .filter(new Func1<ActionState<A>, Boolean>() {
-                    @Override public Boolean call(ActionState<A> as) {
-                        return as.status == Status.START || as.status == Status.PROGRESS;
-                    }
-                })
-                .map(new Func1<ActionState<A>, A>() {
-                    @Override public A call(ActionState<A> as) {
-                        return as.action;
-                    }
-                })
-                .subscribe(new Action1<A>() {
-                    @Override public void call(A a) {
-                        cancel(a);
-                    }
-                });
+        activeStream.action().subscribe(new Action1<A>() {
+            @Override public void call(A a) {
+                cancel(a);
+            }
+        });
     }
 
     /** {@inheritDoc} */
     @Override public Observable<ActionState<A>> createObservable(A action) {
+        activeStream.put(action);
         return syncObservableFactory.call(action);
     }
 
@@ -128,6 +122,10 @@ public final class ActionPipe<A> implements ReadActionPipe<A>, WriteActionPipe<A
         return new ReadOnlyActionPipe<A>(this, predicate);
     }
 
+    ///////////////////////////////////////////////////////////////////////////
+    // Helpers & Delegates
+    ///////////////////////////////////////////////////////////////////////////
+
     private static final class ActionSuccessOnlyTransformer<T> implements Observable.Transformer<ActionState<T>, T> {
         @Override public Observable<T> call(Observable<ActionState<T>> actionStateObservable) {
             return actionStateObservable
@@ -141,6 +139,40 @@ public final class ActionPipe<A> implements ReadActionPipe<A>, WriteActionPipe<A
                             return actionState.action;
                         }
                     });
+        }
+    }
+
+    private static final class ActiveStream<A> {
+        private final ReplaySubject<A> cache;
+
+        public ActiveStream(ReadActionPipe<A> pipe) {
+            connectPipe(pipe);
+            cache = ReplaySubject.createWithSize(1);
+        }
+
+        private void connectPipe(ReadActionPipe<A> pipe) {
+            pipe.observe().doOnNext(new Action1<ActionState<A>>() {
+                @Override public void call(ActionState<A> as) {
+                    if (as.status == Status.START || as.status == Status.PROGRESS) {
+                        put(as.action); // update cache with latest active action
+                    } else if (as.action == cache.getValue()) {
+                        put(null); // cleanup cache if latest action is finished
+                    }
+                }
+            }).subscribe();
+        }
+
+        public void put(A action) {
+            cache.onNext(action);
+        }
+
+        /** Connect to non-finished actions cache (get latest) */
+        public Observable<A> action() {
+            return cache.take(1).filter(new Func1<A, Boolean>() {
+                @Override public Boolean call(A a) {
+                    return a != null;
+                }
+            });
         }
     }
 }
