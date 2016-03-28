@@ -46,16 +46,14 @@ public class App extends Application {
 
     public ActionPipe<UsersAction> getUsersPipe() {
         if (usersPipe == null) {
-            usersPipe = getGitHubAPI().createPipe(UsersAction.class)
-                    .pimp(Schedulers.io());
+            usersPipe = getGitHubAPI().createPipe(UsersAction.class, Schedulers.io());
         }
         return usersPipe;
     }
 
     public ActionPipe<UserReposAction> getUserReposPipe() {
         if (userReposPipe == null) {
-            userReposPipe = getGitHubAPI().createPipe(UserReposAction.class)
-                    .pimp(Schedulers.io());
+            userReposPipe = getGitHubAPI().createPipe(UserReposAction.class, Schedulers.io());
         }
         return userReposPipe;
     }
