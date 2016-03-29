@@ -14,7 +14,7 @@ public abstract class ActionServiceWrapper extends ActionService {
     /**
      * Called before action sending
      * @param holder action holder for intercepting
-     * @return If returns true action won't be processed by decorated service.
+     * @return if {@code true} action won't be processed by decorated service neither any status callback is called
      */
     protected abstract <A> boolean onInterceptSend(ActionHolder<A> holder);
 
@@ -52,10 +52,8 @@ public abstract class ActionServiceWrapper extends ActionService {
      * {@inheritDoc}
      */
     @Override protected <A> void sendInternal(ActionHolder<A> holder) throws JanetException {
-        boolean finished = onInterceptSend(holder);
-        if (finished) {
-            callback.onSuccess(holder);
-        } else {
+        boolean intercepted = onInterceptSend(holder);
+        if (!intercepted) {
             actionService.sendInternal(holder);
         }
     }
