@@ -7,7 +7,6 @@ import rx.Scheduler;
 import rx.functions.Action1;
 import rx.functions.Func0;
 import rx.functions.Func1;
-import rx.subjects.ReplaySubject;
 
 /**
  * End tool for sending and receiving actions with specific type using RXJava.
@@ -90,11 +89,17 @@ public final class ActionPipe<A> implements ReadActionPipe<A>, WriteActionPipe<A
 
     /** {@inheritDoc} */
     @Override public void cancelLatest() {
-        activeStream.action().subscribe(new Action1<A>() {
-            @Override public void call(A a) {
-                cancel(a);
-            }
-        });
+        Observable.just(activeStream.action())
+                .filter(new Func1<A, Boolean>() {
+                    @Override public Boolean call(A a) {
+                        return a != null;
+                    }
+                })
+                .subscribe(new Action1<A>() {
+                    @Override public void call(A a) {
+                        cancel(a);
+                    }
+                });
     }
 
     /** {@inheritDoc} */
@@ -143,11 +148,10 @@ public final class ActionPipe<A> implements ReadActionPipe<A>, WriteActionPipe<A
     }
 
     private static final class ActiveStream<A> {
-        private final ReplaySubject<A> cache;
+        private volatile A action;
 
         public ActiveStream(ReadActionPipe<A> pipe) {
             connectPipe(pipe);
-            cache = ReplaySubject.createWithSize(1);
         }
 
         private void connectPipe(ReadActionPipe<A> pipe) {
@@ -155,7 +159,7 @@ public final class ActionPipe<A> implements ReadActionPipe<A>, WriteActionPipe<A
                 @Override public void call(ActionState<A> as) {
                     if (as.status == Status.START || as.status == Status.PROGRESS) {
                         put(as.action); // update cache with latest active action
-                    } else if (as.action == cache.getValue()) {
+                    } else if (as.action == action) {
                         put(null); // cleanup cache if latest action is finished
                     }
                 }
@@ -163,16 +167,12 @@ public final class ActionPipe<A> implements ReadActionPipe<A>, WriteActionPipe<A
         }
 
         public void put(A action) {
-            cache.onNext(action);
+            this.action = action;
         }
 
         /** Connect to non-finished actions cache (get latest) */
-        public Observable<A> action() {
-            return cache.take(1).filter(new Func1<A, Boolean>() {
-                @Override public Boolean call(A a) {
-                    return a != null;
-                }
-            });
+        public A action() {
+            return action;
         }
     }
 }
