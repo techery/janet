@@ -30,6 +30,11 @@ public interface WriteActionPipe<A> {
     void cancel(A action);
 
     /**
+     * Cancel latest sent or received non-finished action
+     */
+    void cancelLatest();
+
+    /**
      * Create {@linkplain Observable observable} to send action and receive result
      * in the form of action {@linkplain ActionState states} synchronously
      *
