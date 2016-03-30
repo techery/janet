@@ -15,12 +15,12 @@ public final class ActionState<A> {
         START,
         /**
          * Sending progress.
-         * Get result from {@link ActionState#action}
+         * Get the percentage of progress from {@link ActionState#progress}
          **/
         PROGRESS,
         /**
-         * Action is finished without errors.
-         * Get the percentage of progress from {@link ActionState#progress}
+         * Action is finished without errors
+         * Get result from {@link ActionState#action}
          **/
         SUCCESS,
         /**
