@@ -14,7 +14,7 @@ public class ActionStateSubscriber<A> extends Subscriber<ActionState<A>> {
 
     private Action1<A> onSuccess;
     private Action2<A, Throwable> onFail;
-    private Action0 onStart;
+    private Action1<A> onStart;
     private Action2<A, Integer> onProgress;
     private Action1<ActionState<A>> beforeEach;
     private Action1<ActionState<A>> afterEach;
@@ -29,7 +29,7 @@ public class ActionStateSubscriber<A> extends Subscriber<ActionState<A>> {
         return this;
     }
 
-    public ActionStateSubscriber<A> onStart(Action0 onStart) {
+    public ActionStateSubscriber<A> onStart(Action1<A> onStart) {
         this.onStart = onStart;
         return this;
     }
@@ -53,7 +53,7 @@ public class ActionStateSubscriber<A> extends Subscriber<ActionState<A>> {
         if (beforeEach != null) beforeEach.call(state);
         switch (state.status) {
             case START:
-                if (onStart != null) onStart.call();
+                if (onStart != null) onStart.call(state.action);
                 break;
             case PROGRESS:
                 if (onProgress != null) onProgress.call(state.action, state.progress);
