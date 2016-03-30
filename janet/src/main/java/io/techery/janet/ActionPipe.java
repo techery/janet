@@ -73,9 +73,6 @@ public final class ActionPipe<A> implements ReadActionPipe<A>, WriteActionPipe<A
     /** {@inheritDoc} */
     @Override public void send(A action, Scheduler subscribeOn) {
         Observable observable = createObservable(action);
-        if (subscribeOn == null) {
-            subscribeOn = defaultSubscribeOn;
-        }
         if (subscribeOn != null) {
             observable = observable.subscribeOn(subscribeOn);
         }
@@ -105,7 +102,11 @@ public final class ActionPipe<A> implements ReadActionPipe<A>, WriteActionPipe<A
     /** {@inheritDoc} */
     @Override public Observable<ActionState<A>> createObservable(A action) {
         activeStream.put(action);
-        return syncObservableFactory.call(action);
+        Observable observable = syncObservableFactory.call(action);
+        if (defaultSubscribeOn != null) {
+            observable = observable.subscribeOn(defaultSubscribeOn);
+        }
+        return observable;
     }
 
     /** {@inheritDoc} */
