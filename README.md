@@ -181,7 +181,7 @@ compile 'com.github.techery.janet:okhttp3:0.0.18'
 compile 'com.github.techery.janet:android-apache-client:0.0.18'
 compile 'com.github.techery.janet:url-connection:0.0.18'
 
-compile 'com.github.techery.janet:async-service:0.0.18
+compile 'com.github.techery.janet:async-service:0.0.18'
 apt 'com.github.techery.janet:async-service-compiler:0.0.18'
 compile 'com.github.techery.janet:nkzawa-socket.io:0.0.18'
 compile 'com.github.techery.janet:socket.io:0.0.18'
