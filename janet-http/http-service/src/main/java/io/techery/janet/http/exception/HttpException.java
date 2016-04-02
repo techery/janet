@@ -1,24 +1,17 @@
 package io.techery.janet.http.exception;
 
 
+import io.techery.janet.http.model.Response;
+
 public class HttpException extends Exception {
-    private final int status;
-    private final String reason;
+    private final Response response;
 
-    public HttpException(int status, String reason) {
-        super("HTTP " + status + " " + reason);
-        this.status = status;
-        this.reason = reason;
+    public HttpException(Response response) {
+        super("HTTP " + response.getStatus() + " " + response.getReason());
+        this.response = response;
     }
 
-    /** HTTP status status. */
-    public int code() {
-        return status;
+    public Response getResponse() {
+        return response;
     }
-
-    /** HTTP status message. */
-    public String status() {
-        return reason;
-    }
-
 }
