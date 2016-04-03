@@ -93,7 +93,7 @@ public class HttpHelpersGenerator extends Generator<HttpActionClass> {
         for (Element element : actionClass.getAnnotatedElements(Field.class)) {
             Field annotation = element.getAnnotation(Field.class);
             builder.beginControlFlow("if (action.$L != null)", element);
-            builder.addStatement("requestBuilder.addField($S, action.$L.toString())", annotation.value(), element);
+            builder.addStatement("requestBuilder.addField($S, String.valueOf(action.$L))", annotation.value(), element);
             builder.endControlFlow();
         }
     }
@@ -102,10 +102,12 @@ public class HttpHelpersGenerator extends Generator<HttpActionClass> {
         for (Element element : actionClass.getAnnotatedElements(Query.class)) {
             Query annotation = element.getAnnotation(Query.class);
             if (TypeUtils.isPrimitive(element)) {
-                builder.addStatement("requestBuilder.addQueryParam($S, $T.valueOf(action.$L), $L, $L)", annotation.value(), String.class, element, annotation.encodeName(), annotation.encodeValue());
+                builder.addStatement("requestBuilder.addQueryParam($S, String.valueOf(action.$L), $L, $L)", annotation.value(), element, annotation
+                        .encodeName(), annotation.encodeValue());
             } else {
                 builder.beginControlFlow("if (action.$L != null)", element);
-                builder.addStatement("requestBuilder.addQueryParam($S, action.$L.toString(), $L, $L)", annotation.value(), element, annotation.encodeName(), annotation.encodeValue());
+                builder.addStatement("requestBuilder.addQueryParam($S, String.valueOf(action.$L), $L, $L)", annotation.value(), element, annotation
+                        .encodeName(), annotation.encodeValue());
                 builder.endControlFlow();
             }
         }
@@ -122,7 +124,7 @@ public class HttpHelpersGenerator extends Generator<HttpActionClass> {
         for (Element element : actionClass.getAnnotatedElements(RequestHeader.class)) {
             RequestHeader annotation = element.getAnnotation(RequestHeader.class);
             builder.beginControlFlow("if (action.$L != null)", element);
-            builder.addStatement("requestBuilder.addHeader($S, action.$L.toString())", annotation.value(), element);
+            builder.addStatement("requestBuilder.addHeader($S, String.valueOf(action.$L))", annotation.value(), element);
             builder.endControlFlow();
         }
     }
@@ -137,7 +139,7 @@ public class HttpHelpersGenerator extends Generator<HttpActionClass> {
             }
             boolean encode = param.encode();
             builder.beginControlFlow("if (action.$L != null)", name);
-            builder.addStatement("requestBuilder.addPathParam($S, action.$L.toString(), $L)", path, name, encode);
+            builder.addStatement("requestBuilder.addPathParam($S, String.valueOf(action.$L), $L)", path, name, encode);
             builder.endControlFlow();
         }
     }
@@ -205,7 +207,7 @@ public class HttpHelpersGenerator extends Generator<HttpActionClass> {
         if (equalTypes(element, ActionBody.class)) {
             builder.addStatement(fieldAddress + " = response.getBody()", element);
         } else if (equalTypes(element, String.class)) {
-            builder.addStatement(fieldAddress + " = response.getBody().toString()", element);
+            builder.addStatement(fieldAddress + " = String.valueOf(response.getBody())", element);
         } else {
             builder.addStatement(fieldAddress + " = ($T) converter.fromBody(response.getBody(), new $T<$T>(){}.getType())", element, element.asType(), TypeToken.class, element.asType());
         }
