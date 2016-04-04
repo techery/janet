@@ -207,7 +207,7 @@ public class HttpHelpersGenerator extends Generator<HttpActionClass> {
         if (equalTypes(element, ActionBody.class)) {
             builder.addStatement(fieldAddress + " = response.getBody()", element);
         } else if (equalTypes(element, String.class)) {
-            builder.addStatement(fieldAddress + " = String.valueOf(response.getBody())", element);
+            builder.addStatement(fieldAddress + " = response.getBody().toString()", element);
         } else {
             builder.addStatement(fieldAddress + " = ($T) converter.fromBody(response.getBody(), new $T<$T>(){}.getType())", element, element.asType(), TypeToken.class, element.asType());
         }
