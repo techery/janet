@@ -115,7 +115,7 @@ final public class HttpActionService extends ActionService {
                 throwIfCanceled(action, request);
             }
             if (!response.isSuccessful()) {
-                throw new HttpException(response.getStatus(), response.getReason());
+                throw new HttpException(response);
             }
             action = helper.onResponse(action, response, converter);
             throwIfCanceled(action, request);
