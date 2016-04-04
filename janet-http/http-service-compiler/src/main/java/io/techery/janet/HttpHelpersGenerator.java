@@ -20,7 +20,9 @@ import javax.lang.model.element.Modifier;
 
 import io.techery.janet.body.ActionBody;
 import io.techery.janet.body.BytesArrayBody;
+import io.techery.janet.body.FileBody;
 import io.techery.janet.compiler.utils.Generator;
+import io.techery.janet.compiler.utils.TypeUtils;
 import io.techery.janet.converter.Converter;
 import io.techery.janet.converter.ConverterException;
 import io.techery.janet.http.annotations.Body;
@@ -32,11 +34,8 @@ import io.techery.janet.http.annotations.Query;
 import io.techery.janet.http.annotations.RequestHeader;
 import io.techery.janet.http.annotations.ResponseHeader;
 import io.techery.janet.http.annotations.Status;
-import io.techery.janet.body.FileBody;
 import io.techery.janet.http.model.Header;
 import io.techery.janet.http.model.Response;
-
-import io.techery.janet.compiler.utils.TypeUtils;
 import io.techery.janet.internal.TypeToken;
 
 import static io.techery.janet.compiler.utils.TypeUtils.equalTypes;
@@ -156,13 +155,13 @@ public class HttpHelpersGenerator extends Generator<HttpActionClass> {
             String httpBodyName = "httpBody";
             builder.beginControlFlow("if (action.$L != null)", name);
             if (TypeUtils.equalTypes(element, File.class)) {
-                builder.addStatement("$T $L = new $T($S, action.$L)", ActionBody.class,httpBodyName, FileBody.class, encode, name);
+                builder.addStatement("$T $L = new $T($S, action.$L)", ActionBody.class, httpBodyName, FileBody.class, encode, name);
             } else if (TypeUtils.equalTypes(element, byte[].class)) {
-                builder.addStatement("$T $L = new $T($S, action.$L)", ActionBody.class,httpBodyName, BytesArrayBody.class, encode, name);
+                builder.addStatement("$T $L = new $T($S, action.$L)", ActionBody.class, httpBodyName, BytesArrayBody.class, encode, name);
             } else if (TypeUtils.equalTypes(element, String.class)) {
-                builder.addStatement("$T $L = new $T($S, action.$L.getBytes())",ActionBody.class, httpBodyName, BytesArrayBody.class, encode, name);
+                builder.addStatement("$T $L = new $T($S, action.$L.getBytes())", ActionBody.class, httpBodyName, BytesArrayBody.class, encode, name);
             } else {
-                builder.addStatement("$T $L = action.$L", ActionBody.class,httpBodyName, name);
+                builder.addStatement("$T $L = action.$L", ActionBody.class, httpBodyName, name);
             }
             builder.addStatement("requestBuilder.addPart($S, $L, $S)", partName, httpBodyName, encode);
             builder.endControlFlow();
@@ -189,15 +188,36 @@ public class HttpHelpersGenerator extends Generator<HttpActionClass> {
 
     private void addResponses(HttpActionClass actionClass, MethodSpec.Builder builder) {
         List<Element> responseElements = actionClass.getAnnotatedElements(io.techery.janet.http.annotations.Response.class);
-
         for (Element element : responseElements) {
-            int status = element.getAnnotation(io.techery.janet.http.annotations.Response.class).value();
-            if (status > 0) {
-                builder.beginControlFlow("if(response.getStatus() == $L)", status);
+            io.techery.janet.http.annotations.Response annotation
+                    = element.getAnnotation(io.techery.janet.http.annotations.Response.class);
+            if (annotation.value() > 0) {
+                builder.beginControlFlow("if(response.getStatus() == $L)", annotation.value());
+                addResponseStatements(actionClass, builder, element);
+                builder.endControlFlow();
+            } else if (annotation.min() > 0 || annotation.max() > 0) {
+                StringBuilder controlFlow = new StringBuilder("if(");
+                if (annotation.min() > 0) {
+                    controlFlow.append("response.getStatus() >= ").append(annotation.min());
+                    if (annotation.max() > 0) {
+                        controlFlow.append(" && ");
+                    }
+                }
+                if (annotation.max() > 0) {
+                    controlFlow.append("response.getStatus() <= ").append(annotation.max());
+                }
+                controlFlow.append(")");
+                builder.beginControlFlow(controlFlow.toString());
+                addResponseStatements(actionClass, builder, element);
+                builder.endControlFlow();
+            } else if (annotation.value() == io.techery.janet.http.annotations.Response.ERROR) {
+                builder.beginControlFlow("if(!response.isSuccessful())");
                 addResponseStatements(actionClass, builder, element);
                 builder.endControlFlow();
             } else {
+                builder.beginControlFlow("if(response.isSuccessful())");
                 addResponseStatements(actionClass, builder, element);
+                builder.endControlFlow();
             }
         }
     }
@@ -209,7 +229,8 @@ public class HttpHelpersGenerator extends Generator<HttpActionClass> {
         } else if (equalTypes(element, String.class)) {
             builder.addStatement(fieldAddress + " = response.getBody().toString()", element);
         } else {
-            builder.addStatement(fieldAddress + " = ($T) converter.fromBody(response.getBody(), new $T<$T>(){}.getType())", element, element.asType(), TypeToken.class, element.asType());
+            builder.addStatement(fieldAddress + " = ($T) converter.fromBody(response.getBody(), new $T<$T>(){}.getType())", element, element
+                    .asType(), TypeToken.class, element.asType());
         }
     }
 
