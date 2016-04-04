@@ -62,7 +62,7 @@ public class UserReposActivity extends RxAppCompatActivity {
                 .compose(bindToLifecycle())
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribe(new ActionStateSubscriber<UserReposAction>()
-                        .onStart(() -> showProgressLoading(true))
+                        .onStart((action) -> showProgressLoading(true))
                         .onSuccess(action -> {
                             adapter.setData(action.getRepositories());
                             showProgressLoading(false);
