@@ -1,5 +1,7 @@
 package io.techery.janet;
 
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -71,6 +73,11 @@ final public class HttpActionService extends ActionService {
         }
         if (converter == null) {
             throw new IllegalArgumentException("converter == null");
+        }
+        try {
+            new URL(baseUrl);
+        } catch (MalformedURLException t) {
+            throw new IllegalArgumentException("baseUrl is not valid", t);
         }
         this.baseUrl = baseUrl;
         this.client = client;

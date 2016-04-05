@@ -34,11 +34,10 @@ import io.techery.janet.http.annotations.Query;
 import io.techery.janet.http.annotations.RequestHeader;
 import io.techery.janet.http.annotations.ResponseHeader;
 import io.techery.janet.http.annotations.Status;
+import io.techery.janet.http.annotations.Url;
 import io.techery.janet.http.model.Header;
 import io.techery.janet.http.model.Response;
 import io.techery.janet.internal.TypeToken;
-
-import static io.techery.janet.compiler.utils.TypeUtils.equalTypes;
 
 
 public class HttpHelpersGenerator extends Generator<HttpActionClass> {
@@ -76,8 +75,8 @@ public class HttpHelpersGenerator extends Generator<HttpActionClass> {
                 .addParameter(RequestBuilder.class, "requestBuilder")
                 .addParameter(TypeName.get(actionClass.getTypeElement().asType()), "action")
                 .addStatement("requestBuilder.setMethod($T.$L)", HttpAction.Method.class, actionClass.getMethod())
-                .addStatement("requestBuilder.setRequestType($T.$L)", HttpAction.Type.class, actionClass.getRequestType())
-                .addStatement("requestBuilder.setPath($S)", actionClass.getPath());
+                .addStatement("requestBuilder.setRequestType($T.$L)", HttpAction.Type.class, actionClass.getRequestType());
+        addRequestUrl(actionClass, builder);
         addPathParams(actionClass, builder);
         addParts(actionClass, builder);
         addRequestHeaders(actionClass, builder);
@@ -86,6 +85,15 @@ public class HttpHelpersGenerator extends Generator<HttpActionClass> {
         addRequestBody(actionClass, builder);
         builder.addStatement("return requestBuilder");
         return builder.build();
+    }
+
+    private void addRequestUrl(HttpActionClass actionClass, MethodSpec.Builder builder) {
+        List<Element> elements = actionClass.getAnnotatedElements(Url.class);
+        if (!elements.isEmpty()) {
+            builder.addStatement("requestBuilder.setUrl(action.$L)", elements.get(0));
+        } else {
+            builder.addStatement("requestBuilder.setPath($S)", actionClass.getPath());
+        }
     }
 
     private void addRequestFields(HttpActionClass actionClass, MethodSpec.Builder builder) {
@@ -154,11 +162,11 @@ public class HttpHelpersGenerator extends Generator<HttpActionClass> {
             String encode = part.encoding();
             String httpBodyName = "httpBody";
             builder.beginControlFlow("if (action.$L != null)", name);
-            if (TypeUtils.equalTypes(element, File.class)) {
+            if (TypeUtils.equalType(element, File.class)) {
                 builder.addStatement("$T $L = new $T($S, action.$L)", ActionBody.class, httpBodyName, FileBody.class, encode, name);
-            } else if (TypeUtils.equalTypes(element, byte[].class)) {
+            } else if (TypeUtils.equalType(element, byte[].class)) {
                 builder.addStatement("$T $L = new $T($S, action.$L)", ActionBody.class, httpBodyName, BytesArrayBody.class, encode, name);
-            } else if (TypeUtils.equalTypes(element, String.class)) {
+            } else if (TypeUtils.equalType(element, String.class)) {
                 builder.addStatement("$T $L = new $T($S, action.$L.getBytes())", ActionBody.class, httpBodyName, BytesArrayBody.class, encode, name);
             } else {
                 builder.addStatement("$T $L = action.$L", ActionBody.class, httpBodyName, name);
@@ -224,9 +232,9 @@ public class HttpHelpersGenerator extends Generator<HttpActionClass> {
 
     private void addResponseStatements(HttpActionClass actionClass, MethodSpec.Builder builder, Element element) {
         String fieldAddress = getFieldAddress(actionClass, element);
-        if (equalTypes(element, ActionBody.class)) {
+        if (TypeUtils.equalType(element, ActionBody.class)) {
             builder.addStatement(fieldAddress + " = response.getBody()", element);
-        } else if (equalTypes(element, String.class)) {
+        } else if (TypeUtils.equalType(element, String.class)) {
             builder.addStatement(fieldAddress + " = response.getBody().toString()", element);
         } else {
             builder.addStatement(fieldAddress + " = ($T) converter.fromBody(response.getBody(), new $T<$T>(){}.getType())", element, element
@@ -259,7 +267,7 @@ public class HttpHelpersGenerator extends Generator<HttpActionClass> {
                 builder.addStatement(fieldAddress + " = response.isSuccessful()", element);
             } else if (TypeUtils.containsType(element, Integer.class, int.class, long.class)) {
                 builder.addStatement(fieldAddress + " = ($T) response.getStatus()", element, element.asType());
-            } else if (equalTypes(element, String.class)) {
+            } else if (TypeUtils.equalType(element, String.class)) {
                 builder.addStatement(fieldAddress + " = Integer.toString(response.getStatus())", element);
             } else if (TypeUtils.containsType(element, Long.class)) {
                 builder.addStatement(fieldAddress + " = (long) response.getStatus()", element);

@@ -17,15 +17,28 @@ import io.techery.janet.compiler.utils.TypeUtils;
 public class AnnotationTypesValidator<T extends ActionClass> implements Validator<T> {
 
     private final Class annotationClass;
-    private final Type[] types;
-    private final ArrayList<String> typeNames;
+    private Type[] types = new Type[0];
+    private TypeName[] typeNames = new TypeName[0];
+    private final ArrayList<String> typeStrings;
 
     public AnnotationTypesValidator(Class annotationClass, Type... types) {
+        this(annotationClass, types, new TypeName[]{});
+    }
+
+    public AnnotationTypesValidator(Class annotationClass, TypeName... typeNames) {
+        this(annotationClass, new Type[]{}, typeNames);
+    }
+
+    public AnnotationTypesValidator(Class annotationClass, Type[] types, TypeName[] typeNames) {
         this.annotationClass = annotationClass;
         this.types = types;
-        typeNames = new ArrayList<String>();
+        this.typeNames = typeNames;
+        typeStrings = new ArrayList<String>();
         for (Type type : types) {
-            typeNames.add(TypeName.get(type).toString());
+            typeStrings.add(TypeName.get(type).toString());
+        }
+        for (TypeName type : typeNames) {
+            typeStrings.add(type.toString());
         }
     }
 
@@ -38,8 +51,11 @@ public class AnnotationTypesValidator<T extends ActionClass> implements Validato
             if (TypeUtils.containsType(element, types)) {
                 continue;
             }
+            if (TypeUtils.containsType(element, typeNames)) {
+                continue;
+            }
             errors.add(new ValidationError("Fields annotated with %s should one from these types %s", element, annotation
-                    .toString(), typeNames.toString()));
+                    .toString(), typeStrings.toString()));
         }
         return errors;
     }

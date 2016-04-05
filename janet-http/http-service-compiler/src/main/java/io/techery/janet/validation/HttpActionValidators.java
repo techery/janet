@@ -1,6 +1,11 @@
 package io.techery.janet.validation;
 
+import com.squareup.javapoet.ClassName;
+import com.squareup.javapoet.TypeName;
+
 import java.io.File;
+import java.lang.reflect.Type;
+import java.net.URI;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -21,6 +26,7 @@ import io.techery.janet.http.annotations.HttpAction;
 import io.techery.janet.http.annotations.Part;
 import io.techery.janet.http.annotations.ResponseHeader;
 import io.techery.janet.http.annotations.Status;
+import io.techery.janet.http.annotations.Url;
 import io.techery.janet.http.model.FormUrlEncodedRequestBody;
 import io.techery.janet.http.model.MultipartRequestBody;
 
@@ -38,12 +44,16 @@ public class HttpActionValidators implements Validator<HttpActionClass> {
         validators.add(new RequestTypeValidator(Field.class, HttpAction.Type.FORM_URL_ENCODED));
         validators.add(new RequestTypeValidator(Part.class, HttpAction.Type.MULTIPART));
         validators.add(new ResponseValidator());
+        validators.add(new UrlValidator());
         //annotation rules
+        validators.add(new AnnotationQuantityValidator<HttpActionClass>(Body.class, 1));
+        validators.add(new AnnotationQuantityValidator<HttpActionClass>(Url.class, 1));
         validators.add(new AnnotationTypesValidator<HttpActionClass>(ResponseHeader.class, String.class));
         validators.add(new AnnotationTypesValidator<HttpActionClass>(Status.class, Boolean.class, Integer.class, Long.class, String.class, boolean.class, int.class, long.class));
         validators.add(new AnnotationTypesValidator<HttpActionClass>(Part.class, File.class, byte[].class, String.class, ActionBody.class,
                 BytesArrayBody.class, MultipartRequestBody.class, FormUrlEncodedRequestBody.class, FileBody.class));
-        validators.add(new AnnotationQuantityValidator<HttpActionClass>(Body.class, 1));
+        validators.add(new AnnotationTypesValidator<HttpActionClass>(Url.class, new Type[]{String.class, URI.class},
+                new TypeName[]{ClassName.get("android.net", "Uri"), ClassName.get("okhttp3", "HttpUrl"), ClassName.get("com.squareup.okhttp", "HttpUrl")}));
     }
 
     @Override
