@@ -9,6 +9,7 @@ import java.util.Set;
 import io.techery.janet.HttpActionClass;
 import io.techery.janet.body.ActionBody;
 import io.techery.janet.body.BytesArrayBody;
+import io.techery.janet.body.FileBody;
 import io.techery.janet.compiler.utils.validation.AnnotationQuantityValidator;
 import io.techery.janet.compiler.utils.validation.AnnotationTypesValidator;
 import io.techery.janet.compiler.utils.validation.FieldsModifiersValidator;
@@ -20,7 +21,6 @@ import io.techery.janet.http.annotations.HttpAction;
 import io.techery.janet.http.annotations.Part;
 import io.techery.janet.http.annotations.ResponseHeader;
 import io.techery.janet.http.annotations.Status;
-import io.techery.janet.body.FileBody;
 import io.techery.janet.http.model.FormUrlEncodedRequestBody;
 import io.techery.janet.http.model.MultipartRequestBody;
 
@@ -37,6 +37,7 @@ public class HttpActionValidators implements Validator<HttpActionClass> {
         validators.add(new RequestTypeValidator(Body.class, HttpAction.Type.SIMPLE));
         validators.add(new RequestTypeValidator(Field.class, HttpAction.Type.FORM_URL_ENCODED));
         validators.add(new RequestTypeValidator(Part.class, HttpAction.Type.MULTIPART));
+        validators.add(new ResponseValidator());
         //annotation rules
         validators.add(new AnnotationTypesValidator<HttpActionClass>(ResponseHeader.class, String.class));
         validators.add(new AnnotationTypesValidator<HttpActionClass>(Status.class, Boolean.class, Integer.class, Long.class, String.class, boolean.class, int.class, long.class));
