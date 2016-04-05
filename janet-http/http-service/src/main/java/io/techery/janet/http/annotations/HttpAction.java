@@ -36,7 +36,7 @@ public @interface HttpAction {
     }
 
     enum Method {
-        GET(false), POST(true), PUT(true), DELETE(false), HEAD(false), PATCH(true);
+        GET(false), POST(true), PUT(true), DELETE(true), HEAD(false), PATCH(true);
 
         private boolean hasBody;
 
