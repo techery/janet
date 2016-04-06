@@ -158,7 +158,7 @@ Grab via Maven
 <dependency>
     <groupId>com.github.techery.janet</groupId>
     <artifactId>janet</artifactId>
-    <version>0.1.0</version>
+    <version>0.2.0</version>
 </dependency>
 ```
 or Gradle:
@@ -168,26 +168,26 @@ repositories {
     maven { url "https://jitpack.io" }
 }
 dependencies {
-    compile 'com.github.techery.janet:janet:0.1.0'
+    compile 'com.github.techery.janet:janet:0.2.0'
 }
 ```
 
 List of additional artifacts:
 ```groovy
-compile 'com.github.techery.janet:http-service:0.1.0'
-apt 'com.github.techery.janet:http-service-compiler:0.1.0'   
-compile 'com.github.techery.janet:okhttp:0.1.0'
-compile 'com.github.techery.janet:okhttp3:0.1.0'
-compile 'com.github.techery.janet:android-apache-client:0.1.0'
-compile 'com.github.techery.janet:url-connection:0.1.0'
+compile 'com.github.techery.janet:http-service:0.2.0'
+apt 'com.github.techery.janet:http-service-compiler:0.2.0'   
+compile 'com.github.techery.janet:okhttp:0.2.0'
+compile 'com.github.techery.janet:okhttp3:0.2.0'
+compile 'com.github.techery.janet:android-apache-client:0.2.0'
+compile 'com.github.techery.janet:url-connection:0.2.0'
 
-compile 'com.github.techery.janet:async-service:0.1.0'
-apt 'com.github.techery.janet:async-service-compiler:0.1.0'
-compile 'com.github.techery.janet:nkzawa-socket.io:0.1.0'
-compile 'com.github.techery.janet:socket.io:0.1.0'
+compile 'com.github.techery.janet:async-service:0.2.0'
+apt 'com.github.techery.janet:async-service-compiler:0.2.0'
+compile 'com.github.techery.janet:nkzawa-socket.io:0.2.0'
+compile 'com.github.techery.janet:socket.io:0.2.0'
 
-compile 'com.github.techery.janet:gson:0.1.0'
-compile 'com.github.techery.janet:protobuf:0.1.0'
+compile 'com.github.techery.janet:gson:0.2.0'
+compile 'com.github.techery.janet:protobuf:0.2.0'
 
-compile 'com.github.techery.janet:command-service:0.1.0'
+compile 'com.github.techery.janet:command-service:0.2.0'
 ```
