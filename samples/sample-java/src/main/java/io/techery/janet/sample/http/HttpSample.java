@@ -2,8 +2,6 @@ package io.techery.janet.sample.http;
 
 import com.google.gson.Gson;
 
-import java.io.IOException;
-
 import io.techery.janet.ActionPipe;
 import io.techery.janet.HttpActionService;
 import io.techery.janet.Janet;
@@ -11,9 +9,6 @@ import io.techery.janet.gson.GsonConverter;
 import io.techery.janet.helper.ActionStateSubscriber;
 import io.techery.janet.okhttp3.OkClient;
 import io.techery.janet.sample.SampleLoggingService;
-import okhttp3.Interceptor;
-import okhttp3.OkHttpClient;
-import okhttp3.Response;
 import rx.Observable;
 
 public class HttpSample {

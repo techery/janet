@@ -4,37 +4,38 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.io.UnsupportedEncodingException;
 import java.lang.reflect.Array;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 
+import io.techery.janet.body.ActionBody;
 import io.techery.janet.converter.Converter;
 import io.techery.janet.http.annotations.HttpAction;
 import io.techery.janet.http.model.FormUrlEncodedRequestBody;
 import io.techery.janet.http.model.Header;
 import io.techery.janet.http.model.MultipartRequestBody;
 import io.techery.janet.http.model.Request;
-import io.techery.janet.body.ActionBody;
 
 public final class RequestBuilder {
 
     private final Converter converter;
-    private final String apiUrl;
+    private String url;
 
     private FormUrlEncodedRequestBody formBody;
     private MultipartRequestBody multipartBody;
     private ActionBody body;
 
-    private String path = "";
     private StringBuilder queryParams;
     private List<Header> headers;
     private String contentTypeHeader;
     private HttpAction.Method requestMethod = HttpAction.Method.GET;
+    private String ref;
 
-    RequestBuilder(String apiUrl, Converter converter) {
-        this.apiUrl = apiUrl;
+    RequestBuilder(String url, Converter converter) {
+        this.url = url;
         this.converter = converter;
         this.multipartBody = null;
         this.formBody = null;
@@ -61,6 +62,28 @@ public final class RequestBuilder {
         }
     }
 
+    public void setUrl(Object param) {
+        if (param == null) {
+            throw new IllegalArgumentException("@Url field is null.");
+        }
+        String value = param.toString();
+        URL url = null;
+        try {
+            url = new URL(value);
+        } catch (MalformedURLException ignored) {}
+        if (url != null) {
+            String s = url.toString();
+            if (url.getQuery() != null) {
+                String query = "?" + url.getQuery();
+                this.url = s.substring(0, s.indexOf(query));
+                this.queryParams = new StringBuilder(query);
+                this.ref = url.getRef();
+            }
+        } else {
+            setPath(value);
+        }
+    }
+
     public void addHeader(String name, String value) {
         if (name == null) {
             throw new IllegalArgumentException("Header name must not be null.");
@@ -78,7 +101,14 @@ public final class RequestBuilder {
     }
 
     public void setPath(String path) {
-        this.path = path;
+        StringBuilder url = new StringBuilder(this.url);
+        if (this.url.endsWith("/")) {
+            url.deleteCharAt(url.length() - 1);
+        }
+        if (path.startsWith("/")) {
+            path = path.substring(1);
+        }
+        this.url = url.append("/").append(path).toString();
     }
 
     public void addPathParam(String name, String value) {
@@ -100,9 +130,9 @@ public final class RequestBuilder {
                 // encode spaces rather than +. Query encoding difference specified in HTML spec.
                 // Any remaining plus signs represent spaces as already URLEncoded.
                 encodedValue = encodedValue.replace("+", "%20");
-                path = path.replace("{" + name + "}", encodedValue);
+                url = url.replace("{" + name + "}", encodedValue);
             } else {
-                path = path.replace("{" + name + "}", String.valueOf(value));
+                url = url.replace("{" + name + "}", String.valueOf(value));
             }
         } catch (UnsupportedEncodingException e) {
             throw new RuntimeException(
@@ -157,16 +187,6 @@ public final class RequestBuilder {
         }
     }
 
-    public void addQueryParamMap(Map<?, ?> map, boolean encodeNames, boolean encodeValues) {
-        for (Map.Entry<?, ?> entry : map.entrySet()) {
-            Object entryKey = entry.getKey();
-            Object entryValue = entry.getValue();
-            if (entryValue != null) { // Skip null values.
-                addQueryParam(entryKey.toString(), entryValue.toString(), encodeNames, encodeValues);
-            }
-        }
-    }
-
     public void addField(String name, Object value) {
         if (value != null) { // Skip null values.
             if (value instanceof Iterable) {
@@ -214,16 +234,14 @@ public final class RequestBuilder {
         if (multipartBody != null && multipartBody.getPartCount() == 0) {
             throw new IllegalStateException("Multipart requests must contain at least one part.");
         }
-        String apiUrl = this.apiUrl;
-        StringBuilder url = new StringBuilder(apiUrl);
-        if (apiUrl.endsWith("/")) {
-            // We require relative paths to start with '/'. Prevent a double-slash.
-            url.deleteCharAt(url.length() - 1);
-        }
-        url.append(path);
+        StringBuilder url = new StringBuilder(this.url);
         StringBuilder queryParams = this.queryParams;
         if (queryParams != null) {
             url.append(queryParams);
+        }
+        if (ref != null) {
+            url.append("#");
+            url.append(ref);
         }
         ActionBody body = this.body;
         List<Header> headers = this.headers;

@@ -11,18 +11,22 @@ import java.util.List;
 import javax.lang.model.element.Element;
 
 public class TypeUtils {
-    public static boolean equalTypes(Element element, TypeToken token) {
-        return equalTypes(element, token.getType());
+    public static boolean equalType(Element element, TypeToken token) {
+        return equalType(element, token.getType());
     }
 
-    public static boolean equalTypes(Element element, Type type) {
+    public static boolean equalType(Element element, Type type) {
         String elementClassName = TypeName.get(element.asType()).toString();
         if (type instanceof ParameterizedType) {
             List<Type> generics = Arrays.asList(((ParameterizedType) type).getActualTypeArguments());
             List<String> elementGenerics = Arrays.asList(elementClassName.replaceAll(".*?[<]|[>]", "").split(","));
             return getElementTypeName(element).equals(getTypeName(type)) && isGenericsEquals(generics, elementGenerics);
         }
-        return TypeName.get(element.asType()).equals(TypeName.get(type));
+        return equalType(element, TypeName.get(type));
+    }
+
+    public static boolean equalType(Element element, TypeName typeName) {
+        return TypeName.get(element.asType()).equals(typeName);
     }
 
     public static boolean isPrimitive(Element element) {
@@ -56,7 +60,16 @@ public class TypeUtils {
 
     public static boolean containsType(Element element, Type... classes) {
         for (Type clazz : classes) {
-            if (equalTypes(element, clazz)) {
+            if (equalType(element, clazz)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    public static boolean containsType(Element element, TypeName... typeNames) {
+        for (TypeName typeName : typeNames) {
+            if (equalType(element, typeName)) {
                 return true;
             }
         }
