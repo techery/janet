@@ -4,7 +4,7 @@ import org.junit.Test;
 
 import io.techery.janet.helper.ActionStateSubscriber;
 import io.techery.janet.model.TestAction;
-import rx.functions.Action0;
+import rx.functions.Action1;
 import rx.observers.TestSubscriber;
 
 import static org.mockito.Matchers.any;
@@ -87,8 +87,8 @@ public class TestPipeOperations extends BaseTest {
     public void cancelActionAfterStart() {
         final TestAction action = new TestAction();
         TestSubscriber<ActionState<TestAction>> subscriber = new TestSubscriber<ActionState<TestAction>>(
-                new ActionStateSubscriber<TestAction>().onStart(new Action0() {
-                    @Override public void call() {
+                new ActionStateSubscriber<TestAction>().onStart(new Action1<TestAction>() {
+                    @Override public void call(TestAction testAction) {
                         actionPipe.cancel(action);
                     }
                 })
@@ -102,8 +102,8 @@ public class TestPipeOperations extends BaseTest {
     public void cancelLatestAfterStart() {
         final TestAction action = new TestAction();
         TestSubscriber<ActionState<TestAction>> subscriber = new TestSubscriber<ActionState<TestAction>>(
-                new ActionStateSubscriber<TestAction>().onStart(new Action0() {
-                    @Override public void call() {
+                new ActionStateSubscriber<TestAction>().onStart(new Action1<TestAction>() {
+                    @Override public void call(TestAction testAction) {
                         actionPipe.cancelLatest();
                     }
                 })
