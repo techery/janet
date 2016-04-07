@@ -39,7 +39,7 @@ public class TestServiceWrapper extends BaseTest {
         verify(wrapperService, times(1)).sendInternal(any(ActionHolder.class));
         verify(actionService, never()).sendInternal(any(ActionHolder.class));
         verify(callback, never()).onStart(any(ActionHolder.class));
-        AssertUtil.SuccessAnswer.assertNoStatuses(subscriber);
+        AssertUtil.assertSubscriberWithSingleValue(subscriber);
     }
 
     @Test public void passThrough() throws JanetException, Exception {
