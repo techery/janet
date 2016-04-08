@@ -4,10 +4,10 @@ buildscript {
     }
 
     dependencies {
-        classpath 'com.android.tools.build:gradle:2.1.0-alpha5'
-        classpath 'me.tatarka:gradle-retrolambda:3.2.4'
-        classpath 'com.github.ben-manes:gradle-versions-plugin:0.11.3'
-        classpath 'com.neenbedankt.gradle.plugins:android-apt:1.4'
+        classpath 'com.android.tools.build:gradle:2.0.0'
+        classpath 'me.tatarka:gradle-retrolambda:3.2.5'
+        classpath 'com.github.ben-manes:gradle-versions-plugin:0.12.0'
+        classpath 'com.neenbedankt.gradle.plugins:android-apt:1.8'
     }
 }
 
@@ -17,7 +17,7 @@ apply plugin: 'me.tatarka.retrolambda'
 
 android {
     compileSdkVersion 23
-    buildToolsVersion '23.0.2'
+    buildToolsVersion '23.0.3'
 
     defaultConfig {
         applicationId "io.techery.janet.sample"
@@ -51,8 +51,8 @@ dependencies {
     compile project(":janet-converters:gson")
     compile project(":janet-http:http-clients:okhttp")
 
-    compile 'com.android.support:appcompat-v7:23.1.1'
-    compile 'com.android.support:recyclerview-v7:23.1.1'
+    compile 'com.android.support:appcompat-v7:23.0.0'
+    compile 'com.android.support:recyclerview-v7:23.0.0'
     compile 'io.reactivex:rxjava:1.1.0'
     compile 'io.reactivex:rxjava-debug:1.0.3'
     compile 'io.reactivex:rxandroid:1.1.0'
