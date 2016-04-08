@@ -2,6 +2,8 @@
 
 Reactive library for command-based architecture creating. It can be used for both Android and Java.
 
+[![Build Status](https://travis-ci.org/techery/janet.svg?branch=master)](https://travis-ci.org/techery/janet)
+
 ### What does Janet give?
 
 1. Flexibility and scalability. Scale functionality using [services](/janet/src/main/java/io/techery/janet/ActionService.java)
