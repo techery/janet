@@ -128,7 +128,7 @@ public class TestAction {
 
 ### CommandActionService
 
-[CommandActionService](/janet-command/command-service/src/main/java/io/techery/janet/CommandActionService.java) performs actions executing with a help of annotation [@CommandAction](/janet-command/command-service/src/main/java/io/techery/janet/command/annotations/CommandAction.java). Also to create command action it's necessary to implement the interface [CommandActionBase](/janet-command/command-service/src/main/java/io/techery/janet/CommandActionBase.java). It contains the command's methods for running and cancellation. To get command result use method `getResult()`
+[CommandActionService](/janet-command/command-service/src/main/java/io/techery/janet/CommandActionService.java) performs actions executing with a help of annotation [@CommandAction](/janet-command/command-service/src/main/java/io/techery/janet/command/annotations/CommandAction.java). Also to create command action it's necessary to extend the abstract class [CommandActionBase](/janet-command/command-service/src/main/java/io/techery/janet/CommandActionBase.java). It contains the command's methods for running and cancellation. To get command result use method `getResult()`
  
 ```java
 @CommandAction
@@ -160,7 +160,7 @@ Grab via Maven
 <dependency>
     <groupId>com.github.techery.janet</groupId>
     <artifactId>janet</artifactId>
-    <version>0.2.0</version>
+    <version>0.2.2</version>
 </dependency>
 ```
 or Gradle:
@@ -170,26 +170,26 @@ repositories {
     maven { url "https://jitpack.io" }
 }
 dependencies {
-    compile 'com.github.techery.janet:janet:0.2.0'
+    compile 'com.github.techery.janet:janet:0.2.2'
 }
 ```
 
 List of additional artifacts:
 ```groovy
-compile 'com.github.techery.janet:http-service:0.2.0'
-apt 'com.github.techery.janet:http-service-compiler:0.2.0'   
-compile 'com.github.techery.janet:okhttp:0.2.0'
-compile 'com.github.techery.janet:okhttp3:0.2.0'
-compile 'com.github.techery.janet:android-apache-client:0.2.0'
-compile 'com.github.techery.janet:url-connection:0.2.0'
+compile 'com.github.techery.janet:http-service:0.2.2'
+apt 'com.github.techery.janet:http-service-compiler:0.2.2'   
+compile 'com.github.techery.janet:okhttp:0.2.2'
+compile 'com.github.techery.janet:okhttp3:0.2.2'
+compile 'com.github.techery.janet:android-apache-client:0.2.2'
+compile 'com.github.techery.janet:url-connection:0.2.2'
 
-compile 'com.github.techery.janet:async-service:0.2.0'
-apt 'com.github.techery.janet:async-service-compiler:0.2.0'
-compile 'com.github.techery.janet:nkzawa-socket.io:0.2.0'
-compile 'com.github.techery.janet:socket.io:0.2.0'
+compile 'com.github.techery.janet:async-service:0.2.2'
+apt 'com.github.techery.janet:async-service-compiler:0.2.2'
+compile 'com.github.techery.janet:nkzawa-socket.io:0.2.2'
+compile 'com.github.techery.janet:socket.io:0.2.2'
 
-compile 'com.github.techery.janet:gson:0.2.0'
-compile 'com.github.techery.janet:protobuf:0.2.0'
+compile 'com.github.techery.janet:gson:0.2.2'
+compile 'com.github.techery.janet:protobuf:0.2.2'
 
-compile 'com.github.techery.janet:command-service:0.2.0'
+compile 'com.github.techery.janet:command-service:0.2.2'
 ```
