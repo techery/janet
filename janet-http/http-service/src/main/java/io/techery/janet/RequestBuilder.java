@@ -73,12 +73,13 @@ public final class RequestBuilder {
         } catch (MalformedURLException ignored) {}
         if (url != null) {
             String s = url.toString();
+            this.url = s;
             if (url.getQuery() != null) {
                 String query = "?" + url.getQuery();
                 this.url = s.substring(0, s.indexOf(query));
                 this.queryParams = new StringBuilder(query);
-                this.ref = url.getRef();
             }
+            this.ref = url.getRef();
         } else {
             setPath(value);
         }
