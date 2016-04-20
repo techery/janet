@@ -94,6 +94,9 @@ public class ExampleAction {
     String responseHeaderValue;
 }
 ```
+#### Proguard
+Add [Rules](janet-http/http-service/proguard-rules.pro) to your proguard config. 
+See [Sample](samples/sample-android) for complete proguard config example.
 
 ### AsyncActionService
 

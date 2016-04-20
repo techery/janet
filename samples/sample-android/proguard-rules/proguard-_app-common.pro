@@ -1,0 +1,2 @@
+-keep class **.BuildConfig { *; }
+-keepattributes InnerClasses
