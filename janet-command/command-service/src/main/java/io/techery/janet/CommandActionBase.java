@@ -19,10 +19,17 @@ public abstract class CommandActionBase<T> {
     protected abstract void run(CommandCallback<T> callback) throws Throwable;
 
     /**
-     * For cancellation logic
+     * Called upon cancelation via {@code ActionPipe#cancel()}
      */
-    public void cancel() {
-        //do nothing
+    protected void cancel() {
+    }
+
+    public final boolean isCanceled() {
+        return canceled;
+    }
+
+    void setCanceled(boolean canceled) {
+        this.canceled = canceled;
     }
 
     final public T getResult() {
@@ -31,14 +38,6 @@ public abstract class CommandActionBase<T> {
 
     final void setResult(T result) {
         this.result = result;
-    }
-
-    public boolean isCanceled() {
-        return canceled;
-    }
-
-    public void setCanceled(boolean canceled) {
-        this.canceled = canceled;
     }
 
     protected interface CommandCallback<T> {

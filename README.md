@@ -138,11 +138,11 @@ public class TestAction {
 public class ExampleCommandAction extends CommandActionBase<String> {
 
     @Override protected String run(CommandCallback callback) throws Throwable {
-        //perform logic to return result
+        // perform logic to return result
     }
 
-    @Override public void cancel() {
-        //cancellation if needed
+    @Override protected void cancel() {
+        // cancellation logic, e.g. some cleanup
     }
 }
 ```

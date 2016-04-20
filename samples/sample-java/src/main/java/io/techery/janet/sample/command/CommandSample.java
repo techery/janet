@@ -1,15 +1,11 @@
 package io.techery.janet.sample.command;
 
-import java.util.concurrent.TimeUnit;
-
 import io.techery.janet.ActionPipe;
 import io.techery.janet.CommandActionService;
 import io.techery.janet.Janet;
 import io.techery.janet.helper.ActionStateSubscriber;
 import io.techery.janet.sample.command.actions.ThreadSleepAction;
 import io.techery.janet.sample.command.actions.WrongAction;
-import rx.Observable;
-import rx.schedulers.Schedulers;
 
 public class CommandSample {
 
@@ -18,22 +14,26 @@ public class CommandSample {
                 .addService(new CommandActionService())
                 .build();
 
+        // Send simple command, observe progress, try to cancel
         ActionPipe<ThreadSleepAction> actionPipe = janet.createPipe(ThreadSleepAction.class);
 
-        actionPipe.observe()
-                .subscribe(new ActionStateSubscriber<ThreadSleepAction>()
-                        .onProgress((action, progress) -> System.out.println(progress))
-                        .onSuccess(threadSleepAction -> System.out.println(threadSleepAction.getResult()))
-                        .onFail((threadSleepAction1, throwable) -> throwable.printStackTrace()));
+        actionPipe.observe().subscribe(new ActionStateSubscriber<ThreadSleepAction>()
+                .onProgress((action, progress) -> {
+                    System.out.println(progress);
+                    if (progress >= 80) {
+                        actionPipe.cancel(action);
+                    }
+                })
+                .onSuccess(threadSleepAction -> System.out.println(threadSleepAction.getResult()))
+                .onFail((threadSleepAction1, throwable) -> throwable.printStackTrace()));
 
-        ThreadSleepAction action = new ThreadSleepAction();
+        actionPipe.send(new ThreadSleepAction());
 
-        Observable.fromCallable(() -> null)
-                .delay(ThreadSleepAction.DURATION - 1000, TimeUnit.MILLISECONDS)
-                .subscribe(o -> actionPipe.cancel(action));
-
-        actionPipe.send(action);
-
-        janet.createPipe(WrongAction.class).send(new WrongAction());
+        // Try use action with broken contract
+        try {
+            janet.createPipe(WrongAction.class).send(new WrongAction());
+        } catch (Throwable throwable) {
+            throwable.printStackTrace();
+        }
     }
 }
