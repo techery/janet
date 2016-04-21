@@ -1,28 +1,5 @@
-language: android
+language: java
 jdk: oraclejdk8
-
-### Dependencies
-
-env:
-  global:
-    - ANDROID_TARGET=android-23
-    - ANDROID_EMULATOR_TARGET=android-21
-    - ANDROID_ABI=armeabi-v7a
-    - ANDROID_BUILD_TOOLS=23.0.3
-    - ADB_INSTALL_TIMEOUT=8 # avoid timeout exception
-
-android:
-  components:
-    - tools
-    - platform-tools
-    - build-tools-$ANDROID_BUILD_TOOLS
-    - $ANDROID_TARGET
-    - ANDROID_EMULATOR_TARGET
-    - sys-img-$ANDROID_ABI-$ANDROID_EMULATOR_TARGET
-    - extra-android-support
-    - extra-android-m2repository
-  licenses:
-    - 'android-sdk-license-.+'
 
 ### Misc. configurations
 
@@ -38,4 +15,4 @@ cache:
 ### The Job
 
 script:
-  - ./gradlew --info clean build check sample:sample-android:assembleDebug -PdisablePreDex
+  - ./gradlew --info clean build check -PdisablePreDex

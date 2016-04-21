@@ -1,9 +1,4 @@
-apply plugin: 'java'
 apply plugin: 'maven'
-
-sourceCompatibility = 1.6
-targetCompatibility = 1.6
-
 
 task sourcesJar(type: Jar, dependsOn: classes) {
     classifier = 'sources'
@@ -18,9 +13,4 @@ task javadocJar(type: Jar, dependsOn: javadoc) {
 artifacts {
     archives sourcesJar
     archives javadocJar
-}
-
-dependencies {
-    compile project(':janet-http:http-service')
-    compile 'com.squareup.okhttp3:okhttp:3.2.0'
 }
