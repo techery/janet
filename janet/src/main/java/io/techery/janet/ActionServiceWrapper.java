@@ -30,6 +30,7 @@ public abstract class ActionServiceWrapper extends ActionService {
     /**
      * Called from service callback before changing action status to {@linkplain ActionState.Status#START START}
      *
+     *
      * @param holder action holder for intercepting
      */
     protected abstract <A> void onInterceptStart(ActionHolder<A> holder);
@@ -52,15 +53,21 @@ public abstract class ActionServiceWrapper extends ActionService {
      * Called from service callback before changing action status to {@linkplain ActionState.Status#FAIL FAIL}
      *
      * @param holder action holder for intercepting
+     * @return if {@code true} action will be sent again. Should be careful with it because there is possibility to create an infinite loop of action sending
      */
-    protected abstract <A> void onInterceptFail(ActionHolder<A> holder, JanetException e);
+    protected abstract <A> boolean onInterceptFail(ActionHolder<A> holder, JanetException e);
 
     /**
      * {@inheritDoc}
      */
     @Override protected <A> void sendInternal(ActionHolder<A> holder) throws JanetException {
         if (onInterceptSend(holder)) callback.onSuccess(holder);
-        else actionService.sendInternal(holder);
+        else try {
+            actionService.sendInternal(holder);
+        } catch (JanetException e) {
+            this.callback.onFail(holder, e);
+            throw e;
+        }
     }
 
     /**
@@ -100,8 +107,10 @@ public abstract class ActionServiceWrapper extends ActionService {
             onInterceptSuccess(holder);
         }
 
-        @Override public <A> void interceptFail(ActionHolder<A> holder, JanetException e) {
-            onInterceptFail(holder, e);
+        @Override public <A> boolean interceptFail(ActionHolder<A> holder, JanetException e) {
+            boolean resend = onInterceptFail(holder, e);
+            if (resend) actionService.send(holder);
+            return resend;
         }
     };
 }
