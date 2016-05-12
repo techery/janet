@@ -26,7 +26,8 @@ final class CallbackWrapper implements ActionService.Callback {
     }
 
     @Override public void onFail(ActionHolder holder, JanetException e) {
-        interceptor.interceptFail(holder, e);
+        boolean intercept = interceptor.interceptFail(holder, e);
+        if (intercept) return;
         callback.onFail(holder, e);
     }
 
@@ -34,6 +35,6 @@ final class CallbackWrapper implements ActionService.Callback {
         <A> void interceptStart(ActionHolder<A> holder);
         <A> void interceptProgress(ActionHolder<A> holder, int progress);
         <A> void interceptSuccess(ActionHolder<A> holder);
-        <A> void interceptFail(ActionHolder<A> holder, JanetException e);
+        <A> boolean interceptFail(ActionHolder<A> holder, JanetException e);
     }
 }
