@@ -66,7 +66,6 @@ public abstract class ActionServiceWrapper extends ActionService {
             actionService.sendInternal(holder);
         } catch (JanetException e) {
             this.callback.onFail(holder, e);
-            throw e;
         }
     }
 
