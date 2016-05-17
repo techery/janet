@@ -1,155 +1,194 @@
-# Janet
+## Janet
+Build command-based architecture in reactive manner 
 
-Reactive library for command-based architecture creating. It can be used for both Android and Java.
-
-[![Build Status](https://travis-ci.org/techery/janet.svg?branch=master)](https://travis-ci.org/techery/janet)
-
-### What does Janet give?
-
-1. Flexibility and scalability. Scale functionality using [services](/janet/src/main/java/io/techery/janet/ActionService.java)
-2. Reactive approach for any actions manipulating with a help of [RXJava](https://github.com/ReactiveX/RxJava)
-3. Throw-safety architecture.
- 
-### Introduction
-
-Janet helps to write clear maintainable code because each individual operation is an individual class where this operation is described. Let's call it as Action. 
-
-But Janet doesn't perform actions. For that Janet uses services that has algorithm of action processing. Each action is linked to service using an annotation that is defined in the method `ActionService.getSupportedAnnotationType()`. Janet is like action router that can send and receive actions using added services. And service knows what to do with the action. 
-
-To use any service add it to the [Builder](/janet/src/main/java/io/techery/janet/Janet.java) using method `addService`
-
-```java
-    Janet janet = new Janet.Builder()
-             .addService(new HttpActionService(API_URL, new OkClient(), new GsonConverter(new Gson())))
-```
-
-At this moment there are 3 services in Janet:
-
-1. [HttpActionService](#httpactionservice) to provide HTTP/HTTPS requests execution
-2. [AsyncActionService](#asyncactionservice) to provide support async protocols like [socket.io](http://socket.io/)
-3. [CommandActionService](#commandactionservice) to invoke custom logic as [command](#https://en.wikipedia.org/wiki/Command_pattern)   
-
-Also there is an ability to add custom service if needed
-
-After Janet's instance creation all works with action are performed using [ActionPipe](#ActionPipe)  
-
-### ActionPipe
-
-End tool for sending and receiving actions with specific type using RXJava. [ActionPipe](/janet/src/main/java/io/techery/janet/ActionPipe.java) works with actions asynchronously. Create instances using method `Janet.createPipe`.
-For example,
-```java
-    ActionPipe<UsersAction> usersPipe = janet.createPipe(UsersAction.class);
-    
-    usersPipe.observeSuccess()
-                    .subscribe();
-    
-    usersPipe.createObservable(new UsersAction())
-                    .subscribe();
-    
-    usersPipe.send(new UsersAction());
-```
-
-
-###  HttpActionService
-
-Each HTTP request for [HttpActionService](/janet-http/http-service/src/main/java/io/techery/janet/HttpActionService.java) is an individual class that contains all information about the request and response.  
-
-Http action must be annotated with [@HttpAction](/janet-http/http-service/src/main/java/io/techery/janet/http/annotations/HttpAction.java)
-```java
-@HttpAction(value = "/demo", method = HttpAction.Method.GET)
-public class ExampleAction {}
-```
-
-To configure request, Action fields can be annotated with:
-* `@Path` for path value
-* `@Query` for request URL parameters
-* `@Body` for POST request body
-* `@RequestHeader` for request headers
-* `@Field` for request fields if request type is `HttpAction.Type.FORM_URL_ENCODED`
-* `@Part` for multipart request parts
-
-To process response, special annotations can be used:
-* `@Response` for getting response body.
-* `@Status` for getting response status. Field types `Integer`, `Long`, `int` or `long` can be used to get status code or use `boolean` to know that request was sent successfully
-* `@ResponseHeader` for getting response headers
-
-```java
-@HttpAction(value = "/demo/{examplePath}/info",
-        type = HttpAction.Type.SIMPLE,
-        method = HttpAction.Method.GET)
-public class ExampleAction {
-    @Path("examplePath")
-    String ownerr;
-    @Query("repo")
-    int query;
-    @RequestHeader("Example-Header-Name")
-    String requestHeaderValue;
-    @Status
-    int statusCode;
-    @Body
-    ExampleModel exampleModel;
-    @Response
-    ExampleDataModel exampleDataModel;
-    @ResponseHeader("Example-Responseheader-Name")
-    String responseHeaderValue;
-}
-```
-#### Proguard
-Add [Rules](janet-http/http-service/proguard-rules.pro) to your proguard config. 
-See [Sample](samples/sample-android) for complete proguard config example.
-
-### AsyncActionService
-
-[AsyncActionService](/janet-async/async-service/src/main/java/io/techery/janet/AsyncActionService.java) performs actions with annotation [@AsyncAction](/janet-async/async-service/src/main/java/io/techery/janet/async/annotations/AsyncAction.java). Every action is async message that contains message data as a field annotated with [@AsyncMessage](/janet-async/async-service/src/main/java/io/techery/janet/async/annotations/AsyncMessage.java).
- 
-Also [AsyncActionService](/master/janet-async/async-service/src/main/java/io/techery/janet/AsyncActionService.java) has algorithm to synchronize outcoming and incoming messages. To receive action response may add field with annotation [@SyncedResponse](/master/janet-async/async-service/src/main/java/io/techery/janet/async/annotations/SyncedResponse.java). Type of that field must be a class of incoming action. To link action with its response set class in the annotation implemented by [SyncPredicate](/janet-async/async-service/src/main/java/io/techery/janet/async/SyncPredicate.java) where the condition for synchronization present.
-```java
-@AsyncAction(value = "test", incoming = true)
-public class TestAction {
-
-    @AsyncMessage
-    Body body;
-
-    @SyncedResponse(value = TestSyncPredicate.class, timeout = 3000)
-    TestAction response;
-
-    @Override public String toString() {
-        return "TestAction{" +
-                "body=" + body +
-                ", response=" + response +
-                '}';
-    }
-
-    public static class TestSyncPredicate implements SyncPredicate<TestAction, TestAction> {
-
-        @Override public boolean isResponse(TestAction requestAction, TestAction response) {
-            return requestAction.body.id == response.body.id;
-        }
-    }
-}
-```
-
-### CommandActionService
-
-[CommandActionService](/janet-command/command-service/src/main/java/io/techery/janet/CommandActionService.java) performs actions executing with a help of annotation [@CommandAction](/janet-command/command-service/src/main/java/io/techery/janet/command/annotations/CommandAction.java). Also to create command action it's necessary to extend the abstract class [CommandActionBase](/janet-command/command-service/src/main/java/io/techery/janet/CommandActionBase.java). It contains the command's methods for running and cancellation. To get command result use method `getResult()`
- 
-```java
-@CommandAction
-public class ExampleCommandAction extends CommandActionBase<String> {
-
-    @Override protected String run(CommandCallback callback) throws Throwable {
-        // perform logic to return result
-    }
-
-    @Override protected void cancel() {
-        // cancellation logic, e.g. some cleanup
-    }
-}
-```
+## Introduction
+Janet provides infrastructure to build flexible, scalable and resilient 
+architecture based on actions, `RxJava`-powered pipes and services to execute those actions.
   
+Lets walk through common flow for http request: 
 
-# Download 
+![overview](/assets/readme-overview.png)
+
+* Janet is equipped with services to deal with different actions:
+    ```java
+    Janet janet = new Janet.Builder()
+        .addService(new HttpActionService(API_URL, httpClient, converter))
+        .addService(new SqlActionService(...))
+        .addService(new XyzActionService(...))
+        .build();
+    ```
+    
+1. Our request is described with `SampleHttpAction` class:
+    ```java
+    @HttpAction(value = "/demo", method = GET)
+    public class SampleHttpAction {
+        @Response SampleData responseData;
+    }
+    ```
+    
+    Request is sent/observed with it's `ActionPipe`:
+    ```java
+    // create pipe for action class with janet
+    ActionPipe<SampleHttpAction> actionPipe = janet.createPipe(SampleHttpAction.class);
+    
+    // register request result observer
+    actionPipe.observe().subscribe(new ActionStateSubscriber<SampleHttpAction>()
+        .onStart(action -> System.out.println("Request is being sent " + action))
+        .onProgress((action, progress) -> System.out.println("Request in progress: " + progress))
+        .onSuccess(action -> System.out.println("Request finished " + action))
+        .onFail((action, throwable) -> System.err.println("Request failed " + throwable))
+    );
+    
+    // send request
+    actionPipe.send(new SampleHttpAction());
+    // or actionPipe.createObservable(new SampleHttpAction()).subscribe(...) 
+    ```
+2. Request is forwarded to `Janet` instance upon `send` or `subscribe` call;
+3. `Janet` finds suitable service to execute action and routes to it;
+4. `ActionService` knows how to deal with action and sets up `progress`/`success`/`fail` statuses;
+5. Resulting action is brought back to `Janet` instance;
+6. `Janet` routes resulting action with status to dedicated pipes;
+7. Dedicated `ActionPipe` notifies all it's observers of action wrapped with current status;
+
+So `Janet` instance itself stands for routing, delegating diff job to other components:
+
+* `ActionPipe` – action operator, the only way to send action and receive result;
+* `ActionService` – knows how to deal with action;
+* `ActionServiceWrapper` – decorator to put additional logic for underlying service;
+
+### Available services
+Janet abilities depends on services.
+Currently there are:
+
+* [HttpActionService](https://github.com/techery/janet-http) to provide HTTP/HTTPS requests execution;
+* [AsyncActionService](https://github.com/techery/janet-async) to provide support for async protocols, e.g. [socket.io](http://socket.io/);
+* [CommandActionService](https://github.com/techery/janet-command) to delegate job back to command `action`.
+   
+Possible solutions: 
+`SqlActionService`, `LocationActionService`, `BillingActionService`, etc.
+
+## Components
+### ActionPipe
+The only way to operate with `action` – via it's `ActionPipe`.
+It's created for particular action class:
+```java
+// Pipe for users list request
+ActionPipe<GetUsersAction> usersPipe = janet.createPipe(GetUsersAction.class);
+// Pipe for repositories list request
+ActionPipe<GetReposAction> repositoriesPipe = janet.createPipe(GetReposAction.class);
+```
+
+Action result is provided via `ActionState` observable:
+```java
+Observable<ActionState<GetUsersAction>> usersObservable = usersPipe.observe();
+```
+
+`ActionState` includes:
+* state – `start`/`progress`/`success`/`fail`;
+* action instance itself;
+* progress value;
+* exception for `fail` status
+
+To send new action for execution:
+```java
+usersPipe.send(new GetUsersAction());
+```
+
+To combine sending and observing at once:
+```java
+usersPipe.createObservable(new GetUsersAction()).subscribe(...);
+// every other pipe's observer will get result too
+```
+
+Other capabilities:
+* observe latest cached result (aka replay(1)) or clear cache;
+* observe success-only results;
+* observe base parent actions; 
+* cancel action execution;
+* create safe read-only pipe forks to listen for results only;
+
+### ActionService
+`ActionService` is responsible for execution of particular actions. 
+It defines what actions it's able to process, so `janet` knows where to route 'em.
+
+Every service should override 3 methods:
+* `getSupportedAnnotationType()` - defines what actions are processed by their class annotation;
+* `<A> void sendInternal(ActionHolder<A> holder)` – is called upon new action is sent to pipe;
+* `<A> void cancel(ActionHolder<A> holder)` – is called upon action is canceled from pipe;
+
+There are several services to look at:
+* Simple impl. -> [CommandActionService](https://github.com/techery/janet-command);
+* Complex impl. -> [HttpActionService](https://github.com/techery/janet-http).
+
+### ActionServiceWrapper
+Decorator for `ActionService` is used to listen for action status or add additional intercepting logic.
+
+Abilities:
+* Listen for action flow by statuses;
+* Intercept sending completely;
+* Intercept fail-status to start a retry;
+
+Simple logging wrapper:
+```java
+public class LoggingWrapper extends ActionServiceWrapper {
+
+    public LoggingWrapper(ActionService actionService) {
+        super(actionService);
+    }
+
+    @Override protected <A> boolean onInterceptSend(ActionHolder<A> holder) {
+        System.out.println("send " + holder.action());
+        return false;
+    }
+
+    @Override protected <A> void onInterceptCancel(ActionHolder<A> holder) {
+        System.out.println("cancel " + holder.action());
+    }
+
+    @Override protected <A> void onInterceptStart(ActionHolder<A> holder) {
+        System.out.println("onStart " + holder.action());
+    }
+
+    @Override protected <A> void onInterceptProgress(ActionHolder<A> holder, int progress) {
+        System.out.println("onProgress " + holder.action() + ", progress " + progress);
+    }
+
+    @Override protected <A> void onInterceptSuccess(ActionHolder<A> holder) {
+        System.out.println("onSuccess " + holder.action());
+    }
+
+    @Override protected <A> void onInterceptFail(ActionHolder<A> holder, JanetException e) {
+        System.out.println("onFail " + holder.action());
+        e.printStackTrace();
+    }
+}
+
+@Provides Janet createJanet() {
+    return new Janet.Builder()
+        .addService(new LoggingWrapper(new HttpActionService(API_URL, httpClient, converter)))
+        .build();
+}
+```
+
+Examples:
+* Authorize requests via [AuthWrapper](https://github.com/techery/janet-architecture-sample/blob/master/app/src/main/java/io/techery/sample/service/AuthServiceWrapper.java)
+* Log requests via [TimberWrapper](https://gist.github.com/almozavr/ccf620b4c0041552a8b8dbb2204254cb)
+
+Possible solutions: caching middleware, `Dagger` injector, retry policy maker, etc.
+
+## Samples
+* [Simple Android app](https://github.com/techery/janet-http-android-sample)
+* [Advanced Android app](https://github.com/techery/janet-architecture-sample)
+* [Flux-like Android app](https://github.com/techery/janet-flux-todo)
+
+## Janet benefits
+1. Flexibility and scalability. Scale functionality using [services](/janet/src/main/java/io/techery/janet/ActionService.java);
+2. Reactive approach for actions interaction by [RXJava](https://github.com/ReactiveX/RxJava);
+3. Throw-safety architecture.
+
+## Download 
 [![](https://jitpack.io/v/techery/janet.svg)](https://jitpack.io/#techery/janet)
+[![Build Status](https://travis-ci.org/techery/janet.svg?branch=master)](https://travis-ci.org/techery/janet)
 
 Grab via Maven
 ```xml
@@ -161,9 +200,9 @@ Grab via Maven
 </repositories>
 
 <dependency>
-    <groupId>com.github.techery.janet</groupId>
+    <groupId>com.github.techery</groupId>
     <artifactId>janet</artifactId>
-    <version>0.2.4</version>
+    <version>latestVersion</version>
 </dependency>
 ```
 or Gradle:
@@ -173,26 +212,22 @@ repositories {
     maven { url "https://jitpack.io" }
 }
 dependencies {
-    compile 'com.github.techery.janet:janet:0.2.4'
+    compile 'com.github.techery:janet:latestVersion'
 }
 ```
 
-List of additional artifacts:
-```groovy
-compile 'com.github.techery.janet:http-service:0.2.4'
-apt 'com.github.techery.janet:http-service-compiler:0.2.4'   
-compile 'com.github.techery.janet:okhttp:0.2.4'
-compile 'com.github.techery.janet:okhttp3:0.2.4'
-compile 'com.github.techery.janet:android-apache-client:0.2.4'
-compile 'com.github.techery.janet:url-connection:0.2.4'
+## License
 
-compile 'com.github.techery.janet:async-service:0.2.4'
-apt 'com.github.techery.janet:async-service-compiler:0.2.4'
-compile 'com.github.techery.janet:nkzawa-socket.io:0.2.4'
-compile 'com.github.techery.janet:socket.io:0.2.4'
+    Copyright (c) 2016 Techery
 
-compile 'com.github.techery.janet:gson:0.2.4'
-compile 'com.github.techery.janet:protobuf:0.2.4'
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
 
-compile 'com.github.techery.janet:command-service:0.2.4'
-```
+       http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
