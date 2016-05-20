@@ -2,7 +2,6 @@ package io.techery.janet;
 
 import rx.Observable;
 import rx.functions.Func1;
-import rx.observables.ConnectableObservable;
 import rx.subjects.PublishSubject;
 
 class CachedPipelines<A> implements Replays<A> {
@@ -10,8 +9,8 @@ class CachedPipelines<A> implements Replays<A> {
     private final Observable<ActionState<A>> source;
     private final Observable<A> sourceSuccess;
 
-    private ConnectableObservable<ActionState<A>> cachedPipeline;
-    private ConnectableObservable<A> cachedSuccessPipeline;
+    private Observable<ActionState<A>> cachedPipeline;
+    private Observable<A> cachedSuccessPipeline;
 
     private final PublishSubject clearingStream;
 
@@ -25,16 +24,16 @@ class CachedPipelines<A> implements Replays<A> {
 
     private void createCachedPipeline() {
         this.cachedPipeline = createPipeline(source);
-        this.cachedPipeline.connect();
+        this.cachedPipeline.subscribe();
     }
 
     private void createCachedSuccessPipeline() {
         this.cachedSuccessPipeline = createPipeline(sourceSuccess);
-        this.cachedSuccessPipeline.connect();
+        this.cachedSuccessPipeline.subscribe();
     }
 
-    private <A> ConnectableObservable<A> createPipeline(Observable<A> source) {
-        return source.mergeWith(clearingStream).share().replay(1);
+    private <A> Observable<A> createPipeline(Observable<A> source) {
+        return source.mergeWith(clearingStream).replay(1).autoConnect();
     }
 
     @Override public Observable<ActionState<A>> observeWithReplay() {
