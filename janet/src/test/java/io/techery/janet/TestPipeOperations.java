@@ -33,10 +33,10 @@ public class TestPipeOperations extends BaseTest {
     @Test
     public void sendWithObserveWithReplay() {
         TestSubscriber<ActionState<TestAction>> subscriber = new TestSubscriber<ActionState<TestAction>>();
-        actionPipe.observeWithReplay().subscribe(subscriber);
         actionPipe.send(new TestAction());
+        actionPipe.observeWithReplay().subscribe(subscriber);
         subscriber.unsubscribe();
-        AssertUtil.SuccessAnswer.assertAllStatuses(subscriber);
+        AssertUtil.assertSubscriberWithSingleValue(subscriber);
 
         subscriber = new TestSubscriber<ActionState<TestAction>>();
         actionPipe.observeWithReplay().subscribe(subscriber);
@@ -68,15 +68,14 @@ public class TestPipeOperations extends BaseTest {
     public void sendWithObserveSuccessWithReplay() {
         TestSubscriber<TestAction> subscriber = new TestSubscriber<TestAction>();
         TestAction action = new TestAction();
-        actionPipe.observeSuccessWithReplay().subscribe(subscriber);
         actionPipe.send(action);
+        actionPipe.observeSuccessWithReplay().subscribe(subscriber);
         subscriber.unsubscribe();
         AssertUtil.assertSubscriberWithSingleValue(subscriber);
         subscriber.assertValue(action);
 
         subscriber = new TestSubscriber<TestAction>();
-        actionPipe.observeSuccessWithReplay()
-                .subscribe(subscriber);
+        actionPipe.observeSuccessWithReplay().subscribe(subscriber);
         subscriber.unsubscribe();
         AssertUtil.assertSubscriberWithSingleValue(subscriber);
         subscriber.assertValue(action);
