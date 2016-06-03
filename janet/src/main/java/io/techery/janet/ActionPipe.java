@@ -110,7 +110,7 @@ public final class ActionPipe<A> implements ReadActionPipe<A>, WriteActionPipe<A
     }
 
     /** {@inheritDoc} */
-    @Override public Observable<A> createObservableSuccess(A action) {
+    @Override public Observable<A> createObservableResult(A action) {
         return createObservable(action).compose(new ActionStateToActionTransformer<A>());
     }
 

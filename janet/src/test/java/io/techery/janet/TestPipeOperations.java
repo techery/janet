@@ -48,7 +48,7 @@ public class TestPipeOperations extends BaseTest {
     public void createObservableSuccess() {
         TestSubscriber<TestAction> subscriber = new TestSubscriber<TestAction>();
         TestAction action = new TestAction();
-        actionPipe.createObservableSuccess(action).subscribe(subscriber);
+        actionPipe.createObservableResult(action).subscribe(subscriber);
         AssertUtil.assertSubscriberWithSingleValue(subscriber);
         subscriber.assertValue(action);
     }
