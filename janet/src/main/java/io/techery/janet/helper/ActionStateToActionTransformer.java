@@ -29,7 +29,7 @@ public final class ActionStateToActionTransformer<A> implements Observable.Trans
                     case SUCCESS:
                         return Observable.just(state.action);
                     case FAIL:
-                        return Observable.error(state.exception);
+                        return Observable.error(new JanetActionException(state.exception, state.action));
                     default:
                         throw new IllegalArgumentException("Action status is unknown");
                 }
