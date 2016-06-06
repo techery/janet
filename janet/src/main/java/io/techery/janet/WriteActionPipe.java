@@ -49,5 +49,5 @@ public interface WriteActionPipe<A> {
      *
      * @param action prepared action to send
      */
-    Observable<A> createObservableSuccess(A action);
+    Observable<A> createObservableResult(A action);
 }
