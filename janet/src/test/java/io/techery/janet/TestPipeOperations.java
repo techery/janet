@@ -2,13 +2,19 @@ package io.techery.janet;
 
 import org.junit.Test;
 
+import java.util.concurrent.Executor;
+
 import io.techery.janet.helper.ActionStateSubscriber;
 import io.techery.janet.model.TestAction;
+import io.techery.janet.util.FakeExecutor;
 import rx.functions.Action1;
 import rx.observers.TestSubscriber;
+import rx.schedulers.Schedulers;
 
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
@@ -79,6 +85,34 @@ public class TestPipeOperations extends BaseTest {
         subscriber.unsubscribe();
         AssertUtil.assertSubscriberWithSingleValue(subscriber);
         subscriber.assertValue(action);
+    }
+
+    @Test
+    public void sendWithDefaultScheduler() {
+        Executor fakeExecutor = spy(new FakeExecutor());
+        //
+        ActionPipe<TestAction> actionPipe = providePipe(janet, Schedulers.from(fakeExecutor));
+        TestSubscriber<ActionState<TestAction>> subscriber = new TestSubscriber<ActionState<TestAction>>();
+        actionPipe.observe().subscribe(subscriber);
+        actionPipe.send(new TestAction());
+        subscriber.unsubscribe();
+        AssertUtil.SuccessAnswer.assertAllStatuses(subscriber);
+        verify(fakeExecutor, times(1)).execute(any(Runnable.class));
+    }
+
+    @Test
+    public void sendWithOverridenScheduler() {
+        Executor defaultExecutor = spy(new FakeExecutor());
+        Executor newExecutor = spy(new FakeExecutor());
+        //
+        ActionPipe<TestAction> actionPipe = providePipe(janet, Schedulers.from(defaultExecutor));
+        TestSubscriber<ActionState<TestAction>> subscriber = new TestSubscriber<ActionState<TestAction>>();
+        actionPipe.observe().subscribe(subscriber);
+        actionPipe.send(new TestAction(), Schedulers.from(newExecutor));
+        subscriber.unsubscribe();
+        AssertUtil.SuccessAnswer.assertAllStatuses(subscriber);
+        verify(defaultExecutor, never()).execute(any(Runnable.class));
+        verify(newExecutor, times(1)).execute(any(Runnable.class));
     }
 
     @Test

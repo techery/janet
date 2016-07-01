@@ -4,6 +4,7 @@ import org.junit.Before;
 
 import io.techery.janet.model.MockAction;
 import io.techery.janet.model.TestAction;
+import rx.Scheduler;
 
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.doAnswer;
@@ -12,7 +13,7 @@ import static org.mockito.Mockito.when;
 
 public abstract class BaseTest {
 
-    private Janet janet;
+    protected Janet janet;
     protected ActionService service;
     protected ActionPipe<TestAction> actionPipe;
 
@@ -35,7 +36,11 @@ public abstract class BaseTest {
     }
 
     protected ActionPipe<TestAction> providePipe(Janet janet) {
-        return janet.createPipe(TestAction.class);
+        return providePipe(janet, null);
+    }
+
+    protected ActionPipe<TestAction> providePipe(Janet janet, Scheduler scheduler) {
+        return janet.createPipe(TestAction.class, scheduler);
     }
 
 }
