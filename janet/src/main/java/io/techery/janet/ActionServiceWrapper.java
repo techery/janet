@@ -62,11 +62,7 @@ public abstract class ActionServiceWrapper extends ActionService {
      */
     @Override protected <A> void sendInternal(ActionHolder<A> holder) throws JanetException {
         if (onInterceptSend(holder)) callback.onSuccess(holder);
-        else try {
-            actionService.sendInternal(holder);
-        } catch (JanetException e) {
-            this.callback.onFail(holder, e);
-        }
+        else actionService.send(holder);
     }
 
     /**
