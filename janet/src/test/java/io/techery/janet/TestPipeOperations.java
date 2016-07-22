@@ -7,12 +7,14 @@ import java.util.concurrent.Executor;
 import io.techery.janet.helper.ActionStateSubscriber;
 import io.techery.janet.model.TestAction;
 import io.techery.janet.util.FakeExecutor;
+import rx.functions.Action0;
 import rx.functions.Action1;
 import rx.observers.TestSubscriber;
 import rx.schedulers.Schedulers;
 
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
@@ -176,4 +178,27 @@ public class TestPipeOperations extends BaseTest {
         AssertUtil.assertStatusCount(subscriber, ActionState.Status.FAIL, 1);
     }
 
+    @Test
+    public void statusFailFinish() throws JanetException {
+        ActionStateSubscriber<TestAction> subscriber = new ActionStateSubscriber<TestAction>();
+        Action0 onFinish = mock(Action0.class);
+        subscriber.onFinish(onFinish);
+
+        actionPipe.clearReplays();
+        doThrow(JanetException.class).when(service).sendInternal(any(ActionHolder.class));
+        actionPipe.createObservable(new TestAction()).subscribe(subscriber);
+        subscriber.unsubscribe();
+        verify(onFinish, times(1)).call();
+    }
+
+    @Test
+    public void statusSuccessFinish() {
+        ActionStateSubscriber<TestAction> subscriber = new ActionStateSubscriber<TestAction>();
+        Action0 onFinish = mock(Action0.class);
+        subscriber.onFinish(onFinish);
+
+        actionPipe.clearReplays();
+        actionPipe.createObservable(new TestAction()).subscribe(subscriber);
+        verify(onFinish, times(1)).call();
+    }
 }

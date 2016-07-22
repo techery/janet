@@ -7,6 +7,9 @@ import rx.functions.Action0;
 import rx.functions.Action1;
 import rx.functions.Action2;
 
+import static io.techery.janet.ActionState.Status.FAIL;
+import static io.techery.janet.ActionState.Status.SUCCESS;
+
 /**
  * Subscriber that helps to handle states by status using callback
  */
@@ -18,6 +21,7 @@ public class ActionStateSubscriber<A> extends Subscriber<ActionState<A>> {
     private Action2<A, Integer> onProgress;
     private Action1<ActionState<A>> beforeEach;
     private Action1<ActionState<A>> afterEach;
+    private Action0 onFinish;
 
     public ActionStateSubscriber<A> onSuccess(Action1<A> onSuccess) {
         this.onSuccess = onSuccess;
@@ -26,6 +30,11 @@ public class ActionStateSubscriber<A> extends Subscriber<ActionState<A>> {
 
     public ActionStateSubscriber<A> onFail(Action2<A, Throwable> onError) {
         this.onFail = onError;
+        return this;
+    }
+
+    public ActionStateSubscriber<A> onFinish(Action0 onFinish) {
+        this.onFinish = onFinish;
         return this;
     }
 
@@ -64,6 +73,9 @@ public class ActionStateSubscriber<A> extends Subscriber<ActionState<A>> {
             case FAIL:
                 if (onFail != null) onFail.call(state.action, state.exception);
                 break;
+        }
+        if (onFinish != null && (state.status == SUCCESS || state.status == FAIL)) {
+            onFinish.call();
         }
         if (afterEach != null) afterEach.call(state);
     }
