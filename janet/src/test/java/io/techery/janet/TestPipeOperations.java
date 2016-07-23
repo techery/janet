@@ -7,7 +7,6 @@ import java.util.concurrent.Executor;
 import io.techery.janet.helper.ActionStateSubscriber;
 import io.techery.janet.model.TestAction;
 import io.techery.janet.util.FakeExecutor;
-import rx.functions.Action0;
 import rx.functions.Action1;
 import rx.observers.TestSubscriber;
 import rx.schedulers.Schedulers;
@@ -181,24 +180,24 @@ public class TestPipeOperations extends BaseTest {
     @Test
     public void statusFailFinish() throws JanetException {
         ActionStateSubscriber<TestAction> subscriber = new ActionStateSubscriber<TestAction>();
-        Action0 onFinish = mock(Action0.class);
+        Action1<TestAction> onFinish = mock(Action1.class);
         subscriber.onFinish(onFinish);
 
         actionPipe.clearReplays();
         doThrow(JanetException.class).when(service).sendInternal(any(ActionHolder.class));
         actionPipe.createObservable(new TestAction()).subscribe(subscriber);
         subscriber.unsubscribe();
-        verify(onFinish, times(1)).call();
+        verify(onFinish, times(1)).call(any(TestAction.class));
     }
 
     @Test
     public void statusSuccessFinish() {
         ActionStateSubscriber<TestAction> subscriber = new ActionStateSubscriber<TestAction>();
-        Action0 onFinish = mock(Action0.class);
+        Action1<TestAction> onFinish = mock(Action1.class);
         subscriber.onFinish(onFinish);
 
         actionPipe.clearReplays();
         actionPipe.createObservable(new TestAction()).subscribe(subscriber);
-        verify(onFinish, times(1)).call();
+        verify(onFinish, times(1)).call(any(TestAction.class));
     }
 }
