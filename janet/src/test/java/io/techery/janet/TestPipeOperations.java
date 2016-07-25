@@ -13,6 +13,7 @@ import rx.schedulers.Schedulers;
 
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
@@ -176,4 +177,27 @@ public class TestPipeOperations extends BaseTest {
         AssertUtil.assertStatusCount(subscriber, ActionState.Status.FAIL, 1);
     }
 
+    @Test
+    public void statusFailFinish() throws JanetException {
+        ActionStateSubscriber<TestAction> subscriber = new ActionStateSubscriber<TestAction>();
+        Action1<TestAction> onFinish = mock(Action1.class);
+        subscriber.onFinish(onFinish);
+
+        actionPipe.clearReplays();
+        doThrow(JanetException.class).when(service).sendInternal(any(ActionHolder.class));
+        actionPipe.createObservable(new TestAction()).subscribe(subscriber);
+        subscriber.unsubscribe();
+        verify(onFinish, times(1)).call(any(TestAction.class));
+    }
+
+    @Test
+    public void statusSuccessFinish() {
+        ActionStateSubscriber<TestAction> subscriber = new ActionStateSubscriber<TestAction>();
+        Action1<TestAction> onFinish = mock(Action1.class);
+        subscriber.onFinish(onFinish);
+
+        actionPipe.clearReplays();
+        actionPipe.createObservable(new TestAction()).subscribe(subscriber);
+        verify(onFinish, times(1)).call(any(TestAction.class));
+    }
 }
