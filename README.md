@@ -1,6 +1,7 @@
 ## Janet
 Build command-based architecture in reactive manner 
 
+・︎︎ [![Join the chat at https://gitter.im/janet-java/Lobby](https://badges.gitter.im/janet-java/Lobby.svg)](https://gitter.im/janet-java/Lobby?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 ## Introduction
 Janet provides infrastructure to build flexible, scalable and resilient 
 architecture based on actions, `RxJava`-powered pipes and services to execute those actions.
