@@ -1,4 +1,6 @@
 ## Janet
+
+[![Join the chat at https://gitter.im/janet-java/janet-http](https://badges.gitter.im/janet-java/janet-http.svg)](https://gitter.im/janet-java/janet-http?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 Build command-based architecture in reactive manner 
 
 ## Introduction
