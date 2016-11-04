@@ -7,7 +7,9 @@ import java.util.concurrent.Executor;
 import io.techery.janet.helper.ActionStateSubscriber;
 import io.techery.janet.model.TestAction;
 import io.techery.janet.util.FakeExecutor;
+import rx.Observable;
 import rx.functions.Action1;
+import rx.functions.Func1;
 import rx.observers.TestSubscriber;
 import rx.schedulers.Schedulers;
 
@@ -20,6 +22,52 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
 public class TestPipeOperations extends BaseTest {
+
+
+    @Test
+    public void testBackpressure() {
+        TestSubscriber<String> subscriber = new TestSubscriber<String>();
+        Observable.range(0, 10)
+                .map(new Func1<Integer, Observable<ActionState<TestAction>>>() {
+                    @Override
+                    public Observable<ActionState<TestAction>> call(Integer integer) {
+                        return actionPipe.observe();
+                    }
+                })
+                .flatMap(new Func1<Observable<ActionState<TestAction>>, Observable<ActionState<TestAction>>>() {
+                    @Override
+                    public Observable<ActionState<TestAction>> call(Observable<ActionState<TestAction>> observable) {
+                        return observable.mergeWith(actionPipe.observe());
+                    }
+                })
+                .map(new Func1<ActionState<TestAction>, String>() {
+                    @Override
+                    public String call(ActionState<TestAction> state) {
+                        return String.valueOf(state);
+                    }
+                })
+                .distinct() //reduce pressure for subscriber
+                .subscribe(subscriber);
+        int magicLoopSize = 100;
+        Observable.range(0, magicLoopSize)
+                .observeOn(Schedulers.io())
+                .subscribe(new Action1<Integer>() {
+                    @Override
+                    public void call(Integer integer) {
+                        actionPipe.send(new TestAction());
+                    }
+                });
+        Observable.range(0, magicLoopSize)
+                .subscribe(new Action1<Integer>() {
+                    @Override
+                    public void call(Integer integer) {
+                        actionPipe.send(new TestAction());
+                    }
+                });
+        subscriber.unsubscribe();
+        subscriber.assertNotCompleted();
+        subscriber.assertNoErrors();
+    }
 
     @Test
     public void createObservable() {

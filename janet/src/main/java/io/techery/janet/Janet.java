@@ -82,6 +82,7 @@ public final class Janet {
         }, new Func0<Observable<ActionState<A>>>() {
             @Override public Observable<ActionState<A>> call() {
                 return pipeline.asObservable()
+                        .onBackpressureBuffer()
                         .map(new Func1<ActionPair, ActionState>() {
                             @Override public ActionState call(ActionPair pair) {
                                 return pair.state;
