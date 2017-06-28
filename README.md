@@ -5,6 +5,7 @@ Build command-based architecture in reactive manner
 ## Introduction
 Janet provides infrastructure to build flexible, scalable and resilient 
 architecture based on actions, `RxJava`-powered pipes and services to execute those actions.
+You can learn more about our framework from this [presentation](https://speakerdeck.com/dirong/janet-build-command-based-architecture-in-reactive-manner) 
   
 Lets walk through common flow for http request: 
 
