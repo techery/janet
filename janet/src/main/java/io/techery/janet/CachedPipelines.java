@@ -1,23 +1,27 @@
 package io.techery.janet;
 
-import rx.Observable;
-import rx.functions.Func1;
-import rx.subjects.PublishSubject;
+
+import org.reactivestreams.Publisher;
+
+import io.reactivex.Flowable;
+import io.reactivex.FlowableTransformer;
+import io.reactivex.functions.Predicate;
+import io.reactivex.processors.PublishProcessor;
 
 class CachedPipelines<A> implements Replays<A> {
 
-    private final Observable<ActionState<A>> source;
-    private final Observable<A> sourceSuccess;
+    private final Flowable<ActionState<A>> source;
+    private final Flowable<A> sourceSuccess;
 
-    private Observable<ActionState<A>> cachedPipeline;
-    private Observable<A> cachedSuccessPipeline;
+    private Flowable<ActionState<A>> cachedPipeline;
+    private Flowable<A> cachedSuccessPipeline;
 
-    private final PublishSubject clearingStream;
+    private final PublishProcessor clearingStream;
 
     CachedPipelines(ReadActionPipe<A> actionPipe) {
         this.source = actionPipe.observe();
         this.sourceSuccess = actionPipe.observeSuccess();
-        this.clearingStream = PublishSubject.create();
+        this.clearingStream = PublishProcessor.create();
         createCachedPipeline();
         createCachedSuccessPipeline();
     }
@@ -32,36 +36,38 @@ class CachedPipelines<A> implements Replays<A> {
         this.cachedSuccessPipeline.subscribe();
     }
 
-    private <A> Observable<A> createPipeline(Observable<A> source) {
+    private <A> Flowable<A> createPipeline(Flowable<A> source) {
         return source.mergeWith(clearingStream).replay(1).autoConnect();
     }
 
-    @Override public Observable<ActionState<A>> observeWithReplay() {
-        return cachedPipeline.compose(NullFilter.<ActionState<A>>instance());
+    @Override public Flowable<ActionState<A>> observeWithReplay() {
+        return cachedPipeline.compose(EmptyFilter.<ActionState<A>>instance());
     }
 
-    @Override public Observable<A> observeSuccessWithReplay() {
-        return  cachedSuccessPipeline.compose(NullFilter.<A>instance());
+    @Override public Flowable<A> observeSuccessWithReplay() {
+        return cachedSuccessPipeline.compose(EmptyFilter.<A>instance());
     }
 
     @Override public void clearReplays() {
-        clearingStream.onNext(null);
+        clearingStream.onNext(ClearSignal.IT);
     }
 
-    private static class NullFilter<T> implements Observable.Transformer<T, T> {
+    private static class EmptyFilter<T> implements FlowableTransformer<T, T> {
 
-        private static final NullFilter INSTANCE = new NullFilter();
+        private static final EmptyFilter INSTANCE = new EmptyFilter();
 
-        public static <T> NullFilter<T> instance() {
-            return (NullFilter<T>) INSTANCE;
+        public static <T> EmptyFilter<T> instance() {
+            return (EmptyFilter<T>) INSTANCE;
         }
 
-        @Override public Observable<T> call(Observable<T> source) {
-            return source.filter(new Func1<Object, Boolean>() {
-                @Override public Boolean call(Object obj) {
-                    return obj != null;
+        @Override public Publisher<T> apply(Flowable<T> upstream) {
+            return upstream.filter(new Predicate<T>() {
+                @Override public boolean test(T t) throws Exception {
+                    return t != ClearSignal.IT;
                 }
             });
         }
     }
+
+    enum ClearSignal {IT}
 }

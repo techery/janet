@@ -1,8 +1,11 @@
 package io.techery.janet;
 
-import rx.Observable;
-import rx.Scheduler;
-import rx.Subscriber;
+
+import io.reactivex.Flowable;
+import io.reactivex.Observable;
+import io.reactivex.Scheduler;
+import io.reactivex.Single;
+import io.reactivex.SingleObserver;
 
 public interface WriteActionPipe<A> {
 
@@ -40,14 +43,14 @@ public interface WriteActionPipe<A> {
      *
      * @param action prepared action to send
      */
-    Observable<ActionState<A>> createObservable(A action);
+    Flowable<ActionState<A>> createObservable(A action);
 
     /**
      * Create {@linkplain Observable observable} to send action and receive action with result synchronously
      * <p>
-     * To catch errors use {@linkplain Subscriber#onError(Throwable)}
+     * To catch errors use {@linkplain SingleObserver#onError(Throwable)}
      *
      * @param action prepared action to send
      */
-    Observable<A> createObservableResult(A action);
+    Single<A> createObservableResult(A action);
 }

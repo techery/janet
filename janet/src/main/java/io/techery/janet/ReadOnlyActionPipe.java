@@ -1,8 +1,8 @@
 package io.techery.janet;
 
-import rx.Observable;
-import rx.functions.Func1;
-import rx.internal.util.UtilityFunctions;
+import io.reactivex.Flowable;
+import io.reactivex.functions.Predicate;
+import io.reactivex.internal.functions.Functions;
 
 /**
  * Read only type of {@linkplain ActionPipe}
@@ -10,37 +10,37 @@ import rx.internal.util.UtilityFunctions;
 public final class ReadOnlyActionPipe<A> implements ReadActionPipe<A> {
 
     private final ReadActionPipe<A> actionPipe;
-    private final Func1<? super A, Boolean> filter;
+    private final Predicate<? super A> filter;
 
     private final CachedPipelines<A> cachedPipelines;
 
     public ReadOnlyActionPipe(ReadActionPipe<A> actionPipe) {
-        this(actionPipe, UtilityFunctions.alwaysTrue());
+        this(actionPipe, Functions.alwaysTrue());
     }
 
-    public ReadOnlyActionPipe(ReadActionPipe<A> actionPipe, Func1<? super A, Boolean> filter) {
+    public ReadOnlyActionPipe(ReadActionPipe<A> actionPipe, Predicate<? super A> filter) {
         this.actionPipe = actionPipe;
         this.filter = filter;
         cachedPipelines = new CachedPipelines<A>(this);
     }
 
     /** {@inheritDoc} */
-    @Override public Observable<ActionState<A>> observe() {
+    @Override public Flowable<ActionState<A>> observe() {
         return actionPipe.observe().filter(new FilterStateDecorator<A>(filter));
     }
 
     /** {@inheritDoc} */
-    @Override public Observable<ActionState<A>> observeWithReplay() {
+    @Override public Flowable<ActionState<A>> observeWithReplay() {
         return cachedPipelines.observeWithReplay();
     }
 
     /** {@inheritDoc} */
-    @Override public Observable<A> observeSuccess() {
+    @Override public Flowable<A> observeSuccess() {
         return actionPipe.observeSuccess().filter(filter);
     }
 
     /** {@inheritDoc} */
-    @Override public Observable<A> observeSuccessWithReplay() {
+    @Override public Flowable<A> observeSuccessWithReplay() {
         return cachedPipelines.observeSuccessWithReplay();
     }
 
@@ -50,20 +50,20 @@ public final class ReadOnlyActionPipe<A> implements ReadActionPipe<A> {
     }
 
     /** {@inheritDoc} */
-    @Override public ReadOnlyActionPipe<A> filter(Func1<? super A, Boolean> predicate) {
+    @Override public ReadOnlyActionPipe<A> filter(Predicate<? super A> predicate) {
         return new ReadOnlyActionPipe<A>(this, predicate);
     }
 
-    private static class FilterStateDecorator<A> implements Func1<ActionState<A>, Boolean> {
+    static class FilterStateDecorator<A> implements Predicate<ActionState<A>> {
 
-        private final Func1<? super A, Boolean> filter;
+        private final Predicate<? super A> filter;
 
-        private FilterStateDecorator(Func1<? super A, Boolean> filter) {
+        private FilterStateDecorator(Predicate<? super A> filter) {
             this.filter = filter;
         }
 
-        @Override public Boolean call(ActionState<A> state) {
-            return filter.call(state.action);
+        @Override public boolean test(ActionState<A> state) throws Exception {
+            return filter.test(state.action);
         }
     }
 }

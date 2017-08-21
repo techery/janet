@@ -9,11 +9,12 @@ import org.powermock.modules.junit4.PowerMockRunner;
 
 import java.util.LinkedList;
 
+import io.reactivex.subscribers.TestSubscriber;
 import io.techery.janet.model.TestAction;
 import io.techery.janet.util.StubServiceWrapper;
-import rx.observers.TestSubscriber;
 
 import static io.techery.janet.AssertUtil.assertStatusCount;
+import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyInt;
 import static org.mockito.Mockito.doAnswer;
@@ -39,9 +40,8 @@ public class TestServiceWrapper extends BaseTest {
         actionService.callback = callback;
         ActionPipe<TestAction> actionPipe = providePipe(janet);
         //
-        TestSubscriber<ActionState<TestAction>> subscriber = new TestSubscriber<ActionState<TestAction>>();
-        actionPipe.createObservable(new TestAction()).subscribe(subscriber);
-        subscriber.unsubscribe();
+        TestSubscriber<ActionState<TestAction>> subscriber = actionPipe.createObservable(new TestAction()).test();
+        subscriber.dispose();
         //
         verify(wrapperService, times(1)).sendInternal(any(ActionHolder.class));
         verify(actionService, never()).sendInternal(any(ActionHolder.class));
@@ -62,9 +62,8 @@ public class TestServiceWrapper extends BaseTest {
         actionService.callback = callback;
         ActionPipe<TestAction> actionPipe = providePipe(janet);
         //
-        TestSubscriber<ActionState<TestAction>> subscriber = new TestSubscriber<ActionState<TestAction>>();
-        actionPipe.createObservable(new TestAction()).subscribe(subscriber);
-        subscriber.unsubscribe();
+        TestSubscriber<ActionState<TestAction>> subscriber = actionPipe.createObservable(new TestAction()).test();
+        subscriber.dispose();
         //
         verify(wrapperService, times(1)).sendInternal(any(ActionHolder.class));
         verify(actionService, times(1)).sendInternal(any(ActionHolder.class));
@@ -99,9 +98,8 @@ public class TestServiceWrapper extends BaseTest {
         //
         ActionPipe<TestAction> actionPipe = providePipe(janet);
         //
-        TestSubscriber<ActionState<TestAction>> subscriber = new TestSubscriber<ActionState<TestAction>>();
-        actionPipe.createObservable(new TestAction()).subscribe(subscriber);
-        subscriber.unsubscribe();
+        TestSubscriber<ActionState<TestAction>> subscriber = actionPipe.createObservable(new TestAction()).test();
+        subscriber.dispose();
         //
         verify(actionService, times(1)).sendInternal(any(ActionHolder.class));
         for (StubServiceWrapper wrapper : wrappers) {
@@ -113,7 +111,7 @@ public class TestServiceWrapper extends BaseTest {
         //
         subscriber.assertNoErrors();
         subscriber.assertValueCount(3);
-        subscriber.assertUnsubscribed();
+        assertTrue(subscriber.isDisposed());
         assertStatusCount(subscriber, ActionState.Status.START, 1);
         assertStatusCount(subscriber, ActionState.Status.PROGRESS, 1);
         assertStatusCount(subscriber, ActionState.Status.FAIL, 1);
