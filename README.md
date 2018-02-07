@@ -1,13 +1,13 @@
 ## Janet
-Build command-based architecture in reactive manner 
+Build a command-based architecture in a reactive manner 
 
 ・︎︎ [![Join the chat at https://gitter.im/janet-java/Lobby](https://badges.gitter.im/janet-java/Lobby.svg)](https://gitter.im/janet-java/Lobby?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 ## Introduction
-Janet provides infrastructure to build flexible, scalable and resilient 
-architecture based on actions, `RxJava`-powered pipes and services to execute those actions.
+Janet provides the infrastructure to build a flexible, scalable and resilient 
+architecture based on actions, `RxJava`-powered pipes and the services to execute these actions.
 You can learn more about our framework from this [presentation](https://speakerdeck.com/dirong/janet-build-command-based-architecture-in-reactive-manner) 
   
-Lets walk through common flow for http request: 
+Let's walk through a common flow for the http request: 
 
 ![overview](/assets/readme-overview.png)
 
@@ -20,7 +20,7 @@ Lets walk through common flow for http request:
         .build();
     ```
     
-1. Our request is described with `SampleHttpAction` class:
+1. Our request is described with the `SampleHttpAction` class:
     ```java
     @HttpAction(value = "/demo", method = GET)
     public class SampleHttpAction {
@@ -28,7 +28,7 @@ Lets walk through common flow for http request:
     }
     ```
     
-    Request is sent/observed with it's `ActionPipe`:
+    The request is sent/observed with its `ActionPipe`:
     ```java
     // create pipe for action class with janet
     ActionPipe<SampleHttpAction> actionPipe = janet.createPipe(SampleHttpAction.class);
@@ -45,34 +45,34 @@ Lets walk through common flow for http request:
     actionPipe.send(new SampleHttpAction());
     // or actionPipe.createObservable(new SampleHttpAction()).subscribe(...) 
     ```
-2. Request is forwarded to `Janet` instance upon `send` or `subscribe` call;
-3. `Janet` finds suitable service to execute action and routes to it;
-4. `ActionService` knows how to deal with action and sets up `progress`/`success`/`fail` statuses;
-5. Resulting action is brought back to `Janet` instance;
-6. `Janet` routes resulting action with status to dedicated pipes;
-7. Dedicated `ActionPipe` notifies all it's observers of action wrapped with current status;
+2. The request is forwarded to the `Janet` instance upon the `send` or `subscribe` call;
+3. `Janet` finds a suitable service to execute an action and routes to it;
+4. `ActionService` knows how to deal with the action and sets up the `progress`/`success`/`fail` statuses;
+5. The resulting action is brought back to the `Janet` instance;
+6. `Janet` routes the resulting action with a status to the dedicated pipes;
+7. The dedicated `ActionPipe` notifies all its observers of the action wrapped with a current status;
 
-So `Janet` instance itself stands for routing, delegating diff job to other components:
+So the `Janet` instance itself stands for routing and delegating the diff job to other components:
 
-* `ActionPipe` – action operator, the only way to send action and receive result;
-* `ActionService` – knows how to deal with action;
-* `ActionServiceWrapper` – decorator to put additional logic for underlying service;
+* `ActionPipe` – an action operator, the only way to send an action and receive a result;
+* `ActionService` – knows how to deal with an action;
+* `ActionServiceWrapper` – a decorator to add additional logic to the underlying service;
 
 ### Available services
-Janet abilities depends on services.
-Currently there are:
+The Janet abilities depend on services.
+Currently, they include the following:
 
-* [HttpActionService](https://github.com/techery/janet-http) to provide HTTP/HTTPS requests execution;
+* [HttpActionService](https://github.com/techery/janet-http) to enable the HTTP/HTTPS request execution;
 * [AsyncActionService](https://github.com/techery/janet-async) to provide support for async protocols, e.g. [socket.io](http://socket.io/);
-* [CommandActionService](https://github.com/techery/janet-command) to delegate job back to command `action`.
+* [CommandActionService](https://github.com/techery/janet-command) to delegate any job back to the command `action`.
    
 Possible solutions: 
 `SqlActionService`, `LocationActionService`, `BillingActionService`, etc.
 
 ## Components
 ### ActionPipe
-The only way to operate with `action` – via it's `ActionPipe`.
-It's created for particular action class:
+The only way to operate with `action`is via its `ActionPipe`.
+It's created for a particular action class:
 ```java
 // Pipe for users list request
 ActionPipe<GetUsersAction> usersPipe = janet.createPipe(GetUsersAction.class);
@@ -80,7 +80,7 @@ ActionPipe<GetUsersAction> usersPipe = janet.createPipe(GetUsersAction.class);
 ActionPipe<GetReposAction> repositoriesPipe = janet.createPipe(GetReposAction.class);
 ```
 
-Action result is provided via `ActionState` observable:
+An action result is provided via the `ActionState` observable:
 ```java
 Observable<ActionState<GetUsersAction>> usersObservable = usersPipe.observe();
 ```
@@ -89,9 +89,9 @@ Observable<ActionState<GetUsersAction>> usersObservable = usersPipe.observe();
 * state – `start`/`progress`/`success`/`fail`;
 * action instance itself;
 * progress value;
-* exception for `fail` status
+* exception for the `fail` status
 
-To send new action for execution:
+To send a new action for execution:
 ```java
 usersPipe.send(new GetUsersAction());
 ```
@@ -103,11 +103,11 @@ usersPipe.createObservable(new GetUsersAction()).subscribe(...);
 ```
 
 Other capabilities:
-* observe latest cached result (aka replay(1)) or clear cache;
+* observe the latest cached result (aka replay(1)) or clear cache;
 * observe success-only results;
 * observe base parent actions; 
-* cancel action execution;
-* create safe read-only pipe forks to listen for results only;
+* cancel an action execution;
+* create safe read-only pipe forks to listen to results only;
 
 ### ActionService
 `ActionService` is responsible for execution of particular actions. 
@@ -115,22 +115,22 @@ It defines what actions it's able to process, so `janet` knows where to route 'e
 
 Every service should override 3 methods:
 * `getSupportedAnnotationType()` - defines what actions are processed by their class annotation;
-* `<A> void sendInternal(ActionHolder<A> holder)` – is called upon new action is sent to pipe;
-* `<A> void cancel(ActionHolder<A> holder)` – is called upon action is canceled from pipe;
+* `<A> void sendInternal(ActionHolder<A> holder)` – is called when a new action is sent to the pipe;
+* `<A> void cancel(ActionHolder<A> holder)` – is called when an action in the pipe is canceled;
 
 There are several services to look at:
 * Simple impl. -> [CommandActionService](https://github.com/techery/janet-command);
 * Complex impl. -> [HttpActionService](https://github.com/techery/janet-http).
 
 ### ActionServiceWrapper
-Decorator for `ActionService` is used to listen for action status or add additional intercepting logic.
+A decorator for `ActionService` is used to listen to the action status or add the additional intercepting logic.
 
 Abilities:
-* Listen for action flow by statuses;
+* Listen to the action flow by statuses;
 * Intercept sending completely;
-* Intercept fail-status to start a retry;
+* Intercept the fail status to start a retry;
 
-Simple logging wrapper:
+A simple logging wrapper:
 ```java
 public class LoggingWrapper extends ActionServiceWrapper {
 
@@ -176,7 +176,7 @@ Examples:
 * Authorize requests via [AuthWrapper](https://github.com/techery/janet-architecture-sample/blob/master/app/src/main/java/io/techery/sample/service/AuthServiceWrapper.java)
 * Log requests via [TimberWrapper](https://gist.github.com/almozavr/ccf620b4c0041552a8b8dbb2204254cb)
 
-Possible solutions: caching middleware, `Dagger` injector, retry policy maker, etc.
+Possible solutions: caching middleware, the `Dagger` injector, retry policy maker, etc.
 
 ## Samples
 * [Simple Android app](https://github.com/techery/janet-http-android-sample)
