@@ -2,9 +2,9 @@ package io.techery.janet;
 
 import org.junit.Before;
 
+import io.reactivex.Scheduler;
 import io.techery.janet.model.MockAction;
 import io.techery.janet.model.TestAction;
-import rx.Scheduler;
 
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.doAnswer;

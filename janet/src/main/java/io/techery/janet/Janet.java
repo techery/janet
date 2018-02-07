@@ -1,16 +1,20 @@
 package io.techery.janet;
 
+import org.reactivestreams.Publisher;
+import org.reactivestreams.Subscription;
+
 import java.util.ArrayList;
 import java.util.List;
 
+import io.reactivex.Flowable;
+import io.reactivex.FlowableTransformer;
+import io.reactivex.Observable;
+import io.reactivex.Scheduler;
+import io.reactivex.functions.Consumer;
+import io.reactivex.functions.Function;
+import io.reactivex.functions.Predicate;
+import io.reactivex.processors.PublishProcessor;
 import io.techery.janet.internal.TypeToken;
-import rx.Observable;
-import rx.Scheduler;
-import rx.functions.Action0;
-import rx.functions.Action1;
-import rx.functions.Func0;
-import rx.functions.Func1;
-import rx.subjects.PublishSubject;
 
 /**
  * Action router that can send and receive actions using added {@linkplain ActionService services} that know
@@ -29,11 +33,11 @@ import rx.subjects.PublishSubject;
 public final class Janet {
 
     private final List<ActionService> services;
-    private final PublishSubject<ActionPair> pipeline;
+    private final PublishProcessor<ActionPair> pipeline;
 
     private Janet(Builder builder) {
         this.services = builder.services;
-        this.pipeline = PublishSubject.create();
+        this.pipeline = PublishProcessor.create();
         connectPipeline();
     }
 
@@ -75,53 +79,53 @@ public final class Janet {
      * @param defaultSubscribeOn default {@linkplain Scheduler} to do {@linkplain Observable#subscribeOn(Scheduler) subcribeOn} of created Observable in this ActionPipe
      */
     public <A> ActionPipe<A> createPipe(final Class<A> actionClass, Scheduler defaultSubscribeOn) {
-        return new ActionPipe<A>(new Func1<A, Observable<ActionState<A>>>() {
-            @Override public Observable<ActionState<A>> call(A action) {
+        return new ActionPipe<A>(new FlowableFactory<A>() {
+            @Override public Flowable<ActionState<A>> create(A action) {
                 return send(action);
             }
-        }, new Func0<Observable<ActionState<A>>>() {
-            @Override public Observable<ActionState<A>> call() {
-                return pipeline.asObservable()
+        }, new Provider<Flowable<ActionState<A>>>() {
+            @Override public Flowable<ActionState<A>> provide() {
+                return pipeline
                         .onBackpressureBuffer()
-                        .map(new Func1<ActionPair, ActionState>() {
-                            @Override public ActionState call(ActionPair pair) {
+                        .map(new Function<ActionPair, ActionState>() {
+                            @Override public ActionState apply(ActionPair pair) {
                                 return pair.state;
                             }
                         })
-                        .filter(new Func1<ActionState, Boolean>() {
-                            @Override public Boolean call(ActionState actionState) {
+                        .filter(new Predicate<ActionState>() {
+                            @Override public boolean test(ActionState actionState) {
                                 return actionClass.isInstance(actionState.action);
                             }
                         }).compose(new CastToState<A>());
             }
-        }, new Action1<A>() {
-            @Override public void call(A a) {
+        }, new CancelConsumer<A>() {
+            @Override public void accept(A a) {
                 doCancel(a);
             }
         }, defaultSubscribeOn);
     }
 
-    private <A> Observable<ActionState<A>> send(final A action) {
-        return pipeline.asObservable()
-                .filter(new Func1<ActionPair, Boolean>() {
-                    @Override public Boolean call(ActionPair pair) {
+    private <A> Flowable<ActionState<A>> send(final A action) {
+        return pipeline
+                .filter(new Predicate<ActionPair>() {
+                    @Override public boolean test(ActionPair pair) {
                         return pair.holder.isOrigin(action);
                     }
                 })
-                .map(new Func1<ActionPair, ActionState>() {
-                    @Override public ActionState call(ActionPair pair) {
+                .map(new Function<ActionPair, ActionState<A>>() {
+                    @Override public ActionState apply(ActionPair pair) {
                         return pair.state;
                     }
                 })
                 .compose(new CastToState<A>())
-                .mergeWith(Observable.<ActionState<A>>empty()
-                        .doOnSubscribe(new Action0() {
-                            @Override public void call() {
+                .mergeWith(Flowable.<ActionState<A>>empty()
+                        .doOnSubscribe(new Consumer<Subscription>() {
+                            @Override public void accept(Subscription subscription) throws Exception {
                                 doSend(action);
                             }
                         }))
-                .takeUntil(new Func1<ActionState, Boolean>() {
-                    @Override public Boolean call(ActionState actionState) {
+                .takeUntil(new Predicate<ActionState<A>>() {
+                    @Override public boolean test(ActionState actionState) {
                         return actionState.status == ActionState.Status.SUCCESS
                                 || actionState.status == ActionState.Status.FAIL;
                     }
@@ -188,7 +192,7 @@ public final class Janet {
         }
     }
 
-    private final static class CastToState<A> implements Observable.Transformer<ActionState, ActionState<A>> {
+    private final static class CastToState<A> implements FlowableTransformer<ActionState, ActionState<A>> {
 
         private final Class<ActionState<A>> type;
 
@@ -196,8 +200,8 @@ public final class Janet {
             type = (Class<ActionState<A>>) new TypeToken<ActionState<A>>() {}.getRawType();
         }
 
-        @Override public Observable<ActionState<A>> call(Observable<ActionState> source) {
-            return source.cast(type);
+        @Override public Publisher<ActionState<A>> apply(Flowable<ActionState> upstream) {
+            return upstream.cast(type);
         }
     }
 }

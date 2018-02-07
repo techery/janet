@@ -1,12 +1,16 @@
 package io.techery.janet;
 
+import org.reactivestreams.Publisher;
+
+import io.reactivex.Flowable;
+import io.reactivex.FlowableTransformer;
+import io.reactivex.Scheduler;
+import io.reactivex.Single;
+import io.reactivex.functions.Consumer;
+import io.reactivex.functions.Function;
+import io.reactivex.functions.Predicate;
 import io.techery.janet.ActionState.Status;
 import io.techery.janet.helper.ActionStateToActionTransformer;
-import rx.Observable;
-import rx.Scheduler;
-import rx.functions.Action1;
-import rx.functions.Func0;
-import rx.functions.Func1;
 
 /**
  * End tool for sending and receiving actions with specific type using RXJava.
@@ -20,20 +24,21 @@ import rx.functions.Func1;
  */
 public final class ActionPipe<A> implements ReadActionPipe<A>, WriteActionPipe<A> {
 
-    private final Func1<A, Observable<ActionState<A>>> syncObservableFactory;
-    private final Observable<ActionState<A>> pipeline;
-    private final Action1<A> cancelFunc;
+    private final FlowableFactory<A> syncObservableFactory;
+    private final Flowable<ActionState<A>> pipeline;
+    private final CancelConsumer<A> cancelFunc;
     private final Scheduler defaultSubscribeOn;
 
     private final CachedPipelines<A> cachedPipelines;
     private final ActiveStream<A> activeStream;
 
-    ActionPipe(Func1<A, Observable<ActionState<A>>> syncObservableFactory,
-            Func0<Observable<ActionState<A>>> pipelineFactory,
-            final Action1<A> cancelFunc,
+    ActionPipe(
+            FlowableFactory<A> syncObservableFactory,
+            Provider<Flowable<ActionState<A>>> pipelineFactory,
+            CancelConsumer<A> cancelFunc,
             Scheduler defaultSubscribeOn) {
         this.syncObservableFactory = syncObservableFactory;
-        this.pipeline = pipelineFactory.call();
+        this.pipeline = pipelineFactory.provide();
         this.cancelFunc = cancelFunc;
         this.defaultSubscribeOn = defaultSubscribeOn;
         this.cachedPipelines = new CachedPipelines<A>(this);
@@ -41,22 +46,22 @@ public final class ActionPipe<A> implements ReadActionPipe<A>, WriteActionPipe<A
     }
 
     /** {@inheritDoc} */
-    @Override public Observable<ActionState<A>> observe() {
+    @Override public Flowable<ActionState<A>> observe() {
         return pipeline;
     }
 
     /** {@inheritDoc} */
-    @Override public Observable<ActionState<A>> observeWithReplay() {
+    @Override public Flowable<ActionState<A>> observeWithReplay() {
         return cachedPipelines.observeWithReplay();
     }
 
     /** {@inheritDoc} */
-    @Override public Observable<A> observeSuccess() {
+    @Override public Flowable<A> observeSuccess() {
         return observe().compose(new ActionSuccessOnlyTransformer<A>());
     }
 
     /** {@inheritDoc} */
-    @Override public Observable<A> observeSuccessWithReplay() {
+    @Override public Flowable<A> observeSuccessWithReplay() {
         return cachedPipelines.observeSuccessWithReplay();
     }
 
@@ -77,32 +82,23 @@ public final class ActionPipe<A> implements ReadActionPipe<A>, WriteActionPipe<A
 
     /** {@inheritDoc} */
     @Override public void cancel(A action) {
-        cancelFunc.call(action);
+        cancelFunc.accept(action);
     }
 
     /** {@inheritDoc} */
     @Override public void cancelLatest() {
-        Observable.just(activeStream.action())
-                .filter(new Func1<A, Boolean>() {
-                    @Override public Boolean call(A a) {
-                        return a != null;
-                    }
-                })
-                .subscribe(new Action1<A>() {
-                    @Override public void call(A a) {
-                        cancel(a);
-                    }
-                });
+        A action = activeStream.action();
+        if (action != null) cancel(action);
     }
 
     /** {@inheritDoc} */
-    @Override public Observable<ActionState<A>> createObservable(A action) {
+    @Override public Flowable<ActionState<A>> createObservable(A action) {
         return createObservable(action, defaultSubscribeOn);
     }
 
-    private Observable<ActionState<A>> createObservable(A action, Scheduler scheduler) {
+    private Flowable<ActionState<A>> createObservable(A action, Scheduler scheduler) {
         activeStream.put(action);
-        Observable observable = syncObservableFactory.call(action);
+        Flowable observable = syncObservableFactory.create(action);
         if (scheduler != null) {
             observable = observable.subscribeOn(scheduler);
         }
@@ -110,8 +106,8 @@ public final class ActionPipe<A> implements ReadActionPipe<A>, WriteActionPipe<A
     }
 
     /** {@inheritDoc} */
-    @Override public Observable<A> createObservableResult(A action) {
-        return createObservable(action).compose(new ActionStateToActionTransformer<A>());
+    @Override public Single<A> createObservableResult(A action) {
+        return createObservable(action).compose(new ActionStateToActionTransformer<A>()).singleOrError();
     }
 
     /**
@@ -124,7 +120,7 @@ public final class ActionPipe<A> implements ReadActionPipe<A>, WriteActionPipe<A
     }
 
     /** {@inheritDoc} */
-    @Override public ReadActionPipe<A> filter(Func1<? super A, Boolean> predicate) {
+    @Override public ReadActionPipe<A> filter(Predicate<? super A> predicate) {
         return new ReadOnlyActionPipe<A>(this, predicate);
     }
 
@@ -132,16 +128,17 @@ public final class ActionPipe<A> implements ReadActionPipe<A>, WriteActionPipe<A
     // Helpers & Delegates
     ///////////////////////////////////////////////////////////////////////////
 
-    private static final class ActionSuccessOnlyTransformer<T> implements Observable.Transformer<ActionState<T>, T> {
-        @Override public Observable<T> call(Observable<ActionState<T>> actionStateObservable) {
-            return actionStateObservable
-                    .filter(new Func1<ActionState<T>, Boolean>() {
-                        @Override public Boolean call(ActionState<T> actionState) {
+    private static final class ActionSuccessOnlyTransformer<T> implements FlowableTransformer<ActionState<T>, T> {
+
+        @Override public Publisher<T> apply(Flowable<ActionState<T>> upstream) {
+            return upstream
+                    .filter(new Predicate<ActionState<T>>() {
+                        @Override public boolean test(ActionState<T> actionState) {
                             return actionState.status == Status.SUCCESS;
                         }
                     })
-                    .map(new Func1<ActionState<T>, T>() {
-                        @Override public T call(ActionState<T> actionState) {
+                    .map(new Function<ActionState<T>, T>() {
+                        @Override public T apply(ActionState<T> actionState) {
                             return actionState.action;
                         }
                     });
@@ -156,8 +153,8 @@ public final class ActionPipe<A> implements ReadActionPipe<A>, WriteActionPipe<A
         }
 
         private void connectPipe(ReadActionPipe<A> pipe) {
-            pipe.observe().doOnNext(new Action1<ActionState<A>>() {
-                @Override public void call(ActionState<A> as) {
+            pipe.observe().doOnNext(new Consumer<ActionState<A>>() {
+                @Override public void accept(ActionState<A> as) throws Exception {
                     if (as.status == Status.START || as.status == Status.PROGRESS) {
                         put(as.action); // update cache with latest active action
                     } else if (as.action == action) {

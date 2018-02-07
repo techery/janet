@@ -4,9 +4,10 @@ import org.junit.Assert;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 
-import rx.observers.TestSubscriber;
+import io.reactivex.subscribers.TestSubscriber;
 
 import static org.hamcrest.core.IsInstanceOf.instanceOf;
+import static org.junit.Assert.assertTrue;
 
 public final class AssertUtil {
 
@@ -16,27 +17,28 @@ public final class AssertUtil {
     public static <T> void assertSubscriberWithSingleValue(TestSubscriber<T> subscriber) {
         subscriber.assertNoErrors();
         subscriber.assertValueCount(1);
-        subscriber.assertUnsubscribed();
+        assertTrue(subscriber.isDisposed());
     }
 
     public static <T> void assertSubscriberWithoutValues(TestSubscriber<T> subscriber) {
         subscriber.assertNoErrors();
         subscriber.assertNoValues();
-        subscriber.assertUnsubscribed();
+        assertTrue(subscriber.isDisposed());
     }
 
     public static <T> void assertCanceled(TestSubscriber<ActionState<T>> subscriber) {
         subscriber.assertNoErrors();
-        subscriber.assertUnsubscribed();
+        assertTrue(subscriber.isDisposed());
         AssertUtil.assertStatusCount(subscriber, ActionState.Status.START, 1);
         AssertUtil.assertStatusCount(subscriber, ActionState.Status.FAIL, 1);
-        Assert.assertThat(subscriber.getOnNextEvents().get(1).exception, instanceOf(CancelException.class));
+        JanetException exception = subscriber.values().get(subscriber.values().size() - 1).exception;
+        Assert.assertThat(exception, instanceOf(CancelException.class));
     }
 
     public static <T> void assertStatusCount(TestSubscriber<ActionState<T>> subscriber, ActionState.Status status, int count) {
         int i = 0;
-        for (ActionState state : subscriber.getOnNextEvents()) {
-            if (status == state.status) {
+        for (Object state : subscriber.getEvents().get(0)) {
+            if (status == ((ActionState) state).status) {
                 i++;
             }
         }
@@ -65,7 +67,7 @@ public final class AssertUtil {
         public static <T> void assertAllStatuses(TestSubscriber<ActionState<T>> subscriber) {
             subscriber.assertNoErrors();
             subscriber.assertValueCount(4);
-            subscriber.assertUnsubscribed();
+            assertTrue(subscriber.isDisposed());
             assertStatusCount(subscriber, ActionState.Status.START, 1);
             assertStatusCount(subscriber, ActionState.Status.PROGRESS, 2);
             assertStatusCount(subscriber, ActionState.Status.SUCCESS, 1);
@@ -74,7 +76,7 @@ public final class AssertUtil {
         public static <T> void assertNoStatuses(TestSubscriber<ActionState<T>> subscriber) {
             subscriber.assertNoErrors();
             subscriber.assertValueCount(0);
-            subscriber.assertUnsubscribed();
+            assertTrue(subscriber.isDisposed());
         }
     }
 }
