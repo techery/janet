@@ -64,7 +64,8 @@ Currently, they include the following:
 
 * [HttpActionService](https://github.com/techery/janet-http) to enable the HTTP/HTTPS request execution;
 * [AsyncActionService](https://github.com/techery/janet-async) to provide support for async protocols, e.g. [socket.io](http://socket.io/);
-* [CommandActionService](https://github.com/techery/janet-command) to delegate any job back to the command `action`.
+* [CommandActionService](https://github.com/techery/janet-command) to delegate any job back to the command `action`;
+* [AnalyticsActionSerivce](https://github.com/techery/janet-analytics) to extract analytics out of business/view logic;
    
 Possible solutions: 
 `SqlActionService`, `LocationActionService`, `BillingActionService`, etc.
@@ -220,7 +221,7 @@ dependencies {
 
 ## License
 
-    Copyright (c) 2016 Techery
+    Copyright (c) 2018 Techery
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
